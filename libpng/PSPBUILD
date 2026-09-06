@@ -9,8 +9,8 @@ groups=('psp-libraries')
 depends=('zlib')
 makedepends=()
 optdepends=()
-source=("https://github.com/pnggroup/libpng/archive/v${pkgver}.tar.gz")
-sha256sums=('b20cee717e11416d2f96ccc7d184f63730ca8cb2f03bfd0c4ed77fbc909c0bff')
+source=("$pkgname-${pkgver}::git+https://github.com/pnggroup/libpng.git#branch=libpng18")
+sha256sums=('SKIP')
 
 prepare() {
     cd "$pkgname-${pkgver}"
