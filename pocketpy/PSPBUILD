@@ -7,8 +7,8 @@ license=('MIT')
 groups=('psp-libraries')
 url="https://pocketpy.dev/"
 makedepends=()
-source=("https://github.com/pocketpy/pocketpy/archive/refs/tags/v${pkgver}.tar.gz")
-sha256sums=('7e2afd6eafcf72c5797492107558e4b1d6407dccd66e7da4a62b1054eddd2ce3')
+source=("$pkgname-${pkgver}::git+https://github.com/pocketpy/pocketpy.git#branch=main")
+sha256sums=('SKIP')
 
 build() {
     cd "$pkgname-${pkgver}"
