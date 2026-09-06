@@ -10,8 +10,14 @@ depends=()
 makedepends=()
 provides=()
 conflicts=()
-source=("https://github.com/erincatto/box2d/archive/refs/tags/v3.1.1.zip")
-sha256sums=(7c88bef902a118a2933c21027918fea455237a1310e5422daf4640d22ba9a446)
+source=()
+sha256sums=()
+
+prepare() {
+  rm -rf "$srcdir/$pkgname-$pkgver"
+  cp -a "$startdir/../components/box2d" "$srcdir/$pkgname-$pkgver"
+  rm -rf "$srcdir/$pkgname-$pkgver/.git"
+}
 
 build() {
   cmake -B build -S "$pkgname-$pkgver" -Wno-dev \
