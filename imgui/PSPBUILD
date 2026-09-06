@@ -13,6 +13,8 @@ source=("$pkgname::git+https://github.com/adriensalon/imgui_psp.git#tag=v${pkgve
 sha256sums=("SKIP")
 
 prepare() {
+    rm -rf "$srcdir/$pkgname/external/imgui"
+    cp -a "$startdir/../components/imgui/external/imgui" "$srcdir/$pkgname/external/imgui"
     cd "$srcdir/$pkgname"
     sed -i 's/@CMAKE_INSTALL_PREFIX@/${PSPDEV}\/psp/' imgui.pc.in
 }
