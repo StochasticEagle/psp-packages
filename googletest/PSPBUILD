@@ -1,6 +1,6 @@
 pkgname=googletest
 pkgver=1.18.0
-pkgrel=2
+pkgrel=3
 pkgdesc="GoogleTest - Google Testing and Mocking Framework"
 arch=(any)
 url="https://github.com/google/googletest"
@@ -44,7 +44,7 @@ build() {
         -DBUILD_SHARED_LIBS=OFF \
         -DCMAKE_CXX_STANDARD=17 \
         -DCMAKE_CXX_STANDARD_REQUIRED=ON \
-        -DCMAKE_CXX_FLAGS='-DGTEST_HAS_POSIX_RE=0' \
+        -DCMAKE_CXX_FLAGS='-DGTEST_HAS_POSIX_RE=0 -DGTEST_HAS_STREAM_REDIRECTION=0' \
         "${XTRA_OPTS[@]}" || { exit 1; }
     cmake --build "$srcdir/$pkgname-$pkgver/build" -- $MAKEFLAGS || { exit 1; }
 }
