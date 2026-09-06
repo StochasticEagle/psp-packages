@@ -14,8 +14,6 @@ sha256sums=("SKIP")
 
 prepare() {
     cd "$srcdir/$pkgname"
-    git submodule update --init --recursive
-    
     sed -i 's/@CMAKE_INSTALL_PREFIX@/${PSPDEV}\/psp/' imgui.pc.in
 }
 
