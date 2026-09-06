@@ -1,6 +1,6 @@
 pkgname=curl
 pkgver=7.64.1
-pkgrel=13
+pkgrel=14
 pkgdesc="A library for transferring data with URL syntax"
 arch=(any)
 url="https://curl.se/"
@@ -9,31 +9,36 @@ groups=('psp-libraries')
 depends=('zlib' 'mbedtls')
 optdepends=()
 makedepends=()
-source=(
-    "${pkgname}-${pkgver}::git+https://github.com/curl/curl.git#branch=master"
-    "${pkgname}-${pkgver}-PSP.patch"
-)
-sha256sums=(
-    "SKIP"
-    "SKIP"
-)
+source=()
+sha256sums=()
 
 prepare() {
-    cd "${pkgname}-${pkgver}"
-    patch -p1 < ../${pkgname}-${pkgver}-PSP.patch || { exit 1; }
+    rm -rf "$srcdir/$pkgname-$pkgver"
+    cp -a "$startdir/../components/curl" "$srcdir/$pkgname-$pkgver"
+    rm -rf "$srcdir/$pkgname-$pkgver/.git"
 }
 
 build() {
     cd "$pkgname-$pkgver"
-    mkdir -p build
-    cd build
-    cmake -Wno-dev -DCMAKE_TOOLCHAIN_FILE=$PSPDEV/psp/share/pspdev.cmake -DCMAKE_INSTALL_PREFIX=${pkgdir}/psp -DCMAKE_USE_MBEDTLS=1 -DUSE_UNIX_SOCKETS=0 \
-        -DENABLE_IPV6=0 -DENABLE_THREADED_RESOLVER=0 -DBUILD_CURL_EXE=OFF -DBUILD_SHARED_LIBS=OFF -DBUILD_TESTING=OFF -DCMAKE_BUILD_TYPE=Release \
-        -DCMAKE_POLICY_VERSION_MINIMUM=3.5 "${XTRA_OPTS[@]}" .. || { exit 1; }
-    make --quiet $MAKEFLAGS || { exit 1; }
+    cmake -Wno-dev \
+        -S . \
+        -B build \
+        -DCMAKE_TOOLCHAIN_FILE="$PSPDEV/psp/share/pspdev.cmake" \
+        -DCMAKE_INSTALL_PREFIX=/psp \
+        -DCURL_USE_MBEDTLS=ON \
+        -DUSE_UNIX_SOCKETS=OFF \
+        -DENABLE_IPV6=OFF \
+        -DENABLE_THREADED_RESOLVER=OFF \
+        -DBUILD_CURL_EXE=OFF \
+        -DBUILD_SHARED_LIBS=OFF \
+        -DBUILD_TESTING=OFF \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+        "${XTRA_OPTS[@]}" || { exit 1; }
+    cmake --build build -- $MAKEFLAGS || { exit 1; }
 }
 
 package() {
-    cd "$pkgname-$pkgver/build"
-    make --quiet $MAKEFLAGS install
+    cd "$pkgname-$pkgver"
+    DESTDIR="$pkgdir" cmake --install build
 }
