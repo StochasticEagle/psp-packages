@@ -32,9 +32,6 @@ The migration pass only converted sources where the existing PSPBUILD already id
 - libxmp
 - libyaml
 - libzip
-- lua51
-- lua52
-- lua53
 - lua54
 - luasocket
 - lz4
