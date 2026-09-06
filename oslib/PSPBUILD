@@ -13,6 +13,10 @@ source=("git+https://github.com/dogo/oslib.git#commit=19bf02c8c40be7e56a0c2c0ebf
 sha256sums=('SKIP')
 
 prepare() {
+    rm -rf "$srcdir/$pkgname/lib/giflib" "$srcdir/$pkgname/lib/libintraFont" "$srcdir/$pkgname/lib/libpspmath"
+    cp -a "$startdir/../components/oslib/lib/giflib" "$srcdir/$pkgname/lib/giflib"
+    cp -a "$startdir/../components/oslib/lib/libintraFont" "$srcdir/$pkgname/lib/libintraFont"
+    cp -a "$startdir/../components/oslib/lib/libpspmath" "$srcdir/$pkgname/lib/libpspmath"
     cd $pkgname
 }
 
