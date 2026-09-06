@@ -14,7 +14,6 @@ sha256sums=('SKIP')
 
 prepare() {
     cd $pkgname
-    git submodule update --init --recursive
     sed -i 's#@CMAKE_INSTALL_PREFIX@#${PSPDEV}/psp#g' tinygettext.pc.in
     sed -i 's#@LIB_SUBDIR@#lib#g' tinygettext.pc.in
 }
