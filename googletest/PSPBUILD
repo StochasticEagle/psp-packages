@@ -1,6 +1,6 @@
 pkgname=googletest
 pkgver=1.18.0
-pkgrel=5
+pkgrel=6
 pkgdesc="GoogleTest - Google Testing and Mocking Framework"
 arch=(any)
 url="https://github.com/google/googletest"
@@ -23,6 +23,12 @@ prepare() {
     # printer uses %d for total_shards. Convert to int explicitly to match the
     # format argument type. The shard values are int32_t and PSP int is 32-bit.
     sed -i 's/GTEST_FLAG_GET(total_shards));/static_cast<int>(GTEST_FLAG_GET(total_shards)));/' googletest/src/gtest.cc
+
+    # GoogleTest assumes fileno()/isatty() exist even when its filesystem and
+    # stream-redirection features are disabled. PSP/newlib does not provide
+    # those POSIX interfaces. Treat PSP stdout/stderr as non-terminal streams.
+    sed -i 's#inline int FileNo(FILE\* file) { return fileno(file); }#\#ifdef __PSP__\ninline int FileNo(FILE*) { return -1; }\n\#else\ninline int FileNo(FILE* file) { return fileno(file); }\n\#endif#' googletest/include/gtest/internal/gtest-port.h
+    sed -i 's#inline int DoIsATTY(int fd) { return isatty(fd); }#\#ifdef __PSP__\ninline int DoIsATTY(int) { return 0; }\n\#else\ninline int DoIsATTY(int fd) { return isatty(fd); }\n\#endif#' googletest/include/gtest/internal/gtest-port.h
 
     # GoogleTest's CMake helper constructs cxx_base_flags and assigns those
     # directly to the gtest/gmock target COMPILE_FLAGS. Inject the PSP
