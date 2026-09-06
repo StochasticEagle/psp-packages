@@ -1,6 +1,6 @@
 pkgname=sail
 pkgver=1.0.0
-pkgrel=3
+pkgrel=4
 pkgdesc="SAIL is a high-quality cross-platform image decoding library providing rich APIs, from one-liners to complex use cases with custom I/O sources. It enables a client to load and save static, animated, multi-paged images along with their meta data and ICC profiles"
 arch=(any)
 url='https://github.com/HappySeaFox/sail'
@@ -27,7 +27,7 @@ prepare() {
 
 build() {
     cd $pkgname
-    psp-cmake -DBUILD_SHARED_LIBS=OFF "${XTRA_OPTS[@]}" -DSAIL_BUILD_APPS=OFF -DCMAKE_BUILD_TYPE=Release -DCMAKE_BUILD_TYPE=Release --install-prefix="${pkgdir}/psp" || { exit 1; }
+    psp-cmake -DBUILD_SHARED_LIBS=OFF "${XTRA_OPTS[@]}" -DBUILD_TESTING=OFF -DSAIL_BUILD_EXAMPLES=OFF -DSAIL_BUILD_APPS=OFF -DCMAKE_BUILD_TYPE=Release --install-prefix="${pkgdir}/psp" || { exit 1; }
     make --quiet $MAKEFLAGS || { exit 1; }
 }
 
