@@ -1,6 +1,6 @@
 pkgname=googletest
 pkgver=1.18.0
-pkgrel=4
+pkgrel=5
 pkgdesc="GoogleTest - Google Testing and Mocking Framework"
 arch=(any)
 url="https://github.com/google/googletest"
@@ -24,6 +24,12 @@ prepare() {
     # format argument type. The shard values are int32_t and PSP int is 32-bit.
     sed -i 's/GTEST_FLAG_GET(total_shards));/static_cast<int>(GTEST_FLAG_GET(total_shards)));/' googletest/src/gtest.cc
 
+    # GoogleTest's CMake helper constructs cxx_base_flags and assigns those
+    # directly to the gtest/gmock target COMPILE_FLAGS. Inject the PSP
+    # portability definitions there; CMAKE_CXX_FLAGS is not used for these
+    # library targets.
+    sed -i 's#set(cxx_base_flags "${cxx_base_flags} ${GTEST_HAS_PTHREAD_MACRO}")#set(cxx_base_flags "${cxx_base_flags} ${GTEST_HAS_PTHREAD_MACRO} -DGTEST_HAS_POSIX_RE=0 -DGTEST_HAS_STREAM_REDIRECTION=0 -DGTEST_HAS_FILE_SYSTEM=0 -Wno-undef")#' googletest/cmake/internal_utils.cmake
+
     sed -i 's#@CMAKE_INSTALL_FULL_LIBDIR@#${prefix}/lib#' googlemock/cmake/gmock_main.pc.in
     sed -i 's#@CMAKE_INSTALL_FULL_INCLUDEDIR@#${prefix}/include#' googlemock/cmake/gmock_main.pc.in
     sed -i 's#@CMAKE_INSTALL_FULL_LIBDIR@#${prefix}/lib#' googlemock/cmake/gmock.pc.in
@@ -44,7 +50,6 @@ build() {
         -DBUILD_SHARED_LIBS=OFF \
         -DCMAKE_CXX_STANDARD=17 \
         -DCMAKE_CXX_STANDARD_REQUIRED=ON \
-        -DCMAKE_CXX_FLAGS='-DGTEST_HAS_POSIX_RE=0 -DGTEST_HAS_STREAM_REDIRECTION=0 -DGTEST_HAS_FILE_SYSTEM=0 -Wno-undef' \
         "${XTRA_OPTS[@]}" || { exit 1; }
     cmake --build "$srcdir/$pkgname-$pkgver/build" -- $MAKEFLAGS || { exit 1; }
 }
