@@ -1,6 +1,6 @@
 pkgname=googletest
 pkgver=1.18.0
-pkgrel=1
+pkgrel=2
 pkgdesc="GoogleTest - Google Testing and Mocking Framework"
 arch=(any)
 url="https://github.com/google/googletest"
@@ -18,6 +18,12 @@ prepare() {
     rm -rf "$srcdir/$pkgname-$pkgver/.git"
 
     cd "$srcdir/$pkgname-$pkgver"
+
+    # On the PSP/newlib ABI int32_t is long int, while GoogleTest's shard
+    # printer uses %d for total_shards. Convert to int explicitly to match the
+    # format argument type. The shard values are int32_t and PSP int is 32-bit.
+    sed -i 's/GTEST_FLAG_GET(total_shards));/static_cast<int>(GTEST_FLAG_GET(total_shards)));/' googletest/src/gtest.cc
+
     sed -i 's#@CMAKE_INSTALL_FULL_LIBDIR@#${prefix}/lib#' googlemock/cmake/gmock_main.pc.in
     sed -i 's#@CMAKE_INSTALL_FULL_INCLUDEDIR@#${prefix}/include#' googlemock/cmake/gmock_main.pc.in
     sed -i 's#@CMAKE_INSTALL_FULL_LIBDIR@#${prefix}/lib#' googlemock/cmake/gmock.pc.in
