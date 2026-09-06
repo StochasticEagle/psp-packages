@@ -9,8 +9,8 @@ groups=('psp-libraries')
 depends=()
 makedepends=()
 optdepends=()
-source=("https://github.com/yaml/libyaml/archive/${pkgver}.tar.gz")
-sha256sums=('fa240dbf262be053f3898006d502d514936c818e422afdcf33921c63bed9bf2e')
+source=("${pkgname}-${pkgver}::git+https://github.com/yaml/libyaml.git#branch=master")
+sha256sums=('SKIP')
 
 build() {
     cd "$pkgname-${pkgver}"
@@ -29,4 +29,3 @@ package() {
     mkdir -m 755 -p "$pkgdir/psp/share/licenses/$pkgname"
     install -m 644 License "$pkgdir/psp/share/licenses/$pkgname"
 }
-
