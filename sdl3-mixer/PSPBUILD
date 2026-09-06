@@ -10,10 +10,10 @@ depends=('sdl3' 'libxmp-lite')
 makedepends=()
 optdepends=()
 source=(
-    "https://github.com/libsdl-org/SDL_mixer/releases/download/release-${pkgver}/SDL3_mixer-${pkgver}.tar.gz"
+    "SDL3_mixer-${pkgver}::git+https://github.com/libsdl-org/SDL_mixer.git#branch=main"
 )
 sha256sums=(
-    "182a07c745375e113dc740d43964ff21b0be29f29f59876c4dbc4db3d32f6901"
+    "SKIP"
 )
 
 prepare() {

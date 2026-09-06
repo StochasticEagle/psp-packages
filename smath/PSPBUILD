@@ -10,8 +10,8 @@ depends=()
 makedepends=()
 optdepends=()
 provides=()
-source=("https://github.com/slendidev/smath/archive/refs/tags/v$pkgver.tar.gz")
-sha256sums=('f2786f92937ee139fe62317b432a613f595ddb758ada5c16337b1518e074f351')
+source=("$pkgname-$pkgver::git+https://github.com/slendidev/smath.git#branch=master")
+sha256sums=('SKIP')
 
 build() {
     cmake -S "$pkgname-$pkgver" -B build \

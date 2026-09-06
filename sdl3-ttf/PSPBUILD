@@ -10,18 +10,15 @@ depends=('sdl3' 'harfbuzz')
 makedepends=()
 optdepends=()
 source=(
-    "https://github.com/libsdl-org/SDL_ttf/releases/download/release-${pkgver}/SDL3_ttf-${pkgver}.tar.gz"
-    "4dbfe742bce9aa7fc3556c3bf85b30909e3ac41a.patch"
+    "SDL3_ttf-${pkgver}::git+https://github.com/libsdl-org/SDL_ttf.git#branch=main"
 )
 sha256sums=(
-    "63547d58d0185c833213885b635a2c0548201cc8f301e6587c0be1a67e1e045d"
     "SKIP"
 )
 
 prepare() {
     cd "${srcdir}/SDL3_ttf-${pkgver}"
     sed -i '/^prefix=/s/=.*$/=${PSPDEV}\/psp/' cmake/sdl3-ttf.pc.in
-    patch -Np1 -i ../4dbfe742bce9aa7fc3556c3bf85b30909e3ac41a.patch
 }
 
 build() {

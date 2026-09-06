@@ -9,8 +9,8 @@ license=('MIT')
 groups=('psp-libraries')
 depends=()
 makedepends=()
-source=("https://github.com/mcidclan/$reponame/archive/refs/tags/v${pkgver}.tar.gz")
-sha256sums=('7fdec101ffa8370c57e642199f85971ddd918dab4047dc94ecbfcac2785df06f')
+source=("$reponame-${pkgver}::git+https://github.com/mcidclan/psp-media-engine-custom-core.git#branch=main")
+sha256sums=('SKIP')
 
 build() {
   cd "$srcdir/$reponame-${pkgver}"

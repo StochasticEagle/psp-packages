@@ -33,3 +33,15 @@ https://github.com/wolfSSL/wolfssl.git	components/wolfssl
 https://github.com/Cyan4973/xxHash.git	components/xxhash
 https://github.com/madler/zlib.git	components/zlib
 https://github.com/gdraheim/zziplib.git	components/zziplib
+https://github.com/freetype/freetype.git	components/freetype
+https://gitlab.com/libeigen/eigen.git	components/eigen
+https://github.com/tukaani-project/xz.git	components/xz
+https://github.com/zlib-ng/minizip-ng.git	components/minizip-ng
+https://github.com/Jayanky/pspla.git	components/pspla
+https://github.com/mcidclan/psp-media-engine-custom-core.git	components/psp-media-engine-custom-core
+https://github.com/slendidev/smath.git	components/smath
+https://github.com/lunarmodules/luasocket.git	components/luasocket
+https://github.com/libsdl-org/SDL.git	components/SDL3
+https://github.com/libsdl-org/SDL_image.git	components/SDL_image
+https://github.com/libsdl-org/SDL_mixer.git	components/SDL_mixer
+https://github.com/libsdl-org/SDL_ttf.git	components/SDL_ttf

@@ -10,8 +10,8 @@ depends=('zlib' 'bzip2' 'libpng')
 makedepends=()
 optdepends=()
 group=('all')
-source=("https://github.com/freetype/freetype/archive/VER-${pkgver//./-}.tar.gz")
-sha256sums=('fffcba25febd1581cc12d706a39bee96f37eab627d0838ce6e8189ebd841d722')
+source=("freetype-VER-${pkgver//./-}::git+https://github.com/freetype/freetype.git#branch=master")
+sha256sums=('SKIP')
 
 prepare() {
     cd "freetype-VER-${pkgver//./-}/builds/unix"
@@ -40,4 +40,3 @@ package() {
     install -m 644 docs/GPLv2.TXT "$pkgdir/psp/share/licenses/$pkgname"
     install -m 644 docs/FTL.TXT "$pkgdir/psp/share/licenses/$pkgname"
 }
-

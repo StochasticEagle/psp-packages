@@ -113,10 +113,12 @@
 [submodule "components/SDL_image"]
 	path = components/SDL_image
 	url = https://github.com/libsdl-org/SDL_image.git
+	branch = main
 	shallow = true
 [submodule "components/SDL_mixer"]
 	path = components/SDL_mixer
 	url = https://github.com/libsdl-org/SDL_mixer.git
+	branch = main
 	shallow = true
 [submodule "components/pspirkeyb"]
 	path = components/pspirkeyb
@@ -340,4 +342,54 @@
 	path = components/zziplib
 	url = https://github.com/gdraheim/zziplib.git
 	branch = master
+	shallow = true
+[submodule "components/freetype"]
+	path = components/freetype
+	url = https://github.com/freetype/freetype.git
+	branch = master
+	shallow = true
+[submodule "components/eigen"]
+	path = components/eigen
+	url = https://gitlab.com/libeigen/eigen.git
+	branch = master
+	shallow = true
+[submodule "components/xz"]
+	path = components/xz
+	url = https://github.com/tukaani-project/xz.git
+	branch = master
+	shallow = true
+[submodule "components/minizip-ng"]
+	path = components/minizip-ng
+	url = https://github.com/zlib-ng/minizip-ng.git
+	branch = develop
+	shallow = true
+[submodule "components/pspla"]
+	path = components/pspla
+	url = https://github.com/Jayanky/pspla.git
+	branch = main
+	shallow = true
+[submodule "components/psp-media-engine-custom-core"]
+	path = components/psp-media-engine-custom-core
+	url = https://github.com/mcidclan/psp-media-engine-custom-core.git
+	branch = main
+	shallow = true
+[submodule "components/smath"]
+	path = components/smath
+	url = https://github.com/slendidev/smath.git
+	branch = master
+	shallow = true
+[submodule "components/luasocket"]
+	path = components/luasocket
+	url = https://github.com/lunarmodules/luasocket.git
+	branch = master
+	shallow = true
+[submodule "components/SDL3"]
+	path = components/SDL3
+	url = https://github.com/libsdl-org/SDL.git
+	branch = main
+	shallow = true
+[submodule "components/SDL_ttf"]
+	path = components/SDL_ttf
+	url = https://github.com/libsdl-org/SDL_ttf.git
+	branch = main
 	shallow = true
