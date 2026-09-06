@@ -7,8 +7,8 @@ license=('LGPL-2.0-only')
 groups=('psp-libraries')
 url="https://openal-soft.org/"
 makedepends=()
-source=("https://github.com/illteteka/openal-soft-psp/archive/refs/tags/${pkgver}.tar.gz")
-sha256sums=('2dd94abc457906203c03e87fd2c513077bde0d7344b377f09ec535f3b7cb0a91')
+source=("$pkgname-soft-psp-$pkgver::git+https://github.com/illteteka/openal-soft-psp.git#branch=main")
+sha256sums=('SKIP')
 
 prepare() {
   cd $pkgname-soft-psp-$pkgver
