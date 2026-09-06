@@ -30,7 +30,7 @@ fi
 
 configure_local_git_sources() {
   local pspbuild="$1"
-  local src entry remote alias component mapped i=0
+  local src entry remote alias component mapped branch i=0
   local -a git_sources=()
 
   mapfile -t git_sources < <(
@@ -66,6 +66,17 @@ configure_local_git_sources() {
       echo "ERROR: Git source submodule is not initialized:"
       echo "  ${component}"
       exit 1
+    fi
+
+    # Submodule working trees are normally detached. psp-makepkg creates a
+    # fresh working clone and resolves #branch=<name> as origin/<name>, so the
+    # local source repository must expose that branch as refs/heads/<name>.
+    # Point the local branch at the already-synchronized submodule HEAD; this
+    # changes only local Git metadata and performs no source acquisition.
+    if [[ "$entry" == *"#branch="* ]]; then
+      branch="${entry##*#branch=}"
+      branch="${branch%%&*}"
+      git -C "$component" update-ref "refs/heads/${branch}" HEAD
     fi
 
     export "GIT_CONFIG_KEY_${i}=url.file://${component}.insteadOf"
