@@ -9,8 +9,8 @@ url="https://fna-xna.github.io/"
 depends=('sdl2')
 optdepends=()
 makedepends=()
-source=("https://github.com/FNA-XNA/FAudio/archive/refs/tags/${pkgver}.tar.gz")
-sha256sums=('f58d6777f90a3650b16ee78b3b5ad65c1c0f2d6e59ef54aa62b20939efbb945e')
+source=("FAudio-${pkgver}::git+https://github.com/FNA-XNA/FAudio.git#branch=master")
+sha256sums=('SKIP')
 
 prepare() {
     cd "FAudio-${pkgver}"
