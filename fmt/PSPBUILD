@@ -10,9 +10,9 @@ depends=()
 makedepends=()
 provides=()
 conflicts=()
-source=("https://github.com/fmtlib/fmt/archive/refs/tags/12.1.0.zip"
+source=("$pkgname-$pkgver::git+https://github.com/fmtlib/fmt.git#branch=main"
         "fmt-psp.patch")
-sha256sums=("e6a2b43c6ec4779fb53b15b705f7c20b4eb9d5ae35784d610ac6daec30737019"
+sha256sums=("SKIP"
             "75aa63ff07bcb7dcf4275033c13f16a7a01d4024f3ff61b27b20f03dd233f200")
 
 prepare() {
