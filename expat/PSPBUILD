@@ -9,8 +9,8 @@ groups=('psp-libraries')
 depends=()
 makedepends=()
 optdepends=()
-source=("https://github.com/libexpat/libexpat/releases/download/R_${pkgver//./_}/expat-${pkgver}.tar.gz")
-sha256sums=('0cce2e6e69b327fc607b8ff264f4b66bdf71ead55a87ffd5f3143f535f15cfa2')
+source=("$pkgname-${pkgver}::git+https://github.com/libexpat/libexpat.git#branch=master")
+sha256sums=('SKIP')
 
 prepare() {
     cd "$pkgname-${pkgver}"
@@ -37,4 +37,3 @@ package() {
     mkdir -m 755 -p "$pkgdir/psp/share/licenses/$pkgname"
     install -m 644 ../COPYING "$pkgdir/psp/share/licenses/$pkgname"
 }
-
