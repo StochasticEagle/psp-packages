@@ -9,8 +9,8 @@ groups=('psp-libraries')
 depends=()
 makedepends=()
 optdepends=()
-source=("https://github.com/kode54/dumb/archive/${pkgver}.tar.gz")
-sha256sums=('99bfac926aeb8d476562303312d9f47fd05b43803050cd889b44da34a9b2a4f9')
+source=("$pkgname-${pkgver}::git+https://github.com/kode54/dumb.git#branch=master")
+sha256sums=('SKIP')
 
 prepare() {
     cd "$pkgname-${pkgver}"
@@ -37,4 +37,3 @@ package() {
     mkdir -m 755 -p "$pkgdir/psp/share/licenses/$pkgname"
     install -m 644 LICENSE "$pkgdir/psp/share/licenses/$pkgname"
 }
-
