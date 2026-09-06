@@ -9,7 +9,7 @@ groups=('psp-libraries')
 depends=()
 makedepends=()
 optdepends=()
-source=("https://github.com/libxmp/libxmp/releases/download/${pkgname}-${pkgver}/${pkgname}-${pkgver}.tar.gz")
+source=("${pkgname}-${pkgver}::git+https://github.com/libxmp/libxmp.git#branch=master")
 sha256sums=('SKIP')
 
 prepare() {
@@ -38,4 +38,3 @@ package() {
     install -m 644 docs/COPYING "$pkgdir/psp/share/licenses/$pkgname"
     install -m 644 docs/CREDITS "$pkgdir/psp/share/licenses/$pkgname"
 }
-
