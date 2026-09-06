@@ -30,7 +30,7 @@ fi
 
 configure_local_git_sources() {
   local pspbuild="$1"
-  local src entry remote alias component mapped branch i=0
+  local src entry remote alias component mapped branch i=0 j old_count=0
   local -a git_sources=()
 
   mapfile -t git_sources < <(
@@ -38,7 +38,17 @@ configure_local_git_sources() {
       grep -E '(^|::)git\+' || true
   )
 
-  export GIT_CONFIG_COUNT="${#git_sources[@]}"
+  # Remove the temporary Git config exported for the previous package before
+  # constructing this package's config. In particular, do not set
+  # GIT_CONFIG_COUNT until all KEY/VALUE pairs exist: Git validates the entire
+  # array on every invocation, including the local update-ref commands below.
+  if [[ "${GIT_CONFIG_COUNT:-}" =~ ^[0-9]+$ ]]; then
+    old_count="$GIT_CONFIG_COUNT"
+  fi
+  unset GIT_CONFIG_COUNT
+  for ((j = 0; j < old_count; j++)); do
+    unset "GIT_CONFIG_KEY_${j}" "GIT_CONFIG_VALUE_${j}"
+  done
 
   for src in "${git_sources[@]}"; do
     entry="${src#*::}"
@@ -83,6 +93,8 @@ configure_local_git_sources() {
     export "GIT_CONFIG_VALUE_${i}=${remote}"
     i=$((i + 1))
   done
+
+  export GIT_CONFIG_COUNT="$i"
 }
 
 for pkgdir in $PKG_LIST; do
