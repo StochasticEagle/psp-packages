@@ -1,6 +1,6 @@
 pkgname=xxhash
 pkgver=0.8.2
-pkgrel=4
+pkgrel=5
 pkgdesc="Extremely fast non-cryptographic hash algorithm"
 arch=(any)
 url="https://xxhash.com/"
@@ -9,29 +9,33 @@ groups=('psp-libraries')
 depends=()
 makedepends=()
 optdepends=()
-source=("xxHash-$pkgver::git+https://github.com/Cyan4973/xxHash.git#branch=dev")
-sha256sums=('SKIP')
+source=()
+sha256sums=()
 
 prepare() {
-    cd "xxHash-$pkgver"
-    sed -i 's#@PREFIX@#${PSPDEV}/psp#' libxxhash.pc.in
-    sed -i 's#@EXECPREFIX@#${prefix}#' libxxhash.pc.in
-    sed -i 's#@LIBDIR@#${prefix}/lib#' libxxhash.pc.in
-    sed -i 's#@INCLUDEDIR@#${prefix}/include#' libxxhash.pc.in
+    rm -rf "$srcdir/xxHash-$pkgver"
+    cp -a "$startdir/../components/xxhash" "$srcdir/xxHash-$pkgver"
+    rm -rf "$srcdir/xxHash-$pkgver/.git"
 }
 
 build() {
-    cd "xxHash-$pkgver"
-    mkdir -p build && cd build
-    cmake -Wno-dev -DCMAKE_TOOLCHAIN_FILE=$PSPDEV/psp/share/pspdev.cmake -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -DCMAKE_INSTALL_PREFIX=${pkgdir}/psp \
-        -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DXXHASH_BUILD_XXHSUM=OFF "${XTRA_OPTS[@]}" ../cmake_unofficial || { exit 1; }
-    cmake --build . || { exit 1; }
+    cd "$srcdir/xxHash-$pkgver"
+    mkdir -p build-psp
+    cmake -Wno-author \
+        -S build/cmake \
+        -B build-psp \
+        -DCMAKE_TOOLCHAIN_FILE="$PSPDEV/psp/share/pspdev.cmake" \
+        -DCMAKE_INSTALL_PREFIX=/psp \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DBUILD_SHARED_LIBS=OFF \
+        -DXXHASH_BUILD_XXHSUM=OFF \
+        "${XTRA_OPTS[@]}" || { exit 1; }
+    cmake --build build-psp -- $MAKEFLAGS || { exit 1; }
 }
 
 package() {
-    cd "xxHash-$pkgver/build"
-    cmake --install .
-    cd ..
+    cd "$srcdir/xxHash-$pkgver"
+    DESTDIR="$pkgdir" cmake --install build-psp
 
     mkdir -m 755 -p "$pkgdir/psp/share/licenses/$pkgname"
     install -m 644 LICENSE "$pkgdir/psp/share/licenses/$pkgname"
