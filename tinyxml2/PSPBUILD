@@ -9,8 +9,8 @@ url="https://github.com/leethomason/tinyxml2"
 depends=()
 optdepends=()
 makedepends=()
-source=("https://github.com/leethomason/tinyxml2/archive/refs/tags/${pkgver}.tar.gz")
-sha256sums=('5556deb5081fb246ee92afae73efd943c889cef0cafea92b0b82422d6a18f289')
+source=("${pkgname}-${pkgver}::git+https://github.com/leethomason/tinyxml2.git#branch=master")
+sha256sums=('SKIP')
 
 prepare() {
     cd "${pkgname}-${pkgver}"
