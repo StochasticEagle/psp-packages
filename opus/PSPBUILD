@@ -9,8 +9,8 @@ groups=('psp-libraries')
 depends=()
 makedepends=()
 optdepends=()
-source=("https://downloads.xiph.org/releases/opus/${pkgname}-${pkgver}.tar.gz")
-sha256sums=('6ffcb593207be92584df15b32466ed64bbec99109f007c82205f0194572411a1')
+source=("${pkgname}-${pkgver}::git+https://github.com/xiph/opus.git#branch=main")
+sha256sums=('SKIP')
 
 build() {
     cd "${pkgname}-${pkgver}"
