@@ -10,6 +10,7 @@ set -e
 BLACKLIST="lua51|lua52|lua53|pocketpy|luasocket"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 COMPONENTS="${ROOT}/components"
+SOURCE_COMPONENTS="${ROOT}/source-components.tsv"
 
 doinstall=""
 if [ "$1" == "--install" ]; then
@@ -27,7 +28,7 @@ fi
 
 configure_local_git_sources() {
   local pspbuild="$1"
-  local src entry remote alias component i=0
+  local src entry remote alias component mapped i=0
   local -a git_sources=()
 
   mapfile -t git_sources < <(
@@ -42,14 +43,23 @@ configure_local_git_sources() {
     remote="${entry#git+}"
     remote="${remote%%#*}"
 
-    if [[ "$src" == *"::"* ]]; then
-      alias="${src%%::*}"
-    else
-      alias="$(basename "$remote")"
-      alias="${alias%.git}"
+    mapped=""
+    if [ -f "$SOURCE_COMPONENTS" ]; then
+      mapped=$(awk -F '\t' -v remote="$remote" '$1 == remote { print $2; exit }' "$SOURCE_COMPONENTS")
     fi
 
-    component="${COMPONENTS}/${alias}"
+    if [ -n "$mapped" ]; then
+      component="${ROOT}/${mapped}"
+    else
+      if [[ "$src" == *"::"* ]]; then
+        alias="${src%%::*}"
+      else
+        alias="$(basename "$remote")"
+        alias="${alias%.git}"
+      fi
+      component="${COMPONENTS}/${alias}"
+    fi
+
     if [ ! -e "$component" ]; then
       echo "ERROR: Git source submodule is not initialized:"
       echo "  ${component}"
