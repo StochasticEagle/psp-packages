@@ -7,7 +7,7 @@
 
 set -e
 
-BLACKLIST="lua51|lua52|lua53|pocketpy|luasocket"
+BLACKLIST="pocketpy|luasocket"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 COMPONENTS="${ROOT}/components"
 SOURCE_COMPONENTS="${ROOT}/source-components.tsv"
@@ -19,7 +19,9 @@ if [ "$1" == "--install" ]; then
 fi
 
 if [ -z "$1" ]; then
-  PKG_LIST=$(find . -name "PSPBUILD" -not -path './components/*' -exec sh -c 'echo $(basename $(dirname $0))' {} \;)
+  # Package recipes live exactly one directory below the repository root.
+  # Do not recurse into generated src/pkg trees or checked-out components.
+  PKG_LIST=$(find . -mindepth 2 -maxdepth 2 -type f -name "PSPBUILD" -exec sh -c 'basename "$(dirname "$1")"' _ {} \;)
   PKG_LIST=$(printf "%s\n" $PKG_LIST | grep -Ev "^($BLACKLIST)$")
   echo "Will build packages: ${PKG_LIST}" | tr '\n' ' '
 else
