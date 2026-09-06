@@ -30,7 +30,8 @@ fi
 
 configure_local_git_sources() {
   local pspbuild="$1"
-  local src entry remote alias component mapped branch source_name pkgroot cache component_head i=0 j old_count=0
+  local local_pspbuild="$2"
+  local src entry remote source_name component mapped branch component_head escaped_branch i=0 j old_count=0
   local -a git_sources=()
 
   mapfile -t git_sources < <(
@@ -46,7 +47,7 @@ configure_local_git_sources() {
     unset "GIT_CONFIG_KEY_${j}" "GIT_CONFIG_VALUE_${j}"
   done
 
-  pkgroot="$(cd "$(dirname "$pspbuild")" && pwd)"
+  cp "$pspbuild" "$local_pspbuild"
 
   for src in "${git_sources[@]}"; do
     entry="${src#*::}"
@@ -74,28 +75,27 @@ configure_local_git_sources() {
     if [ ! -e "$component" ]; then
       echo "ERROR: Git source submodule is not initialized:"
       echo "  ${component}"
+      rm -f "$local_pspbuild"
       exit 1
     fi
 
+    component_head="$(git -C "$component" rev-parse HEAD)"
+
+    # Branch tracking belongs to the parent submodule configuration. Package
+    # builds consume exactly the checked-out gitlink revision. Rewrite only the
+    # temporary build script so makepkg checks out the commit directly instead
+    # of trying to resolve an origin/<branch> remote-tracking ref in its cache.
     if [[ "$entry" == *"#branch="* ]]; then
       branch="${entry##*#branch=}"
       branch="${branch%%&*}"
-      component_head="$(git -C "$component" rev-parse HEAD)"
+      escaped_branch="${branch//&/\\&}"
+      escaped_branch="${escaped_branch//|/\\|}"
+      sed -i "s|#branch=${escaped_branch}|#commit=${component_head}|g" "$local_pspbuild"
 
-      # Submodules are normally detached. Expose the requested branch at the
-      # synchronized component HEAD so a fresh makepkg cache clone can create
-      # origin/<branch> without contacting the network.
+      # Keep a local branch ref at the synchronized HEAD so makepkg's local
+      # VCS-cache fetch can obtain the commit from a detached submodule without
+      # contacting the authoritative remote.
       git -C "$component" update-ref "refs/heads/${branch}" "$component_head"
-
-      # makepkg may already have a VCS cache from an earlier build attempt.
-      # Refresh that cache locally instead of deleting it or fetching upstream.
-      cache="${pkgroot}/${source_name}"
-      if git -C "$cache" rev-parse --git-dir >/dev/null 2>&1; then
-        git -C "$cache" fetch --no-tags "file://${component}" \
-          "+refs/heads/${branch}:refs/remotes/origin/${branch}"
-        git -C "$cache" update-ref "refs/heads/${branch}" \
-          "$(git -C "$cache" rev-parse "refs/remotes/origin/${branch}")"
-      fi
     fi
 
     export "GIT_CONFIG_KEY_${i}=url.file://${component}.insteadOf"
@@ -124,8 +124,15 @@ for pkgdir in $PKG_LIST; do
 
   if [[ ! -f "${pkgdir}/${pkgfile}" ]]; then
     echo "Building $pkgdir ..."
-    configure_local_git_sources "$pkgdir/PSPBUILD"
-    (cd "$pkgdir" && psp-makepkg)
+    local_pspbuild="${pkgdir}/.PSPBUILD.local"
+    configure_local_git_sources "$pkgdir/PSPBUILD" "$local_pspbuild"
+    if (cd "$pkgdir" && psp-makepkg -p .PSPBUILD.local); then
+      rm -f "$local_pspbuild"
+    else
+      status=$?
+      rm -f "$local_pspbuild"
+      exit "$status"
+    fi
   fi
 
   if [ ! -z "$doinstall" ]; then
