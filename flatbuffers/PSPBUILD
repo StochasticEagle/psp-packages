@@ -1,16 +1,20 @@
 pkgname=flatbuffers
 pkgver=24.3.25
-pkgrel=4
+pkgrel=5
 pkgdesc="Memory Efficient Serialization Library"
 arch=(any)
 url="https://flatbuffers.dev"
 license=('Apache-2.0')
 groups=('psp-libraries')
-source=("$pkgname-${pkgver}::git+https://github.com/google/flatbuffers.git#branch=master")
-sha256sums=('SKIP')
+source=()
+sha256sums=()
 
 prepare() {
-    cd "$pkgname-${pkgver}/CMake"
+    rm -rf "$srcdir/$pkgname-${pkgver}"
+    cp -a "$startdir/../components/flatbuffers" "$srcdir/$pkgname-${pkgver}"
+    rm -rf "$srcdir/$pkgname-${pkgver}/.git"
+
+    cd "$srcdir/$pkgname-${pkgver}/CMake"
 
     sed -i '1 s/^/prefix=${PSPDEV}\/psp\n/' flatbuffers.pc.in
 
@@ -22,7 +26,7 @@ prepare() {
 }
 
 build() {
-    cd "$pkgname-${pkgver}"
+    cd "$srcdir/$pkgname-${pkgver}"
     mkdir -p build
     cd build
     psp-cmake -Wno-dev -DCMAKE_INSTALL_PREFIX=${pkgdir}/psp \
@@ -32,7 +36,7 @@ build() {
 }
 
 package() {
-    cd "$pkgname-${pkgver}/build"
+    cd "$srcdir/$pkgname-${pkgver}/build"
     make --quiet $MAKEFLAGS install
 
     mkdir -m 755 -p "$pkgdir/psp/share/licenses/$pkgname"
