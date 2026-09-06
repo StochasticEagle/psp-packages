@@ -6,8 +6,8 @@ arch=(any)
 url="https://flatbuffers.dev"
 license=('Apache-2.0')
 groups=('psp-libraries')
-source=("https://github.com/google/${pkgname}/archive/refs/tags/v${pkgver}.tar.gz")
-sha256sums=('4157c5cacdb59737c5d627e47ac26b140e9ee28b1102f812b36068aab728c1ed')
+source=("$pkgname-${pkgver}::git+https://github.com/google/flatbuffers.git#branch=master")
+sha256sums=('SKIP')
 
 prepare() {
     cd "$pkgname-${pkgver}/CMake"
