@@ -2,3 +2,167 @@
 	path = components/box2d
 	url = https://github.com/erincatto/box2d.git
 	shallow = true
+[submodule "components/SDL"]
+	path = components/SDL
+	url = https://github.com/pspdev/SDL.git
+	shallow = true
+[submodule "components/stb"]
+	path = components/stb
+	url = https://github.com/nothings/stb.git
+	shallow = true
+[submodule "components/glm"]
+	path = components/glm
+	url = https://github.com/g-truc/glm
+	shallow = true
+[submodule "components/sail"]
+	path = components/sail
+	url = https://github.com/HappySeaFox/sail.git
+	shallow = true
+[submodule "components/ya2d"]
+	path = components/ya2d
+	url = https://github.com/xerpi/ya2d.git
+	shallow = true
+[submodule "components/smpeg-psp"]
+	path = components/smpeg-psp
+	url = https://github.com/fungos/smpeg-psp.git
+	shallow = true
+[submodule "components/pspgl"]
+	path = components/pspgl
+	url = https://github.com/pspdev/pspgl.git
+	shallow = true
+[submodule "components/libunrar-ps3"]
+	path = components/libunrar-ps3
+	url = https://github.com/bucanero/libunrar-ps3
+	shallow = true
+[submodule "components/imgui"]
+	path = components/imgui
+	url = https://github.com/adriensalon/imgui_psp.git
+	shallow = true
+[submodule "components/oslib"]
+	path = components/oslib
+	url = https://github.com/dogo/oslib.git
+	shallow = true
+[submodule "components/bzip2"]
+	path = components/bzip2
+	url = https://gitlab.com/bzip2/bzip2.git
+	shallow = true
+[submodule "components/tremor"]
+	path = components/tremor
+	url = https://gitlab.xiph.org/xiph/tremor.git
+	shallow = true
+[submodule "components/raylib"]
+	path = components/raylib
+	url = https://github.com/raylib4Consoles/raylib.git
+	shallow = true
+[submodule "components/libmad"]
+	path = components/libmad
+	url = https://github.com/pspdev/libmad.git
+	shallow = true
+[submodule "components/theora"]
+	path = components/theora
+	url = https://gitlab.xiph.org/xiph/theora.git
+	shallow = true
+[submodule "components/code"]
+	path = components/code
+	url = https://git.code.sf.net/p/giflib/code
+	shallow = true
+[submodule "components/minilzo"]
+	path = components/minilzo
+	url = https://github.com/yuhaoth/minilzo.git
+	shallow = true
+[submodule "components/mini18n"]
+	path = components/mini18n
+	url = https://github.com/bucanero/mini18n
+	shallow = true
+[submodule "components/psp-uart-library"]
+	path = components/psp-uart-library
+	url = https://github.com/Operation-DITTO/psp-uart-library.git
+	shallow = true
+[submodule "components/SDL_net"]
+	path = components/SDL_net
+	url = https://github.com/libsdl-org/SDL_net.git
+	shallow = true
+[submodule "components/bullet3"]
+	path = components/bullet3
+	url = https://github.com/bulletphysics/bullet3.git
+	shallow = true
+[submodule "components/jsoncpp"]
+	path = components/jsoncpp
+	url = https://github.com/open-source-parsers/jsoncpp
+	shallow = true
+[submodule "components/openTRI"]
+	path = components/openTRI
+	url = https://github.com/fjtrujy/openTRI.git
+	shallow = true
+[submodule "components/libpspav"]
+	path = components/libpspav
+	url = https://github.com/pspdev/libpspav.git
+	shallow = true
+[submodule "components/yaml-cpp"]
+	path = components/yaml-cpp
+	url = https://github.com/jbeder/yaml-cpp.git
+	shallow = true
+[submodule "components/squirrel"]
+	path = components/squirrel
+	url = https://github.com/albertodemichelis/squirrel.git
+	shallow = true
+[submodule "components/sdl3-gfx"]
+	path = components/sdl3-gfx
+	url = https://github.com/sabdul-khabir/SDL3_gfx.git
+	shallow = true
+[submodule "components/SDL_image"]
+	path = components/SDL_image
+	url = https://github.com/libsdl-org/SDL_image.git
+	shallow = true
+[submodule "components/SDL_mixer"]
+	path = components/SDL_mixer
+	url = https://github.com/libsdl-org/SDL_mixer.git
+	shallow = true
+[submodule "components/pspirkeyb"]
+	path = components/pspirkeyb
+	url = https://github.com/pspdev/pspirkeyb.git
+	shallow = true
+[submodule "components/dbglogger"]
+	path = components/dbglogger
+	url = https://github.com/bucanero/dbglogger.git
+	shallow = true
+[submodule "components/libun7zip"]
+	path = components/libun7zip
+	url = https://github.com/bucanero/libun7zip
+	shallow = true
+[submodule "components/libpspftp"]
+	path = components/libpspftp
+	url = https://github.com/pspdev/libpspftp.git
+	shallow = true
+[submodule "components/mikmod"]
+	path = components/mikmod
+	url = https://git.code.sf.net/p/mikmod/mikmod
+	shallow = true
+[submodule "components/libpspvram"]
+	path = components/libpspvram
+	url = https://github.com/pspdev/libpspvram.git
+	shallow = true
+[submodule "components/libmodplug"]
+	path = components/libmodplug
+	url = https://github.com/Konstanty/libmodplug
+	shallow = true
+[submodule "components/libpspmath"]
+	path = components/libpspmath
+	url = https://github.com/tufty/libpspmath.git
+	shallow = true
+[submodule "components/libbulletml"]
+	path = components/libbulletml
+	url = https://github.com/pspdev/libbulletml.git
+	shallow = true
+[submodule "components/psp-cfw-sdk"]
+	path = components/psp-cfw-sdk
+	url = https://github.com/pspdev/psp-cfw-sdk.git
+	shallow = true
+[submodule "components/tinygettext"]
+	path = components/tinygettext
+	url = https://github.com/tinygettext/tinygettext.git
+	shallow = true
+[submodule "components/libintrafont"]
+	path = components/libintrafont
+	url = https://github.com/pspdev/libintrafont
+	shallow = true
