@@ -1,6 +1,6 @@
 pkgname=libxmp-lite
 pkgver=4.6.3
-pkgrel=2
+pkgrel=3
 pkgdesc="Libxmp is a library that renders module files to PCM data"
 arch=(any)
 url="https://github.com/libxmp/libxmp"
@@ -9,18 +9,17 @@ groups=('psp-libraries')
 depends=()
 makedepends=()
 optdepends=()
-source=("${pkgname}-${pkgver}::git+https://github.com/libxmp/libxmp.git#branch=master")
-sha256sums=('SKIP')
+source=()
+sha256sums=()
 
 prepare() {
-    cd "${pkgname}-${pkgver}"
-    sed -i 's#@prefix@#${PSPDEV}/psp#' libxmp-lite.pc.in
-    sed -i 's#@libdir@#${prefix}/lib#' libxmp-lite.pc.in
-    sed -i 's#@includedir@#${prefix}/include#' libxmp-lite.pc.in
+    rm -rf "$srcdir/$pkgname-$pkgver"
+    cp -a "$startdir/../components/libxmp" "$srcdir/$pkgname-$pkgver"
+    rm -rf "$srcdir/$pkgname-$pkgver/.git"
 }
 
 build() {
-    cd "${pkgname}-${pkgver}"
+    cd "$srcdir/$pkgname-$pkgver"
     mkdir -p build && cd build
     cmake -Wno-dev -DCMAKE_TOOLCHAIN_FILE="${PSPDEV}/psp/share/pspdev.cmake" -DCMAKE_INSTALL_PREFIX=/psp -DBUILD_SHARED=OFF -DBUILD_LITE=ON \
         -DCMAKE_BUILD_TYPE=Release -DCMAKE_POLICY_VERSION_MINIMUM=3.5 "${XTRA_OPTS[@]}" .. || { exit 1; }
@@ -28,7 +27,7 @@ build() {
 }
 
 package() {
-    cd "${pkgname}-${pkgver}/build"
+    cd "$srcdir/$pkgname-$pkgver/build"
     make --quiet $MAKEFLAGS DESTDIR="${pkgdir}/" install || { exit 1; }
 
     mkdir -m 755 -p "${pkgdir}/psp/share/licenses/${pkgname}"
