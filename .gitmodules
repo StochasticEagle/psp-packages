@@ -256,3 +256,88 @@
 	url = https://github.com/xiph/vorbis.git
 	branch = main
 	shallow = true
+[submodule "components/libxmp"]
+	path = components/libxmp
+	url = https://github.com/libxmp/libxmp.git
+	branch = master
+	shallow = true
+[submodule "components/libyaml"]
+	path = components/libyaml
+	url = https://github.com/yaml/libyaml.git
+	branch = master
+	shallow = true
+[submodule "components/libzip"]
+	path = components/libzip
+	url = https://github.com/nih-at/libzip.git
+	branch = main
+	shallow = true
+[submodule "components/lz4"]
+	path = components/lz4
+	url = https://github.com/lz4/lz4.git
+	branch = dev
+	shallow = true
+[submodule "components/mbedtls"]
+	path = components/mbedtls
+	url = https://github.com/Mbed-TLS/mbedtls.git
+	branch = development
+	shallow = true
+[submodule "components/openal"]
+	path = components/openal
+	url = https://github.com/illteteka/openal-soft-psp.git
+	branch = main
+	shallow = true
+[submodule "components/opus"]
+	path = components/opus
+	url = https://github.com/xiph/opus.git
+	branch = main
+	shallow = true
+[submodule "components/opusfile"]
+	path = components/opusfile
+	url = https://github.com/xiph/opusfile.git
+	branch = main
+	shallow = true
+[submodule "components/physfs"]
+	path = components/physfs
+	url = https://github.com/icculus/physfs.git
+	branch = main
+	shallow = true
+[submodule "components/pocketpy"]
+	path = components/pocketpy
+	url = https://github.com/pocketpy/pocketpy.git
+	branch = main
+	shallow = true
+[submodule "components/spdlog"]
+	path = components/spdlog
+	url = https://github.com/gabime/spdlog.git
+	branch = v1.x
+	shallow = true
+[submodule "components/tinyxml2"]
+	path = components/tinyxml2
+	url = https://github.com/leethomason/tinyxml2.git
+	branch = master
+	shallow = true
+[submodule "components/unarr"]
+	path = components/unarr
+	url = https://github.com/selmf/unarr.git
+	branch = master
+	shallow = true
+[submodule "components/wolfssl"]
+	path = components/wolfssl
+	url = https://github.com/wolfSSL/wolfssl.git
+	branch = master
+	shallow = true
+[submodule "components/xxhash"]
+	path = components/xxhash
+	url = https://github.com/Cyan4973/xxHash.git
+	branch = dev
+	shallow = true
+[submodule "components/zlib"]
+	path = components/zlib
+	url = https://github.com/madler/zlib.git
+	branch = develop
+	shallow = true
+[submodule "components/zziplib"]
+	path = components/zziplib
+	url = https://github.com/gdraheim/zziplib.git
+	branch = master
+	shallow = true

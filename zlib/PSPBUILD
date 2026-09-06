@@ -9,8 +9,8 @@ groups=('psp-libraries')
 depends=()
 makedepends=()
 optdepends=()
-source=("https://github.com/madler/zlib/archive/v${pkgver}.tar.gz")
-sha256sums=('17e88863f3600672ab49182f217281b6fc4d3c762bde361935e436a95214d05c')
+source=("${pkgname}-${pkgver}::git+https://github.com/madler/zlib.git#branch=develop")
+sha256sums=('SKIP')
 
 # prepare() {
 #     cd "${pkgname}-${pkgver}"
@@ -36,4 +36,3 @@ package() {
     mkdir -p "$pkgdir/psp/share/doc/"
     cp -r ../doc "$pkgdir/psp/share/doc/$pkgname"
 }
-

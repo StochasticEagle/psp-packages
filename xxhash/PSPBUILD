@@ -9,8 +9,8 @@ groups=('psp-libraries')
 depends=()
 makedepends=()
 optdepends=()
-source=("https://github.com/Cyan4973/xxHash/archive/refs/tags/v${pkgver}.tar.gz")
-sha256sums=('baee0c6afd4f03165de7a4e67988d16f0f2b257b51d0e3cb91909302a26a79c4')
+source=("xxHash-$pkgver::git+https://github.com/Cyan4973/xxHash.git#branch=dev")
+sha256sums=('SKIP')
 
 prepare() {
     cd "xxHash-$pkgver"

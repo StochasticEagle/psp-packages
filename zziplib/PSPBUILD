@@ -9,8 +9,8 @@ groups=('psp-libraries')
 depends=('zlib')
 makedepends=()
 optdepends=()
-source=("https://github.com/gdraheim/zziplib/archive/refs/tags/v${pkgver}.tar.gz")
-sha256sums=('08b0e300126329c928a41b6d68e397379fad02469e34a0855d361929968ea4c0')
+source=("$pkgname-$pkgver::git+https://github.com/gdraheim/zziplib.git#branch=master")
+sha256sums=('SKIP')
 
 build() {
     cd "$pkgname-$pkgver"
@@ -30,4 +30,3 @@ package() {
     mkdir -m 755 -p "$pkgdir/psp/share/licenses/$pkgname"
     install -m 644 COPYING.LIB "$pkgdir/psp/share/licenses/$pkgname"
 }
-

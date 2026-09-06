@@ -2,48 +2,21 @@
 
 These package recipes are not yet migrated to checked-out source submodules.
 
-The migration pass only converted sources where the existing PSPBUILD already identified a Git repository directly (`git+...`) with an exact commit or tag. The entries below currently use release archives, non-Git downloads, or otherwise require verification of the authoritative Git repository and the exact revision corresponding to the packaged source before a gitlink can be created safely.
+Packages are migrated only when there is a clear authoritative Git repository that corresponds to the package lineage. Migrated repositories track their upstream development branch rather than a release tag; remaining entries below either have ambiguous/non-Git provenance, require special handling, or are intentionally deferred as part of a larger compatibility migration.
+
+## Remaining
 
 - angelscript
 - argtable2
-- cereal
-- cjson
-- curl
-- dumb
-- enet
-- expat
-- faudio
-- flac
-- flatbuffers
-- fmt
 - freetype2
-- googletest
-- harfbuzz
-- jpeg
-- leptonica
-- libconfuse
 - libeigen
 - liblzma
 - libmecore
-- libogg
-- libpng
-- libvorbis
-- libxmp-lite
-- libxmp
-- libyaml
-- libzip
 - lua54
 - luasocket
-- lz4
-- mbedtls
 - minizip
 - mpg123
-- openal
-- opus
-- opusfile
-- physfs
 - pixman
-- pocketpy
 - polarssl
 - pspla
 - sdl-gfx
@@ -59,13 +32,11 @@ The migration pass only converted sources where the existing PSPBUILD already id
 - sdl3-ttf
 - sdl3
 - smath
-- spdlog
 - sqlite
-- tinyxml2
-- unarr
-- wolfssl
-- xxhash
-- zlib
-- zziplib
 
-For each item, verify the Git repository from the source already named by the PSPBUILD, identify the exact commit corresponding to the current packaged archive/version, then add it under `components/` as a shallow submodule. Do not substitute an unrelated mirror merely because one exists.
+## Notes
+
+- SDL-family migration is intentionally deferred so SDL 1.2/SDL2 packages are not silently pointed at SDL3 default branches. Consolidate these as a separate compatibility/API migration.
+- `sqlite` uses Fossil as its authoritative VCS, so a Git mirror is not treated as authoritative.
+- `polarssl` is obsolete and should be evaluated for removal/replacement by mbedTLS rather than automatically migrated.
+- `lua54` remains until an authoritative Git source policy is established; Lua 5.1/5.2/5.3 packages were removed.

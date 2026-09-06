@@ -9,8 +9,8 @@ groups=('psp-libraries')
 depends=()
 makedepends=()
 optdepends=()
-source=("https://github.com/wolfSSL/wolfssl/archive/refs/tags/v${pkgver}-stable.tar.gz")
-sha256sums=('2de93e8af588ee856fe67a6d7fce23fc1b226b74d710b0e3946bc8061f6aa18f')
+source=("$pkgname-$pkgver-stable::git+https://github.com/wolfSSL/wolfssl.git#branch=master")
+sha256sums=('SKIP')
 
 prepare() {
     cd "$pkgname-$pkgver-stable"
