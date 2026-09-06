@@ -166,3 +166,93 @@
 	path = components/libintrafont
 	url = https://github.com/pspdev/libintrafont
 	shallow = true
+[submodule "components/cereal"]
+	path = components/cereal
+	url = https://github.com/USCiLab/cereal.git
+	branch = master
+	shallow = true
+[submodule "components/cjson"]
+	path = components/cjson
+	url = https://github.com/DaveGamble/cJSON.git
+	branch = master
+	shallow = true
+[submodule "components/curl"]
+	path = components/curl
+	url = https://github.com/curl/curl.git
+	branch = master
+	shallow = true
+[submodule "components/dumb"]
+	path = components/dumb
+	url = https://github.com/kode54/dumb.git
+	branch = master
+	shallow = true
+[submodule "components/enet"]
+	path = components/enet
+	url = https://github.com/lsalzman/enet.git
+	branch = master
+	shallow = true
+[submodule "components/expat"]
+	path = components/expat
+	url = https://github.com/libexpat/libexpat.git
+	branch = master
+	shallow = true
+[submodule "components/faudio"]
+	path = components/faudio
+	url = https://github.com/FNA-XNA/FAudio.git
+	branch = master
+	shallow = true
+[submodule "components/flac"]
+	path = components/flac
+	url = https://github.com/xiph/flac.git
+	branch = master
+	shallow = true
+[submodule "components/flatbuffers"]
+	path = components/flatbuffers
+	url = https://github.com/google/flatbuffers.git
+	branch = master
+	shallow = true
+[submodule "components/fmt"]
+	path = components/fmt
+	url = https://github.com/fmtlib/fmt.git
+	branch = main
+	shallow = true
+[submodule "components/googletest"]
+	path = components/googletest
+	url = https://github.com/google/googletest.git
+	branch = main
+	shallow = true
+[submodule "components/harfbuzz"]
+	path = components/harfbuzz
+	url = https://github.com/harfbuzz/harfbuzz.git
+	branch = main
+	shallow = true
+[submodule "components/libjpeg-turbo"]
+	path = components/libjpeg-turbo
+	url = https://github.com/libjpeg-turbo/libjpeg-turbo.git
+	branch = main
+	shallow = true
+[submodule "components/leptonica"]
+	path = components/leptonica
+	url = https://github.com/DanBloomberg/leptonica.git
+	branch = master
+	shallow = true
+[submodule "components/libconfuse"]
+	path = components/libconfuse
+	url = https://github.com/libconfuse/libconfuse.git
+	branch = master
+	shallow = true
+[submodule "components/libogg"]
+	path = components/libogg
+	url = https://github.com/xiph/ogg.git
+	branch = main
+	shallow = true
+[submodule "components/libpng"]
+	path = components/libpng
+	url = https://github.com/pnggroup/libpng.git
+	branch = libpng18
+	shallow = true
+[submodule "components/libvorbis"]
+	path = components/libvorbis
+	url = https://github.com/xiph/vorbis.git
+	branch = main
+	shallow = true
