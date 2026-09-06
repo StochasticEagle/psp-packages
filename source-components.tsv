@@ -45,3 +45,5 @@ https://github.com/libsdl-org/SDL.git	components/SDL3
 https://github.com/libsdl-org/SDL_image.git	components/SDL_image
 https://github.com/libsdl-org/SDL_mixer.git	components/SDL_mixer
 https://github.com/libsdl-org/SDL_ttf.git	components/SDL_ttf
+https://github.com/lua/lua.git	components/lua
+https://github.com/sqlite/sqlite.git	components/sqlite

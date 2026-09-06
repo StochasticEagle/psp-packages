@@ -393,3 +393,13 @@
 	url = https://github.com/libsdl-org/SDL_ttf.git
 	branch = main
 	shallow = true
+[submodule "components/lua"]
+	path = components/lua
+	url = https://github.com/lua/lua.git
+	branch = master
+	shallow = true
+[submodule "components/sqlite"]
+	path = components/sqlite
+	url = https://github.com/sqlite/sqlite.git
+	branch = master
+	shallow = true

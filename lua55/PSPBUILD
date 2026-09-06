@@ -1,0 +1,42 @@
+pkgname=lua55
+pkgver=5.5.1
+pkgrel=1
+pkgdesc="A powerful, efficient, lightweight, embeddable scripting language (version 5.5)"
+arch=(any)
+url="https://lua.org"
+license=('MIT')
+groups=('psp-libraries')
+depends=()
+makedepends=()
+optdepends=()
+conflicts=('lua')
+provides=('lua=5.5')
+source=("lua-${pkgver}::git+https://github.com/lua/lua.git#branch=master")
+sha256sums=('SKIP')
+
+prepare() {
+    cd "lua-${pkgver}"
+    sed -i '/#define LUA_32BITS/s/0/1/g' luaconf.h
+    awk '/Copyright \(C\) 1994-2026 Lua.org/{p=1} p' lua.h > LICENSE
+}
+
+build() {
+    cd "lua-${pkgver}"
+    make -f makefile a \
+        CC="psp-gcc" \
+        AR="psp-ar rc" \
+        RANLIB="psp-ranlib" \
+        LOCAL="" \
+        MYCFLAGS="-std=c99" \
+        MYLDFLAGS="" \
+        MYLIBS="" \
+        CORE_O="lapi.o lcode.o lctype.o ldebug.o ldo.o ldump.o lfunc.o lgc.o llex.o lmem.o lobject.o lopcodes.o lparser.o lstate.o lstring.o ltable.o ltm.o lundump.o lvm.o lzio.o"
+}
+
+package() {
+    cd "lua-${pkgver}"
+    mkdir -p "${pkgdir}/psp/lib" "${pkgdir}/psp/include" "${pkgdir}/psp/share/licenses/${pkgname}"
+    install -m 644 liblua.a "${pkgdir}/psp/lib/"
+    install -m 644 lua.h luaconf.h lauxlib.h lualib.h "${pkgdir}/psp/include/"
+    install -m 644 LICENSE "${pkgdir}/psp/share/licenses/${pkgname}/"
+}

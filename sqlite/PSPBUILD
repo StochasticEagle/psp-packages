@@ -10,11 +10,11 @@ depends=()
 optdepends=()
 makedepends=()
 source=(
-    "https://github.com/sqlite/sqlite/archive/refs/tags/version-3.7.4.tar.gz"
+    "${pkgname}-version-${pkgver}::git+https://github.com/sqlite/sqlite.git#branch=master"
     "${pkgname}-${pkgver}-PSP.patch"
 )
 sha256sums=(
-    "5fdbe958102f6f9dc93f3fc2f9e61a327fe8067fed227cd63ae26ed210a2774a"
+    "SKIP"
     "SKIP"
 )
 

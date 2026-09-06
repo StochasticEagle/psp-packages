@@ -8,7 +8,6 @@ Packages are migrated only when there is a clear authoritative Git repository th
 
 - angelscript
 - argtable2
-- lua54
 - mpg123
 - pixman
 - polarssl
@@ -20,13 +19,12 @@ Packages are migrated only when there is a clear authoritative Git repository th
 - sdl2-net
 - sdl2-ttf
 - sdl2
-- sqlite
 
 ## Notes
 
 - SDL 1.2/SDL2-family migration is intentionally deferred so older packages are not silently pointed at SDL3 default branches. SDL3 and its SDL3 extension packages track their authoritative `main` branches.
-- `lua54` remains on the Lua 5.4 source line; the available development Git mirror is not used because moving its default branch would implicitly migrate the package to Lua 5.5.
-- `mpg123` uses Subversion as its authoritative development repository; a Git mirror is not treated as authoritative.
-- `sqlite` uses Fossil as its authoritative VCS; a Git mirror is not treated as authoritative.
-- `polarssl` is obsolete and should be evaluated for removal/replacement by mbedTLS rather than automatically migrated.
-- Lua 5.1/5.2/5.3 packages were removed. LuaSocket now targets `lua54`, but remains build-blacklisted pending compatibility testing.
+- Lua has been consolidated onto Lua 5.5 as `lua55`, tracking the Lua team's `lua/lua` development mirror on `master`. Lua 5.5 is not ABI-compatible with Lua 5.4, so all C modules must be rebuilt. LuaSocket now depends on `lua55` but remains build-blacklisted pending Lua 5.5 compatibility testing.
+- `mpg123` uses Subversion as its authoritative development repository. The GitHub mirrors located so far explicitly state that they are unofficial, so no Git component is used yet.
+- SQLite now tracks the official read-only `sqlite/sqlite` GitHub mirror on `master`.
+- `polarssl` is obsolete. The existing `components/mbedtls` submodule tracks Mbed TLS development and should be used as the migration target over time; PolarSSL remains temporarily for compatibility until dependent packages are moved.
+- Lua 5.1/5.2/5.3/5.4 package recipes have been removed in favor of `lua55`.
