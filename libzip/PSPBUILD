@@ -9,8 +9,8 @@ groups=('psp-libraries')
 depends=('zlib' 'bzip2' 'liblzma' 'mbedtls')
 makedepends=()
 optdepends=()
-source=("https://libzip.org/download/libzip-1.9.2.tar.xz")
-sha256sums=('c93e9852b7b2dc931197831438fee5295976ee0ba24f8524a8907be5c2ba5937')
+source=("$pkgname-$pkgver::git+https://github.com/nih-at/libzip.git#branch=main")
+sha256sums=('SKIP')
 
 prepare() {
     cd "$pkgname-$pkgver"
