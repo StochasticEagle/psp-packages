@@ -1,6 +1,6 @@
 pkgname=sdl2-net
 pkgver=2.2.0
-pkgrel=8
+pkgrel=9
 pkgdesc="A wrapper over TCP/IP sockets"
 arch=(any)
 url="https://wiki.libsdl.org/SDL2_net/FrontPage"
@@ -21,7 +21,7 @@ sha256sums=(
 prepare() {
     cd "${srcdir}/SDL2_net-${pkgver}"
     sed -i '/^prefix=/s/=.*$/=${PSPDEV}\/psp/' SDL2_net.pc.in
-    patch -p1 < ../${pkgname}-${pkgver}-PSP.patch || { exit 1; }
+    patch --batch --forward -p1 < ../${pkgname}-${pkgver}-PSP.patch || { exit 1; }
 }
 
 build() {
