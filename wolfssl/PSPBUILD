@@ -1,26 +1,26 @@
 pkgname=wolfssl
-pkgver=5.7.0
-pkgrel=8
+pkgver=5.9.2
+pkgrel=1
 pkgdesc="The wolfSSL library is a small, fast, portable implementation of TLS/SSL for embedded devices to the cloud. wolfSSL supports up to TLS 1.3!"
 arch=(any)
-url="www.wolfssl.com"
+url="https://www.wolfssl.com/"
 license=('GPL-2.0-only')
 groups=('psp-libraries')
 depends=()
 makedepends=()
 optdepends=()
 source=(
-    "$pkgname-$pkgver-stable::git+https://github.com/wolfSSL/wolfssl.git#branch=master"
+    "$pkgname-$pkgver-stable::git+https://github.com/wolfSSL/wolfssl.git#tag=v${pkgver}-stable"
     "wolfssl-psp-ipv6.patch"
 )
 sha256sums=(
     'SKIP'
-    'ef9b5cc2cdb513c44f54564f3ac9bfd6bec7d3a9e36428a08ef336e083f8fb0d'
+    'b75088ef97eb31bd42a8a63384f323a250a803312c02d251088eade6bc78c789'
 )
 
 prepare() {
     cd "$pkgname-$pkgver-stable"
-    patch -Np1 -i "../wolfssl-psp-ipv6.patch"
+    patch --batch --forward -Np1 -i "../wolfssl-psp-ipv6.patch"
     sed -i 's#@prefix@#${PSPDEV}/psp#' support/wolfssl.pc.in
     sed -i 's#@exec_prefix@#${prefix}#' support/wolfssl.pc.in
     sed -i 's#@libdir@#${prefix}/lib#' support/wolfssl.pc.in
