@@ -1,6 +1,6 @@
 pkgname=tremor
 pkgver=1.2.1git
-pkgrel=6
+pkgrel=7
 pkgdesc="Integer-only, fully Ogg Vorbis compliant software decoder library"
 arch=(any)
 url="https://wiki.xiph.org/Tremor"
@@ -22,8 +22,8 @@ sha256sums=(
 
 prepare() {
     cd "${pkgname}"
-    patch -p1 < ../master...sezero.patch
-    patch -p1 < ../platform-allegrex.patch
+    patch --batch --forward -p1 < ../master...sezero.patch
+    patch --batch --forward -p1 < ../platform-allegrex.patch
 
     sed -i 's#@prefix@#${PSPDEV}/psp#' vorbisidec.pc.in
     sed -i 's#@exec_prefix@#${prefix}#' vorbisidec.pc.in
