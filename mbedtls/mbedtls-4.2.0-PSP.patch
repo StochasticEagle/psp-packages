@@ -139,3 +139,102 @@ diff --git a/library/net_sockets.c b/library/net_sockets.c
 +#endif /* !PSP */
          }
      }
+diff --git a/tf-psa-crypto/platform/platform_util.c b/tf-psa-crypto/platform/platform_util.c
+--- a/tf-psa-crypto/platform/platform_util.c
++++ b/tf-psa-crypto/platform/platform_util.c
+@@ -204,8 +204,17 @@
+ #if defined(MBEDTLS_PLATFORM_IS_UNIXLIKE)
+ #include <unistd.h>
+ #endif
++#if defined(PSP)
++#include <pspthreadman.h>
++#endif
+ 
+-#if (defined(_POSIX_VERSION) && _POSIX_VERSION >= 199309L) || defined(__HAIKU__)
++#if defined(PSP)
++mbedtls_ms_time_t mbedtls_ms_time(void)
++{
++    /* sceKernelGetSystemTimeWide() is a monotonic microsecond counter. */
++    return (mbedtls_ms_time_t) (sceKernelGetSystemTimeWide() / 1000);
++}
++#elif (defined(_POSIX_VERSION) && _POSIX_VERSION >= 199309L) || defined(__HAIKU__)
+ mbedtls_ms_time_t mbedtls_ms_time(void)
+ {
+     int ret;
+@@ -246,7 +255,8 @@
+ #if !defined(MBEDTLS_PLATFORM_IS_UNIXLIKE) && \
+     !defined(__MVS__) /* z/OS */ &&           \
+-    !defined(_WIN32)
++    !defined(_WIN32) &&                       \
++    !defined(PSP)
+ #error \
+     "The built-in entropy sources only work on Unix and Windows. " \
+     "Please enable MBEDTLS_PSA_DRIVER_GET_ENTROPY instead of " \
+@@ -255,6 +265,10 @@
+ 
+ #include "mbedtls/private/entropy.h"
+ 
++#if defined(PSP)
++#include <unistd.h>
++#endif
++
+ #if defined(_WIN32) && !defined(EFIX64) && !defined(EFI32)
+ 
+ #include <windows.h>
+@@ -378,6 +392,26 @@
+         return PSA_ERROR_NOT_SUPPORTED;
+     }
+ 
++#if defined(PSP)
++    /*
++     * Preserve the entropy source used by the existing PSP Mbed TLS port.
++     * Keep calls within the POSIX getentropy() 256-byte request limit.
++     */
++    size_t offset = 0;
++    while (offset < output_size) {
++        size_t chunk = output_size - offset;
++        if (chunk > 256) {
++            chunk = 256;
++        }
++        if (getentropy(output + offset, chunk) != 0) {
++            return MBEDTLS_ERR_ENTROPY_SOURCE_FAILED;
++        }
++        offset += chunk;
++    }
++    *estimate_bits = 8 * output_size;
++    return 0;
++#endif
++
+ #if defined(HAVE_GETRANDOM)
+     ret = getrandom_wrapper(output, output_size, 0);
+     if (ret >= 0) {
+diff --git a/tf-psa-crypto/scripts/generate_driver_wrappers.py b/tf-psa-crypto/scripts/generate_driver_wrappers.py
+--- a/tf-psa-crypto/scripts/generate_driver_wrappers.py
++++ b/tf-psa-crypto/scripts/generate_driver_wrappers.py
+@@ -15,7 +15,10 @@
+ from typing import NewType, Dict, Any
+ from traceback import format_tb
+ import argparse
+-import jsonschema
++try:
++    import jsonschema
++except ImportError:
++    jsonschema = None
+ import jinja2
+ 
+ import framework_scripts_path # pylint: disable=unused-import
+@@ -65,6 +68,12 @@
+ def validate_json(driverjson_data: Driver, driverschema_list: dict) -> None:
+     """
+     Validate the Driver JSON against an appropriate schema
+     the schema passed could be that matching an opaque/ transparent driver.
+     """
++    # jsonschema is a development-time validation dependency. For a packaged
++    # build from the pinned upstream release data, rendering does not require
++    # schema validation.
++    if jsonschema is None:
++        return
++
+     driver_type = driverjson_data["type"]
+     driver_prefix = driverjson_data["prefix"]
+     try:
