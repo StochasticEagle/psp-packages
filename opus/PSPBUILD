@@ -1,6 +1,6 @@
 pkgname=opus
 pkgver=1.6.1
-pkgrel=2
+pkgrel=3
 pkgdesc="Opus is a totally open, royalty-free, highly versatile audio codec."
 arch=(any)
 url="https://opus-codec.org/"
@@ -9,24 +9,27 @@ groups=('psp-libraries')
 depends=()
 makedepends=()
 optdepends=()
-source=("${pkgname}-${pkgver}::git+https://github.com/xiph/opus.git#branch=main")
+source=("${pkgname}-${pkgver}::git+https://github.com/xiph/opus.git#commit=22244de5a79bd1d6d623c32e72bf1954b56235be")
 sha256sums=('SKIP')
 
 build() {
     cd "${pkgname}-${pkgver}"
-    mkdir -p build
-    cd build
-    cmake -Wno-dev -DCMAKE_TOOLCHAIN_FILE=$PSPDEV/psp/share/pspdev.cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=${pkgdir}/psp \
-        "${XTRA_OPTS[@]}" .. || { exit 1; }
-    make --quiet $MAKEFLAGS || { exit 1; }
+    rm -rf build
+    cmake -Wno-author -S . -B build \
+        -DCMAKE_TOOLCHAIN_FILE=$PSPDEV/psp/share/pspdev.cmake \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_PREFIX=${pkgdir}/psp \
+        -DOPUS_PACKAGE_VERSION="${pkgver}" \
+        "${XTRA_OPTS[@]}" || { exit 1; }
+    cmake --build build -- $MAKEFLAGS || { exit 1; }
 }
 
 package() {
-    cd "${pkgname}-${pkgver}/build"
-    make --quiet $MAKEFLAGS install
+    cd "${pkgname}-${pkgver}"
+    cmake --install build
 
     mkdir -m 755 -p "$pkgdir/psp/share/licenses/$pkgname"
-    install -m 644 ../COPYING "$pkgdir/psp/share/licenses/$pkgname"
+    install -m 644 COPYING "$pkgdir/psp/share/licenses/$pkgname"
 
     sed -i "s#$pkgdir#\${PSPDEV}#g" "$pkgdir/psp/lib/pkgconfig/opus.pc"
 }
