@@ -407,3 +407,7 @@
 	url = https://github.com/sqlite/sqlite.git
 	branch = master
 	shallow = true
+[submodule "components/SDL_image12"]
+	path = components/SDL_image12
+	url = https://github.com/libsdl-org/SDL_image.git
+	shallow = true
