@@ -12,11 +12,11 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 COMPONENTS="${ROOT}/components"
 SOURCE_COMPONENTS="${ROOT}/source-components.tsv"
 
-# Temporary one-commit repositories created from checked-out component
-# worktrees. They are removed after psp-makepkg finishes.
+# Temporary tar snapshots created from checked-out component worktrees.
+# makepkg consumes these as ordinary local archives, so its VCS cache/ref
+# machinery is never involved in package builds.
 LOCAL_SOURCE_SNAPSHOTS=()
 LOCAL_SNAPSHOT_PATH=""
-LOCAL_SNAPSHOT_COMMIT=""
 
 doinstall=""
 if [ "$1" == "--install" ]; then
@@ -38,77 +38,66 @@ fi
 cleanup_local_source_snapshots() {
   local snapshot
   for snapshot in "${LOCAL_SOURCE_SNAPSHOTS[@]}"; do
-    rm -rf "$snapshot"
+    rm -f "$snapshot"
   done
   LOCAL_SOURCE_SNAPSHOTS=()
   LOCAL_SNAPSHOT_PATH=""
-  LOCAL_SNAPSHOT_COMMIT=""
 }
 
 create_local_source_snapshot() {
   local component="$1"
   local source_name="$2"
-  local snapshot tree snapshot_commit
+  local package_dir="$3"
+  local source_index="$4"
+  local archive
 
-  snapshot=$(mktemp -d "${TMPDIR:-/tmp}/psp-source-${source_name}.XXXXXX")
+  archive=$(mktemp --suffix=.tar \
+    "${ROOT}/${package_dir}/.psp-source-${source_index}.XXXXXX")
 
-  # Materialize the checked-out source tree, including initialized nested
-  # submodules, but never copy Git metadata. This makes the component worktree
-  # itself authoritative and avoids depending on tag refs, ancestor history,
-  # shallow boundaries, alternates, or promisor objects in its Git database.
+  # Archive exactly the checked-out worktree. Git metadata is deliberately
+  # excluded: the parent repository's submodule gitlink is the source revision,
+  # and package compilation must not depend on tags, ancestor history, shallow
+  # boundaries, remote refs, or makepkg's own Git cache.
   (
     cd "$component"
-    tar --exclude='./.git' --exclude='*/.git' -cf - .
-  ) | (
-    cd "$snapshot"
-    tar -xf -
+    tar --exclude='./.git' --exclude='*/.git' \
+      --transform="s|^\\./|${source_name}/|" \
+      -cf "$archive" .
   )
 
-  git -C "$snapshot" init -q
-  git -C "$snapshot" add -A
-  tree=$(git -C "$snapshot" write-tree)
-  snapshot_commit=$(
-    GIT_AUTHOR_NAME=psp-packages \
-    GIT_AUTHOR_EMAIL=psp-packages@localhost \
-    GIT_COMMITTER_NAME=psp-packages \
-    GIT_COMMITTER_EMAIL=psp-packages@localhost \
-      git -C "$snapshot" commit-tree "$tree" -m "Local source snapshot"
-  )
-  git -C "$snapshot" update-ref refs/heads/psp-packages-source "$snapshot_commit"
-  git -C "$snapshot" symbolic-ref HEAD refs/heads/psp-packages-source
-
-  LOCAL_SOURCE_SNAPSHOTS+=("$snapshot")
-  LOCAL_SNAPSHOT_PATH="$snapshot"
-  LOCAL_SNAPSHOT_COMMIT="$snapshot_commit"
+  LOCAL_SOURCE_SNAPSHOTS+=("$archive")
+  LOCAL_SNAPSHOT_PATH="$archive"
 }
 
 configure_local_git_sources() {
   local pspbuild="$1"
   local local_pspbuild="$2"
-  local src entry remote source_name component mapped
-  local ref_kind ref_value escaped_ref i=0 j old_count=0
-  local snapshot snapshot_commit package_dir
+  local record source_index src entry remote source_name component mapped
+  local package_dir archive cache
   local -a git_sources=()
 
   cleanup_local_source_snapshots
 
+  # Keep the source-array index so the temporary PSPBUILD can replace only the
+  # Git-backed entry while leaving checksums and unrelated sources aligned.
   mapfile -t git_sources < <(
-    bash -c 'source "$1"; printf "%s\n" "${source[@]}"' _ "$pspbuild" |
-      grep -E '(^|::)git\+' || true
+    bash -c '
+      source "$1"
+      for i in "${!source[@]}"; do
+        case "${source[$i]}" in
+          *git+*) printf "%s\t%s\n" "$i" "${source[$i]}" ;;
+        esac
+      done
+    ' _ "$pspbuild"
   )
-
-  if [[ "${GIT_CONFIG_COUNT:-}" =~ ^[0-9]+$ ]]; then
-    old_count="$GIT_CONFIG_COUNT"
-  fi
-  unset GIT_CONFIG_COUNT
-  for ((j = 0; j < old_count; j++)); do
-    unset "GIT_CONFIG_KEY_${j}" "GIT_CONFIG_VALUE_${j}"
-  done
 
   cp "$pspbuild" "$local_pspbuild"
   package_dir="$(dirname "$pspbuild")"
 
-  for src in "${git_sources[@]}"; do
+  for record in "${git_sources[@]}"; do
+    source_index="${record%%$'\t'*}"
+    src="${record#*$'\t'}"
+
     entry="${src#*::}"
     remote="${entry#git+}"
     remote="${remote%%#*}"
@@ -139,41 +128,28 @@ configure_local_git_sources() {
       exit 1
     fi
 
-    # Do not let makepkg reuse a historical/broken bare VCS cache. The checked
-    # out component is the cache; this package-local repository is disposable.
-    rm -rf "${ROOT}/${package_dir}/${source_name}"
-
-    create_local_source_snapshot "$component" "$source_name"
-    snapshot="$LOCAL_SNAPSHOT_PATH"
-    snapshot_commit="$LOCAL_SNAPSHOT_COMMIT"
-
-    # The parent repository's gitlink/worktree is authoritative. Rewrite any
-    # documented branch/tag/commit selector in the temporary PSPBUILD to the
-    # synthetic one-commit snapshot. A plain Git source needs no selector: the
-    # snapshot's HEAD already names psp-packages-source.
-    ref_kind=""
-    ref_value=""
-    for ref_kind in branch tag commit; do
-      if [[ "$entry" == *"#${ref_kind}="* ]]; then
-        ref_value="${entry##*#${ref_kind}=}"
-        ref_value="${ref_value%%&*}"
-        break
-      fi
-      ref_kind=""
-    done
-
-    if [ -n "$ref_kind" ]; then
-      escaped_ref="${ref_value//&/\\&}"
-      escaped_ref="${escaped_ref//|/\\|}"
-      sed -i "s|#${ref_kind}=${escaped_ref}|#commit=${snapshot_commit}|g" "$local_pspbuild"
+    # Remove any historical makepkg bare VCS cache left from older versions of
+    # this build script. It is no longer used, but a stale cache should not be
+    # mistaken for an ordinary package source file/directory.
+    cache="${ROOT}/${package_dir}/${source_name}"
+    if [ -d "$cache" ] && \
+       git --git-dir="$cache" rev-parse --is-bare-repository >/dev/null 2>&1; then
+      rm -rf "$cache"
     fi
 
-    export "GIT_CONFIG_KEY_${i}=url.file://${snapshot}.insteadOf"
-    export "GIT_CONFIG_VALUE_${i}=${remote}"
-    i=$((i + 1))
-  done
+    create_local_source_snapshot "$component" "$source_name" "$package_dir" "$source_index"
+    archive="$LOCAL_SNAPSHOT_PATH"
 
-  export GIT_CONFIG_COUNT="$i"
+    # Override the evaluated source entry in the temporary PSPBUILD. The tar
+    # contains the same top-level directory name makepkg would have produced for
+    # the original Git source, so existing prepare/build/package functions do
+    # not need to know that source acquisition changed.
+    {
+      echo
+      printf '# Local snapshot for source[%d] from %s\n' "$source_index" "$component"
+      printf 'source[%d]=%q\n' "$source_index" "$(basename "$archive")"
+    } >> "$local_pspbuild"
+  done
 }
 
 trap cleanup_local_source_snapshots EXIT
