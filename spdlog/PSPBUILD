@@ -1,6 +1,6 @@
 pkgname=spdlog
 pkgver=1.17.0
-pkgrel=2
+pkgrel=3
 pkgdesc="Very fast, header only, C++ logging library"
 arch=(any)
 url="https://github.com/gabime/spdlog"
@@ -10,14 +10,14 @@ depends=(fmt)
 makedepends=()
 provides=()
 conflicts=()
-source=("$pkgname-$pkgver::git+https://github.com/gabime/spdlog.git#branch=v1.x"
+source=("$pkgname-$pkgver::git+https://github.com/gabime/spdlog.git#tag=v${pkgver}"
         "spdlog-psp.patch")
 sha256sums=('SKIP'
             '19c3ca85f22d845e96a6b97e653ef17426ab55dd2d73fabbd3396a597689cacb')
 
 prepare() {
   cd "$pkgname-$pkgver"
-  patch -p1 < ../spdlog-psp.patch
+  patch --batch --forward -p1 < ../spdlog-psp.patch
 
   # patch spdlog.pc.in
   sed -i 's/@CMAKE_INSTALL_PREFIX@/${PSPDEV}\/psp/' ./cmake/spdlog.pc.in
