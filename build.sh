@@ -112,12 +112,12 @@ for pkgdir in $PKG_LIST; do
     continue
   fi
 
+  # A dependency must be installed in the PSP prefix before the dependent
+  # package is configured or linked. Build/install dependencies recursively,
+  # while preserving --install as the switch controlling installation of the
+  # package explicitly requested by this invocation.
   for pkgdep in $(bash -c "./parse_pspbuild.sh $pkgdir/PSPBUILD depends"); do
-    if [ -z "$doinstall" ]; then
-      ./build.sh "$pkgdep"
-    else
-      ./build.sh --install "$pkgdep"
-    fi
+    ./build.sh --install "$pkgdep"
   done
 
   pkgfile=$(bash -c "./parse_pspbuild.sh $pkgdir/PSPBUILD pkgoutput")
