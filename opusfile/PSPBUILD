@@ -1,6 +1,6 @@
 pkgname=opusfile
 pkgver=0.12
-pkgrel=2
+pkgrel=3
 pkgdesc="The opusfile library provides seeking, decode, and playback of Opus streams in the Ogg container."
 arch=(any)
 url="https://opus-codec.org/"
@@ -15,7 +15,7 @@ depends=('libogg' 'opus')
 
 prepare() {
     cd "${pkgname}-${pkgver}"
-    patch -p1 < ../../${pkgname}-${pkgver}-PSP.patch
+    ./autogen.sh
     sed -i 's#@prefix@#${PSPDEV}/psp#' opusfile.pc.in opusurl.pc.in
     sed -i 's#@exec_prefix@#${prefix}#' opusfile.pc.in opusurl.pc.in
     sed -i 's#@libdir@#${prefix}/lib#' opusfile.pc.in opusurl.pc.in
