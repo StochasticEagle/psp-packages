@@ -1,6 +1,6 @@
 pkgname=expat
-pkgver=2.7.1
-pkgrel=3
+pkgver=2.8.4
+pkgrel=1
 pkgdesc="XML parsing C library"
 arch=(any)
 url="https://libexpat.github.io/"
@@ -12,28 +12,29 @@ optdepends=()
 source=("$pkgname-${pkgver}::git+https://github.com/libexpat/libexpat.git#branch=master")
 sha256sums=('SKIP')
 
-prepare() {
-    cd "$pkgname-${pkgver}"
-    sed -i 's#@prefix@#${PSPDEV}/psp#' expat.pc.in
-    sed -i 's#@exec_prefix@#${prefix}#' expat.pc.in
-    sed -i 's#@libdir@#${prefix}/lib#' expat.pc.in
-    sed -i 's#@includedir@#${prefix}/include#' expat.pc.in
-}
-
 build() {
-    cd "$pkgname-${pkgver}"
-    mkdir -p build
-    cd build
-    cmake -Wno-dev -DCMAKE_C_FLAGS="-DXML_POOR_ENTROPY " -DCMAKE_TOOLCHAIN_FILE=$PSPDEV/psp/share/pspdev.cmake -DCMAKE_INSTALL_PREFIX=${pkgdir}/psp \
-        -DEXPAT_BUILD_EXAMPLES=OFF -DEXPAT_BUILD_DOCS=OFF -DEXPAT_BUILD_TESTS=OFF -DEXPAT_BUILD_TOOLS=OFF \
-        -DEXPAT_SHARED_LIBS=OFF "${XTRA_OPTS[@]}" .. || { exit 1; }
-    make --quiet $MAKEFLAGS || { exit 1; }
+    cd "$pkgname-${pkgver}/expat"
+
+    rm -rf build
+    cmake -S . -B build -Wno-author \
+        -DCMAKE_C_FLAGS="-DXML_POOR_ENTROPY" \
+        -DCMAKE_TOOLCHAIN_FILE="$PSPDEV/psp/share/pspdev.cmake" \
+        -DCMAKE_INSTALL_PREFIX=/psp \
+        -DEXPAT_BUILD_EXAMPLES=OFF \
+        -DEXPAT_BUILD_DOCS=OFF \
+        -DEXPAT_BUILD_TESTS=OFF \
+        -DEXPAT_BUILD_TOOLS=OFF \
+        -DEXPAT_SHARED_LIBS=OFF \
+        "${XTRA_OPTS[@]}" || { exit 1; }
+
+    cmake --build build -- $MAKEFLAGS || { exit 1; }
 }
 
 package() {
-    cd "$pkgname-${pkgver}/build"
-    make --quiet $MAKEFLAGS install
+    cd "$pkgname-${pkgver}/expat"
+
+    DESTDIR="$pkgdir" cmake --install build || { exit 1; }
 
     mkdir -m 755 -p "$pkgdir/psp/share/licenses/$pkgname"
-    install -m 644 ../COPYING "$pkgdir/psp/share/licenses/$pkgname"
+    install -m 644 COPYING "$pkgdir/psp/share/licenses/$pkgname"
 }
