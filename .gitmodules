@@ -120,6 +120,10 @@
 	url = https://github.com/libsdl-org/SDL_mixer.git
 	branch = main
 	shallow = true
+[submodule "components/SDL_mixer12"]
+	path = components/SDL_mixer12
+	url = https://github.com/libsdl-org/SDL_mixer.git
+	shallow = true
 [submodule "components/pspirkeyb"]
 	path = components/pspirkeyb
 	url = https://github.com/pspdev/pspirkeyb.git
