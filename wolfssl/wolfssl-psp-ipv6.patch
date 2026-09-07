@@ -1,0 +1,22 @@
+--- a/src/internal.c
++++ b/src/internal.c
+@@ -14382,7 +14382,8 @@
+ #endif /* !NO_TLS */
+ 
+ #ifndef NO_CERTS
+-#if defined(WOLFSSL_IP_ALT_NAME) && !defined(WOLFSSL_USER_IO)
++#if defined(WOLFSSL_IP_ALT_NAME) && defined(WOLFSSL_IPV6) && \
++    !defined(WOLFSSL_USER_IO)
+ static int MatchIPv6(const char* pattern, int patternLen,
+                      const char* str, word32 strLen)
+ {
+@@ -14480,7 +14481,8 @@
+     if (pattern == NULL || str == NULL || patternLen <= 0 || strLen == 0)
+         return 0;
+ 
+-#if defined(WOLFSSL_IP_ALT_NAME) && !defined(WOLFSSL_USER_IO)
++#if defined(WOLFSSL_IP_ALT_NAME) && defined(WOLFSSL_IPV6) && \
++    !defined(WOLFSSL_USER_IO)
+     /* First try to match IPv6 addresses */
+     if (MatchIPv6(pattern, patternLen, str, strLen))
+         return 1;
