@@ -54,7 +54,7 @@ diff --git a/src/sail/codec.c b/src/sail/codec.c
  
  /*
   * Public functions.
-@@ -239,8 +241,15 @@
+@@ -239,8 +241,14 @@
      }
      else
      {
@@ -69,7 +69,7 @@ diff --git a/src/sail/codec.c b/src/sail/codec.c
      }
  #else
      SAIL_TRY_OR_CLEANUP(load_codec_from_file(codec_info, codec_local),
-@@ -264,7 +273,7 @@
+@@ -264,7 +272,7 @@
      {
  #ifdef SAIL_WIN32
          FreeLibrary((HMODULE)codec->handle);
