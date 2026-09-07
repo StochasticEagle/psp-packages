@@ -135,6 +135,13 @@ for pkgdir in $PKG_LIST; do
 
   if [[ ! -f "${pkgdir}/${pkgfile}" ]]; then
     echo "Building $pkgdir ..."
+
+    # Many CMake recipes use ${srcdir}/build. psp-makepkg preserves src/ across
+    # invocations, so a version bump can otherwise reuse a cache whose source
+    # directory points at the previous release. Remove only this generated
+    # top-level CMake build tree before starting a package rebuild.
+    rm -rf "${pkgdir}/src/build"
+
     local_pspbuild="${pkgdir}/.PSPBUILD.local"
     configure_local_git_sources "$pkgdir/PSPBUILD" "$local_pspbuild"
     if (cd "$pkgdir" && psp-makepkg -p .PSPBUILD.local); then
