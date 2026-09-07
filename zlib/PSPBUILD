@@ -1,6 +1,6 @@
 pkgname=zlib
 pkgver=1.3.2
-pkgrel=2
+pkgrel=3
 pkgdesc="Compression library implementing the deflate compression method found in gzip and PKZIP"
 arch=(any)
 url="https://www.zlib.net/"
@@ -19,6 +19,12 @@ prepare() {
     # targets even when only one is built. PSP builds zlib static-only.
     sed -i 's/set(_ZLIB_supported_components "shared" "static")/set(_ZLIB_supported_components "static")/' \
         zlibConfig.cmake.in
+
+    # For a static-only PSP installation, export the static library under the
+    # conventional CMake target name expected by FindZLIB consumers such as
+    # libpng: ZLIB::ZLIB rather than ZLIB::ZLIBSTATIC.
+    sed -i 's/PROPERTIES EXPORT_NAME ZLIBSTATIC OUTPUT_NAME/PROPERTIES EXPORT_NAME ZLIB OUTPUT_NAME/' \
+        CMakeLists.txt
 }
 
 build() {
