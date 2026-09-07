@@ -1,6 +1,6 @@
 pkgname=mbedtls
-pkgver=2.28.10
-pkgrel=2
+pkgver=4.2.0
+pkgrel=1
 pkgdesc="Secure Socket Layer library"
 arch=(any)
 url="https://www.trustedfirmware.org/projects/mbed-tls/"
@@ -9,47 +9,41 @@ groups=('psp-libraries')
 depends=()
 optdepends=()
 makedepends=()
-source=(
-    "${pkgname}-${pkgver}::git+https://github.com/Mbed-TLS/mbedtls.git#branch=development"
-    "${pkgname}-${pkgver}-PSP.patch"
-)
-sha256sums=(
-    "SKIP"
-    "SKIP"
-)
+source=()
+sha256sums=()
 
 prepare() {
-    cd "${pkgname}-${pkgver}"
-    patch -p1 < ../${pkgname}-${pkgver}-PSP.patch || { exit 1; }
+    rm -rf "$srcdir/$pkgname-$pkgver"
+    cp -a "$startdir/../components/mbedtls" "$srcdir/$pkgname-$pkgver"
 
-    cd pkgconfig
-    sed -i 's#@CMAKE_INSTALL_PREFIX@#${PSPDEV}/psp#' mbedcrypto.pc.in
-    sed -i 's#@PKGCONFIG_LIBDIR@#${prefix}/lib#' mbedcrypto.pc.in
-    sed -i 's#@PKGCONFIG_INCLUDEDIR@#${prefix}/include#' mbedcrypto.pc.in
+    # The parent source is a shallow submodule and Mbed TLS 4.x contains
+    # framework and TF-PSA-Crypto submodules. Strip Git metadata only from the
+    # disposable build copy; the checked-out components tree remains pristine.
+    find "$srcdir/$pkgname-$pkgver" -name .git -exec rm -rf {} + 2>/dev/null || true
 
-    sed -i 's#@CMAKE_INSTALL_PREFIX@#${PSPDEV}/psp#' mbedtls.pc.in
-    sed -i 's#@PKGCONFIG_LIBDIR@#${prefix}/lib#' mbedtls.pc.in
-    sed -i 's#@PKGCONFIG_INCLUDEDIR@#${prefix}/include#' mbedtls.pc.in
-
-    sed -i 's#@CMAKE_INSTALL_PREFIX@#${PSPDEV}/psp#' mbedx509.pc.in
-    sed -i 's#@PKGCONFIG_LIBDIR@#${prefix}/lib#' mbedx509.pc.in
-    sed -i 's#@PKGCONFIG_INCLUDEDIR@#${prefix}/include#' mbedx509.pc.in
+    cd "$srcdir/$pkgname-$pkgver"
+    patch -p1 < "$startdir/mbedtls-$pkgver-PSP.patch" || { exit 1; }
 }
 
 build() {
-    cd "${pkgname}-${pkgver}"
-    mkdir -p build
-    cd build
-    cmake -Wno-dev -DCMAKE_TOOLCHAIN_FILE="${PSPDEV}/psp/share/pspdev.cmake" -DCMAKE_INSTALL_PREFIX="${pkgdir}/psp" \
-        -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
-        -DCMAKE_BUILD_TYPE=Release -DENABLE_TESTING=FALSE -DENABLE_PROGRAMS=FALSE "${XTRA_OPTS[@]}" .. || { exit 1; }
-    make --quiet $MAKEFLAGS || { exit 1; }
+    cmake -Wno-author \
+        -S "$srcdir/$pkgname-$pkgver" \
+        -B "$srcdir/$pkgname-$pkgver/build" \
+        -DCMAKE_TOOLCHAIN_FILE="$PSPDEV/psp/share/pspdev.cmake" \
+        -DCMAKE_INSTALL_PREFIX=/psp \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DENABLE_TESTING=OFF \
+        -DENABLE_PROGRAMS=OFF \
+        -DUSE_STATIC_MBEDTLS_LIBRARY=ON \
+        -DUSE_SHARED_MBEDTLS_LIBRARY=OFF \
+        "${XTRA_OPTS[@]}" || { exit 1; }
+
+    cmake --build "$srcdir/$pkgname-$pkgver/build" -- $MAKEFLAGS || { exit 1; }
 }
 
 package() {
-    cd "${pkgname}-${pkgver}/build"
-    make --quiet $MAKEFLAGS install
-    cd ..
-    mkdir -m 755 -p "${pkgdir}/psp/share/licenses/${pkgname}"
-    install -m 644 LICENSE "${pkgdir}/psp/share/licenses/${pkgname}"
+    DESTDIR="$pkgdir" cmake --install "$srcdir/$pkgname-$pkgver/build" || { exit 1; }
+
+    mkdir -m 755 -p "$pkgdir/psp/share/licenses/$pkgname"
+    install -m 644 "$srcdir/$pkgname-$pkgver/LICENSE" "$pkgdir/psp/share/licenses/$pkgname"
 }
