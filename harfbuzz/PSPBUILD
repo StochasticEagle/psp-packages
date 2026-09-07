@@ -1,6 +1,6 @@
 pkgname=harfbuzz
 pkgver=14.4.0
-pkgrel=3
+pkgrel=4
 pkgdesc="OpenType text shaping engine"
 arch=(any)
 url="https://harfbuzz.github.io/"

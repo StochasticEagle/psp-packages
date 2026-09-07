@@ -1,7 +1,7 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -139,8 +139,13 @@
+@@ -139,7 +139,12 @@
    find_package(Threads)
    if (CMAKE_USE_PTHREADS_INIT)
      add_compile_definitions(HAVE_PTHREAD)
