@@ -1,7 +1,7 @@
 #!/bin/bash
-# Build one package or all packages. Recipe files stay read-only under
-# pspbuild/; per-package build trees live under build/ and final package
-# archives are written flat into packages/.
+# Build one package or all packages. Recipes remain under pspbuild/;
+# makepkg build trees live under build/ and final package archives are written
+# flat into packages/.
 
 set -e
 
@@ -12,8 +12,25 @@ COMPONENTS="${ROOT}/components"
 BUILD_ROOT="${ROOT}/build"
 PACKAGES="${ROOT}/packages"
 SOURCE_COMPONENTS="${ROOT}/source-components.tsv"
+CURRENT_LOCAL_BUILD_FILE=""
+
+cleanup_local_buildfile() {
+  if [[ -n "${CURRENT_LOCAL_BUILD_FILE}" ]]; then
+    rm -f "${CURRENT_LOCAL_BUILD_FILE}"
+    CURRENT_LOCAL_BUILD_FILE=""
+  fi
+}
+trap cleanup_local_buildfile EXIT
 
 mkdir -p "${BUILD_ROOT}" "${PACKAGES}"
+
+# A fresh clone must be buildable directly. Package source submodules follow
+# the gitlinks selected by psp-packages; do not float them with --remote.
+if [[ -z "${PSP_PACKAGES_SUBMODULES_READY:-}" ]]; then
+  git -C "${ROOT}" submodule sync --recursive
+  git -C "${ROOT}" submodule update --init --recursive --depth 1
+  export PSP_PACKAGES_SUBMODULES_READY=1
+fi
 
 doinstall=""
 if [[ "${1:-}" == "--install" ]]; then
@@ -25,7 +42,11 @@ if [[ -z "${1:-}" ]]; then
   PKG_LIST=$(find "${RECIPES}" -mindepth 2 -maxdepth 2 -type f -name PSPBUILD \
     -exec sh -c 'basename "$(dirname "$1")"' _ {} \; | LC_ALL=C sort)
   PKG_LIST=$(printf "%s\n" ${PKG_LIST} | grep -Ev "^(${BLACKLIST})$")
-  echo "Will build packages: ${PKG_LIST}" | tr '\n' ' '
+  printf 'Will build packages:'
+  while IFS= read -r pkg; do
+    [[ -n "${pkg}" ]] && printf ' %s' "${pkg}"
+  done <<< "${PKG_LIST}"
+  printf '\n'
 else
   PKG_LIST="$1"
 fi
@@ -33,12 +54,13 @@ fi
 create_local_source_snapshot() {
   local component="$1"
   local source_name="$2"
-  local workspace="$3"
+  local source_cache="$3"
   local source_index="$4"
   local archive
 
+  mkdir -p "${source_cache}"
   archive=$(mktemp --suffix=.tar \
-    "${workspace}/.psp-source-${source_index}.XXXXXX")
+    "${source_cache}/.psp-source-${source_index}.XXXXXX")
 
   (
     cd "${component}"
@@ -53,7 +75,7 @@ create_local_source_snapshot() {
 configure_local_git_sources() {
   local pspbuild="$1"
   local local_pspbuild="$2"
-  local workspace="$3"
+  local source_cache="$3"
   local record source_index src entry remote source_name component mapped archive
   local -a git_sources=()
 
@@ -67,6 +89,10 @@ configure_local_git_sources() {
       done
     ' _ "${pspbuild}"
   )
+
+  if (( ${#git_sources[@]} == 0 )); then
+    return 1
+  fi
 
   cp "${pspbuild}" "${local_pspbuild}"
 
@@ -99,16 +125,16 @@ configure_local_git_sources() {
     if [[ ! -e "${component}" ]]; then
       echo "ERROR: Git source submodule is not initialized:"
       echo "  ${component}"
-      return 1
+      return 2
     fi
 
     archive=$(create_local_source_snapshot \
-      "${component}" "${source_name}" "${workspace}" "${source_index}")
+      "${component}" "${source_name}" "${source_cache}" "${source_index}")
 
     {
       echo
       printf '# Local snapshot for source[%d] from %s\n' "${source_index}" "${component}"
-      printf 'source[%d]=%q\n' "${source_index}" "$(basename "${archive}")"
+      printf 'source[%d]=%q\n' "${source_index}" "${archive}"
     } >> "${local_pspbuild}"
   done
 }
@@ -127,31 +153,55 @@ for pkg in ${PKG_LIST}; do
   done
 
   pkgfile=$("${ROOT}/parse_pspbuild.sh" "${pspbuild}" pkgoutput)
+  pkgbase=$(bash -c 'source "$1"; printf "%s\n" "${pkgbase:-${pkgname[0]}}"' _ "${pspbuild}")
   package_path="${PACKAGES}/${pkgfile}"
-  workdir="${BUILD_ROOT}/${pkg}"
+  workdir="${BUILD_ROOT}/${pkgbase}"
+  source_cache="${workdir}/sources"
 
   if [[ ! -f "${package_path}" ]]; then
     echo "Building ${pkg} ..."
 
-    # Every actual rebuild starts from a clean per-package build tree. Leave the
-    # tree in place afterward so successful and failed builds can be inspected.
+    # Native makepkg BUILDDIR handling creates build/<pkgbase>/src and
+    # build/<pkgbase>/pkg while keeping startdir at pspbuild/<package>.
     rm -rf "${workdir}"
-    mkdir -p "${workdir}"
-    cp -a "${recipe_dir}/." "${workdir}/"
+    mkdir -p "${source_cache}"
 
-    local_pspbuild="${workdir}/.PSPBUILD.local"
+    cleanup_local_buildfile
+    CURRENT_LOCAL_BUILD_FILE=$(mktemp "${recipe_dir}/.PSPBUILD.local.XXXXXX")
+
+    makepkg_args=()
+    set +e
     configure_local_git_sources \
-      "${workdir}/PSPBUILD" "${local_pspbuild}" "${workdir}"
+      "${pspbuild}" "${CURRENT_LOCAL_BUILD_FILE}" "${source_cache}"
+    source_status=$?
+    set -e
 
-    if (cd "${workdir}" && \
-      PKGDEST="${PACKAGES}" psp-makepkg -p .PSPBUILD.local); then
+    if (( source_status == 1 )); then
+      # No Git-backed sources: use the tracked PSPBUILD directly.
+      rm -f "${CURRENT_LOCAL_BUILD_FILE}"
+      CURRENT_LOCAL_BUILD_FILE=""
+    elif (( source_status != 0 )); then
+      cleanup_local_buildfile
+      exit "${source_status}"
+    else
+      makepkg_args=(-p "$(basename "${CURRENT_LOCAL_BUILD_FILE}")")
+    fi
+
+    if (cd "${recipe_dir}" && \
+      psp-makepkg "${makepkg_args[@]}" \
+        "BUILDDIR=${BUILD_ROOT}" \
+        "SRCDEST=${source_cache}" \
+        "PKGDEST=${PACKAGES}"); then
       :
     else
       status=$?
+      cleanup_local_buildfile
       echo "ERROR: Build failed for ${pkg}. Build tree preserved at:"
       echo "  ${workdir}"
       exit "${status}"
     fi
+
+    cleanup_local_buildfile
 
     if [[ ! -f "${package_path}" ]]; then
       echo "ERROR: Expected package was not produced:"
