@@ -15,6 +15,8 @@ SOURCE_COMPONENTS="${ROOT}/source-components.tsv"
 # Temporary one-commit repositories created from checked-out component
 # worktrees. They are removed after psp-makepkg finishes.
 LOCAL_SOURCE_SNAPSHOTS=()
+LOCAL_SNAPSHOT_PATH=""
+LOCAL_SNAPSHOT_COMMIT=""
 
 doinstall=""
 if [ "$1" == "--install" ]; then
@@ -39,6 +41,8 @@ cleanup_local_source_snapshots() {
     rm -rf "$snapshot"
   done
   LOCAL_SOURCE_SNAPSHOTS=()
+  LOCAL_SNAPSHOT_PATH=""
+  LOCAL_SNAPSHOT_COMMIT=""
 }
 
 create_local_source_snapshot() {
@@ -74,7 +78,8 @@ create_local_source_snapshot() {
   git -C "$snapshot" symbolic-ref HEAD refs/heads/psp-packages-source
 
   LOCAL_SOURCE_SNAPSHOTS+=("$snapshot")
-  printf '%s\t%s\n' "$snapshot" "$snapshot_commit"
+  LOCAL_SNAPSHOT_PATH="$snapshot"
+  LOCAL_SNAPSHOT_COMMIT="$snapshot_commit"
 }
 
 configure_local_git_sources() {
@@ -82,7 +87,7 @@ configure_local_git_sources() {
   local local_pspbuild="$2"
   local src entry remote source_name component mapped
   local ref_kind ref_value escaped_ref i=0 j old_count=0
-  local snapshot snapshot_commit snapshot_info package_dir
+  local snapshot snapshot_commit package_dir
   local -a git_sources=()
 
   cleanup_local_source_snapshots
@@ -138,9 +143,9 @@ configure_local_git_sources() {
     # out component is the cache; this package-local repository is disposable.
     rm -rf "${ROOT}/${package_dir}/${source_name}"
 
-    snapshot_info="$(create_local_source_snapshot "$component" "$source_name")"
-    snapshot="${snapshot_info%%$'\t'*}"
-    snapshot_commit="${snapshot_info#*$'\t'}"
+    create_local_source_snapshot "$component" "$source_name"
+    snapshot="$LOCAL_SNAPSHOT_PATH"
+    snapshot_commit="$LOCAL_SNAPSHOT_COMMIT"
 
     # The parent repository's gitlink/worktree is authoritative. Rewrite any
     # documented branch/tag/commit selector in the temporary PSPBUILD to the
@@ -170,6 +175,8 @@ configure_local_git_sources() {
 
   export GIT_CONFIG_COUNT="$i"
 }
+
+trap cleanup_local_source_snapshots EXIT
 
 for pkgdir in $PKG_LIST; do
   if [[ ! -f "$pkgdir/PSPBUILD" ]]; then
