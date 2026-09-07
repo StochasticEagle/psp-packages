@@ -1,9 +1,9 @@
 pkgname=leptonica
-pkgver=1.84.1
-pkgrel=6
+pkgver=1.87.0
+pkgrel=1
 pkgdesc="An open source C library for efficient image processing and image analysis operations"
 arch=(any)
-url="http://www.leptonica.org/"
+url="https://www.leptonica.org/"
 license=('BSD-2-Clause')
 depends=('zlib' 'libpng' 'jpeg')
 groups=('psp-libraries')
@@ -21,7 +21,7 @@ sha256sums=(
 prepare() {
     cd "$pkgname-${pkgver}"
 
-    patch -p1 < ../${pkgname}-${pkgver}-PSP.patch
+    patch --batch --forward -p1 < ../${pkgname}-${pkgver}-PSP.patch
 
     sed -i 's#@prefix@#${PSPDEV}/psp#' lept.pc.in
     sed -i 's#@exec_prefix@#${prefix}#' lept.pc.in
