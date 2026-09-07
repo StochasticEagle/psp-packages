@@ -10,7 +10,7 @@ groups=('psp-libraries')
 makedepends=()
 optdepends=()
 source=(
-  "harfbuzz-${pkgver}::git+https://github.com/harfbuzz/harfbuzz.git#branch=main"
+  "harfbuzz-${pkgver}::git+https://github.com/harfbuzz/harfbuzz.git#tag=${pkgver}"
   "fix-cmake.patch"
 )
 sha256sums=(
