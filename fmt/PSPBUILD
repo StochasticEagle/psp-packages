@@ -1,6 +1,6 @@
 pkgname=fmt
 pkgver=12.2.0
-pkgrel=1
+pkgrel=2
 pkgdesc="Open-source formatting library for C++"
 arch=('any')
 url="https://fmt.dev/"
@@ -21,8 +21,12 @@ prepare() {
 }
 
 build() {
-    cmake -S $pkgname-$pkgver -B build \
-        -DCMAKE_TOOLCHAIN_FILE=$PSPDEV/psp/share/pspdev.cmake \
+    # psp-makepkg preserves src/ between invocations. Do not allow a CMake
+    # cache generated for an older fmt source tree to survive a version bump.
+    rm -rf build
+
+    cmake -S "$pkgname-$pkgver" -B build \
+        -DCMAKE_TOOLCHAIN_FILE="$PSPDEV/psp/share/pspdev.cmake" \
         -DBUILD_SHARED_LIBS=OFF \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_INSTALL_PREFIX=/psp \
@@ -30,11 +34,11 @@ build() {
         -DFMT_TEST=OFF \
         -DFMT_FUZZ=OFF \
         -DFMT_OS=OFF \
-        -Wno-dev
+        -Wno-author
     cmake --build build
 }
 
 package() {
     DESTDIR="$pkgdir" cmake --install build
-    install -Dm644 -t "$pkgdir"/psp/share/licenses/$pkgname $pkgname-$pkgver/LICENSE
+    install -Dm644 -t "$pkgdir"/psp/share/licenses/$pkgname "$pkgname-$pkgver/LICENSE"
 }
