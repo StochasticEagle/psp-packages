@@ -1,6 +1,6 @@
 pkgname=libpng
-pkgver=1.6.53
-pkgrel=2
+pkgver=1.6.58
+pkgrel=1
 pkgdesc="libpng is the official PNG reference library"
 arch=(any)
 url="http://libpng.org/pub/png/libpng.html"
@@ -9,7 +9,7 @@ groups=('psp-libraries')
 depends=('zlib')
 makedepends=()
 optdepends=()
-source=("$pkgname-${pkgver}::git+https://github.com/pnggroup/libpng.git#branch=libpng18")
+source=("$pkgname-${pkgver}::git+https://github.com/pnggroup/libpng.git#commit=3061454d980de7d53608f594194cfac722721d2a")
 sha256sums=('SKIP')
 
 prepare() {
@@ -22,17 +22,23 @@ prepare() {
 
 build() {
     cd "$pkgname-${pkgver}"
-    mkdir -p build
-    cd build
-    cmake -Wno-dev -DCMAKE_TOOLCHAIN_FILE=$PSPDEV/psp/share/pspdev.cmake -DCMAKE_INSTALL_PREFIX=/psp -DBUILD_SHARED_LIBS=OFF \
-        -DPNG_SHARED=OFF -DPNG_STATIC=ON -DUNIX=ON -DCMAKE_BUILD_TYPE=Release "${XTRA_OPTS[@]}" .. || { exit 1; }
-    make --quiet $MAKEFLAGS || { exit 1; }
+    rm -rf build
+    cmake -Wno-author -S . -B build \
+        -DCMAKE_TOOLCHAIN_FILE="$PSPDEV/psp/share/pspdev.cmake" \
+        -DCMAKE_INSTALL_PREFIX=/psp \
+        -DBUILD_SHARED_LIBS=OFF \
+        -DPNG_SHARED=OFF \
+        -DPNG_STATIC=ON \
+        -DUNIX=ON \
+        -DCMAKE_BUILD_TYPE=Release \
+        "${XTRA_OPTS[@]}" || { exit 1; }
+    cmake --build build -- $MAKEFLAGS || { exit 1; }
 }
 
 package() {
-    cd "$pkgname-${pkgver}/build"
-    make --quiet DESTDIR=$pkgdir $MAKEFLAGS install
+    cd "$pkgname-${pkgver}"
+    DESTDIR="$pkgdir" cmake --install build
 
     mkdir -m 755 -p "$pkgdir/psp/share/licenses/$pkgname"
-    install -m 644 ../LICENSE "$pkgdir/psp/share/licenses/$pkgname"
+    install -m 644 LICENSE "$pkgdir/psp/share/licenses/$pkgname"
 }
