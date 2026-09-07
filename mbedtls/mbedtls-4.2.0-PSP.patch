@@ -1,0 +1,213 @@
+diff --git a/library/net_sockets.c b/library/net_sockets.c
+--- a/library/net_sockets.c
++++ b/library/net_sockets.c
+@@ -9,7 +9,7 @@
+ 
+ #if defined(MBEDTLS_NET_C)
+ 
+-#if !defined(MBEDTLS_PLATFORM_IS_UNIXLIKE) && !defined(_WIN32)
++#if !defined(MBEDTLS_PLATFORM_IS_UNIXLIKE) && !defined(_WIN32) && !defined(PSP)
+ #error "This module only works on Unix and Windows, see MBEDTLS_NET_C in mbedtls_config.h"
+ #endif
+@@ -153,39 +153,38 @@ int mbedtls_net_connect(mbedtls_net_context *ctx, const char *host,
+                         const char *port, int proto)
+ {
+-    int ret = MBEDTLS_ERR_ERROR_CORRUPTION_DETECTED;
+-    struct addrinfo hints, *addr_list, *cur;
++    int ret;
++    int socket_type;
++    int socket_protocol;
++    struct sockaddr_in server_addr;
++    struct hostent *server_host;
+ 
+     if ((ret = net_prepare()) != 0) {
+         return ret;
+     }
+ 
+-    /* Do name resolution with both IPv6 and IPv4 */
+-    memset(&hints, 0, sizeof(hints));
+-    hints.ai_family = AF_UNSPEC;
+-    hints.ai_socktype = proto == MBEDTLS_NET_PROTO_UDP ? SOCK_DGRAM : SOCK_STREAM;
+-    hints.ai_protocol = proto == MBEDTLS_NET_PROTO_UDP ? IPPROTO_UDP : IPPROTO_TCP;
+-
+-    if (getaddrinfo(host, port, &hints, &addr_list) != 0) {
++    server_host = gethostbyname(host);
++    if (server_host == NULL) {
+         return MBEDTLS_ERR_NET_UNKNOWN_HOST;
+     }
+ 
+-    /* Try the sockaddrs until a connection succeeds */
+-    ret = MBEDTLS_ERR_NET_UNKNOWN_HOST;
+-    for (cur = addr_list; cur != NULL; cur = cur->ai_next) {
+-        ctx->fd = (int) socket(cur->ai_family, cur->ai_socktype,
+-                               cur->ai_protocol);
+-        if (ctx->fd < 0) {
+-            ret = MBEDTLS_ERR_NET_SOCKET_FAILED;
+-            continue;
+-        }
++    socket_type = proto == MBEDTLS_NET_PROTO_UDP ? SOCK_DGRAM : SOCK_STREAM;
++    socket_protocol = proto == MBEDTLS_NET_PROTO_UDP ? IPPROTO_UDP : IPPROTO_TCP;
++    ctx->fd = (int) socket(AF_INET, socket_type, socket_protocol);
++    if (ctx->fd < 0) {
++        return MBEDTLS_ERR_NET_SOCKET_FAILED;
++    }
+ 
+-        if (connect(ctx->fd, cur->ai_addr, MSVC_INT_CAST cur->ai_addrlen) == 0) {
+-            ret = 0;
+-            break;
+-        }
++    memset(&server_addr, 0, sizeof(server_addr));
++    memcpy(&server_addr.sin_addr, server_host->h_addr, server_host->h_length);
++    server_addr.sin_family = AF_INET;
++    server_addr.sin_port = htons((uint16_t) atoi(port));
+ 
++    if (connect(ctx->fd, (struct sockaddr *) &server_addr,
++                sizeof(server_addr)) != 0) {
+         mbedtls_net_close(ctx);
+-        ret = MBEDTLS_ERR_NET_CONNECT_FAILED;
++        return MBEDTLS_ERR_NET_CONNECT_FAILED;
+     }
+ 
+-    freeaddrinfo(addr_list);
+-
+-    return ret;
++    return 0;
+ }
+ 
+ /*
+@@ -194,48 +193,57 @@ int mbedtls_net_connect(mbedtls_net_context *ctx, const char *host,
+  */
+ int mbedtls_net_bind(mbedtls_net_context *ctx, const char *bind_ip, const char *port, int proto)
+ {
+-    int n, ret;
+-    struct addrinfo hints, *addr_list, *cur;
++    int n, ret;
++    int socket_type;
++    int socket_protocol;
++    int c[4];
++    struct sockaddr_in server_addr;
+ 
+     if ((ret = net_prepare()) != 0) {
+         return ret;
+     }
+ 
+-    /* Bind to IPv6 and/or IPv4, but only in the desired protocol */
+-    memset(&hints, 0, sizeof(hints));
+-    hints.ai_family = AF_UNSPEC;
+-    hints.ai_socktype = proto == MBEDTLS_NET_PROTO_UDP ? SOCK_DGRAM : SOCK_STREAM;
+-    hints.ai_protocol = proto == MBEDTLS_NET_PROTO_UDP ? IPPROTO_UDP : IPPROTO_TCP;
+-    if (bind_ip == NULL) {
+-        hints.ai_flags = AI_PASSIVE;
++    socket_type = proto == MBEDTLS_NET_PROTO_UDP ? SOCK_DGRAM : SOCK_STREAM;
++    socket_protocol = proto == MBEDTLS_NET_PROTO_UDP ? IPPROTO_UDP : IPPROTO_TCP;
++    ctx->fd = (int) socket(AF_INET, socket_type, socket_protocol);
++    if (ctx->fd < 0) {
++        return MBEDTLS_ERR_NET_SOCKET_FAILED;
+     }
+ 
+-    if (getaddrinfo(bind_ip, port, &hints, &addr_list) != 0) {
+-        return MBEDTLS_ERR_NET_UNKNOWN_HOST;
++    n = 1;
++    if (setsockopt(ctx->fd, SOL_SOCKET, SO_REUSEADDR,
++                   (const char *) &n, sizeof(n)) != 0) {
++        mbedtls_net_close(ctx);
++        return MBEDTLS_ERR_NET_SOCKET_FAILED;
+     }
+ 
+-    /* Try the sockaddrs until a binding succeeds */
+-    ret = MBEDTLS_ERR_NET_UNKNOWN_HOST;
+-    for (cur = addr_list; cur != NULL; cur = cur->ai_next) {
+-        ctx->fd = (int) socket(cur->ai_family, cur->ai_socktype,
+-                               cur->ai_protocol);
+-        if (ctx->fd < 0) {
+-            ret = MBEDTLS_ERR_NET_SOCKET_FAILED;
+-            continue;
+-        }
+-
+-        n = 1;
+-        if (setsockopt(ctx->fd, SOL_SOCKET, SO_REUSEADDR,
+-                       (const char *) &n, sizeof(n)) != 0) {
+-            mbedtls_net_close(ctx);
+-            ret = MBEDTLS_ERR_NET_SOCKET_FAILED;
+-            continue;
++    memset(&server_addr, 0, sizeof(server_addr));
++    server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
++    server_addr.sin_family = AF_INET;
++    server_addr.sin_port = htons((uint16_t) atoi(port));
++
++    if (bind_ip != NULL) {
++        memset(c, 0, sizeof(c));
++        if (sscanf(bind_ip, "%d.%d.%d.%d", &c[0], &c[1], &c[2], &c[3]) == 4) {
++            for (n = 0; n < 4; n++) {
++                if (c[n] < 0 || c[n] > 255) {
++                    break;
++                }
++            }
++            if (n == 4) {
++                server_addr.sin_addr.s_addr = htonl(
++                    ((uint32_t) c[0] << 24) |
++                    ((uint32_t) c[1] << 16) |
++                    ((uint32_t) c[2] << 8) |
++                    ((uint32_t) c[3]));
++            }
+         }
++    }
+ 
+-        if (bind(ctx->fd, cur->ai_addr, MSVC_INT_CAST cur->ai_addrlen) != 0) {
+-            mbedtls_net_close(ctx);
+-            ret = MBEDTLS_ERR_NET_BIND_FAILED;
+-            continue;
+-        }
++    if (bind(ctx->fd, (struct sockaddr *) &server_addr,
++             sizeof(server_addr)) != 0) {
++        mbedtls_net_close(ctx);
++        return MBEDTLS_ERR_NET_BIND_FAILED;
++    }
+ 
+-        /* Listen only makes sense for TCP */
+-        if (proto == MBEDTLS_NET_PROTO_TCP) {
+-            if (listen(ctx->fd, MBEDTLS_NET_LISTEN_BACKLOG) != 0) {
+-                mbedtls_net_close(ctx);
+-                ret = MBEDTLS_ERR_NET_LISTEN_FAILED;
+-                continue;
+-            }
++    if (proto == MBEDTLS_NET_PROTO_TCP) {
++        if (listen(ctx->fd, MBEDTLS_NET_LISTEN_BACKLOG) != 0) {
++            mbedtls_net_close(ctx);
++            return MBEDTLS_ERR_NET_LISTEN_FAILED;
+         }
+-
+-        /* Bind was successful */
+-        ret = 0;
+-        break;
+     }
+ 
+-    freeaddrinfo(addr_list);
+-
+-    return ret;
+-
++    return 0;
+ }
+@@ -328,7 +336,7 @@ int mbedtls_net_accept(mbedtls_net_context *bind_ctx,
+ #if defined(__socklen_t_defined) || defined(_SOCKLEN_T) ||  \
+     defined(_SOCKLEN_T_DECLARED) || defined(__DEFINED_socklen_t) || \
+-    defined(socklen_t) || (defined(_POSIX_VERSION) && _POSIX_VERSION >= 200112L)
++    defined(socklen_t) || (defined(_POSIX_VERSION) && _POSIX_VERSION >= 200112L) || defined(PSP)
+     socklen_t n = (socklen_t) sizeof(client_addr);
+     socklen_t type_len = (socklen_t) sizeof(type);
+ #else
+@@ -405,6 +413,7 @@ int mbedtls_net_accept(mbedtls_net_context *bind_ctx,
+             }
+ 
+             memcpy(client_ip, &addr4->sin_addr.s_addr, *cip_len);
++#if !defined(PSP)
+         } else {
+             struct sockaddr_in6 *addr6 = (struct sockaddr_in6 *) &client_addr;
+             *cip_len = sizeof(addr6->sin6_addr.s6_addr);
+@@ -414,6 +423,7 @@ int mbedtls_net_accept(mbedtls_net_context *bind_ctx,
+             }
+ 
+             memcpy(client_ip, &addr6->sin6_addr.s6_addr, *cip_len);
++#endif
+         }
+     }
