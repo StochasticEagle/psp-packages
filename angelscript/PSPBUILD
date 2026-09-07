@@ -1,6 +1,6 @@
 pkgname=angelscript
 pkgver=2.38.0
-pkgrel=1
+pkgrel=2
 pkgdesc="A game-oriented interpreted compiled scripting language library"
 arch=(any)
 url="https://www.angelcode.com/angelscript/"
@@ -19,23 +19,25 @@ prepare() {
 }
 
 build() {
-    cd "${srcdir}/angelscript-${pkgver}/sdk/angelscript/projects/cmake"
-    mkdir -p build
-    cd build
-    cmake -Wno-dev -DCMAKE_TOOLCHAIN_FILE=$PSPDEV/psp/share/pspdev.cmake -DCMAKE_INSTALL_PREFIX=${pkgdir}/psp -DBUILD_SHARED_LIBS=OFF \
-        -DCMAKE_BUILD_TYPE=Release -DCMAKE_POLICY_VERSION_MINIMUM=3.5 "${XTRA_OPTS[@]}" .. || { exit 1; }
-    make --quiet $MAKEFLAGS || { exit 1; }
+    cmake -S "${srcdir}/angelscript-${pkgver}/sdk/angelscript/projects/cmake" \
+        -B "${srcdir}/angelscript-${pkgver}/build" \
+        -Wno-dev \
+        -DCMAKE_TOOLCHAIN_FILE="$PSPDEV/psp/share/pspdev.cmake" \
+        -DCMAKE_INSTALL_PREFIX=/psp \
+        -DBUILD_SHARED_LIBS=OFF \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_POLICY_VERSION_MINIMUM=3.10 \
+        "${XTRA_OPTS[@]}" || { exit 1; }
+    cmake --build "${srcdir}/angelscript-${pkgver}/build" -- $MAKEFLAGS || { exit 1; }
 }
 
 package() {
-    cd "${srcdir}/angelscript-${pkgver}/sdk/angelscript"
-    mkdir -m 755 -p "$pkgdir/psp/lib" "$pkgdir/psp/include"
-    install -m 644 "lib/libAngelscript.a" "$pkgdir/psp/lib"
-    install -m 644 "include/angelscript.h" "$pkgdir/psp/include"
+    DESTDIR="$pkgdir" cmake --install "${srcdir}/angelscript-${pkgver}/build" || { exit 1; }
 
     mkdir -m 755 -p "$pkgdir/psp/share/licenses/$pkgname"
-    install -m 644 ../docs/manual/doc_license.html "$pkgdir/psp/share/licenses/$pkgname/license.html"
+    install -m 644 "${srcdir}/angelscript-${pkgver}/sdk/docs/manual/doc_license.html" \
+        "$pkgdir/psp/share/licenses/$pkgname/license.html"
 
-    mkdir -p "$pkgdir/psp/share/doc/"
-    cp -r ../docs "$pkgdir/psp/share/doc/$pkgname"
+    mkdir -p "$pkgdir/psp/share/doc/$pkgname"
+    cp -r "${srcdir}/angelscript-${pkgver}/sdk/docs/." "$pkgdir/psp/share/doc/$pkgname/"
 }
