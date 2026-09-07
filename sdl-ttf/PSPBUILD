@@ -1,6 +1,6 @@
 pkgname=sdl-ttf
 pkgver=2.0.11
-pkgrel=10
+pkgrel=11
 pkgdesc="A companion library to SDL for working with TrueType (tm) fonts"
 arch=(any)
 url="https://www.libsdl.org/projects/old/SDL_ttf/release-1.2.html"
@@ -24,7 +24,8 @@ build() {
     cd "SDL_ttf-$pkgver-psp"
     ./autogen.sh
     CFLAGS="$(psp-pkgconf --cflags freetype2 libpng zlib)" \
-    LDFLAGS="-L$(psp-config --pspsdk-path)/lib" LIBS="$(psp-pkgconf --libs freetype2 libpng zlib) -lpspvfpu" \
+    LDFLAGS="-L$(psp-config --pspsdk-path)/lib -L$(psp-config --psp-prefix)/lib -lc -lpspuser" \
+    LIBS="$(psp-pkgconf --libs freetype2 libpng zlib) -lpspvfpu -lc -lpspuser" \
     ./configure --host psp --prefix=/psp --with-sdl-prefix=$(psp-config --psp-prefix) \
     --with-freetype-prefix=$(psp-config --psp-prefix) --without-x
     make
@@ -39,4 +40,3 @@ package() {
     mkdir -m 755 -p "$pkgdir/psp/share/licenses/$pkgname"
     install -m 644 COPYING "$pkgdir/psp/share/licenses/$pkgname/COPYING"
 }
-
