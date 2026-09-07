@@ -1,6 +1,6 @@
 pkgname=angelscript
 pkgver=2.38.0
-pkgrel=2
+pkgrel=3
 pkgdesc="A game-oriented interpreted compiled scripting language library"
 arch=(any)
 url="https://www.angelcode.com/angelscript/"
@@ -19,9 +19,16 @@ prepare() {
 }
 
 build() {
+    # AngelScript's generic MIPS native-call backend still contains instructions
+    # and argument packing that are not valid for the Allegrex FPU, notably
+    # double-precision COP1 operations. Use AngelScript's supported portable
+    # host-call path on PSP rather than compiling a native ABI stub that is not
+    # safe for this processor. Applications must register host functions with
+    # asCALL_GENERIC when using this build.
+    CXXFLAGS="${CXXFLAGS:+$CXXFLAGS }-DAS_MAX_PORTABILITY" \
     cmake -S "${srcdir}/angelscript-${pkgver}/sdk/angelscript/projects/cmake" \
         -B "${srcdir}/angelscript-${pkgver}/build" \
-        -Wno-dev \
+        -Wno-author \
         -DCMAKE_TOOLCHAIN_FILE="$PSPDEV/psp/share/pspdev.cmake" \
         -DCMAKE_INSTALL_PREFIX=/psp \
         -DBUILD_SHARED_LIBS=OFF \
