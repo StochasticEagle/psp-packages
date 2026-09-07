@@ -1,6 +1,6 @@
 pkgname=mbedtls
 pkgver=4.2.0
-pkgrel=2
+pkgrel=3
 pkgdesc="Secure Socket Layer library"
 arch=(any)
 url="https://www.trustedfirmware.org/projects/mbed-tls/"
@@ -22,7 +22,7 @@ prepare() {
     find "$srcdir/$pkgname-$pkgver" -name .git -exec rm -rf {} + 2>/dev/null || true
 
     cd "$srcdir/$pkgname-$pkgver"
-    patch -p1 < "$startdir/mbedtls-$pkgver-PSP.patch" || { exit 1; }
+    patch --batch --forward -p1 < "$startdir/mbedtls-$pkgver-PSP.patch" || { exit 1; }
 }
 
 build() {
