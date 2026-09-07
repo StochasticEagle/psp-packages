@@ -1,6 +1,6 @@
 pkgname=wolfssl
 pkgver=5.9.2
-pkgrel=1
+pkgrel=2
 pkgdesc="The wolfSSL library is a small, fast, portable implementation of TLS/SSL for embedded devices to the cloud. wolfSSL supports up to TLS 1.3!"
 arch=(any)
 url="https://www.wolfssl.com/"
@@ -11,16 +11,41 @@ makedepends=()
 optdepends=()
 source=(
     "$pkgname-$pkgver-stable::git+https://github.com/wolfSSL/wolfssl.git#tag=v5.9.2-stable"
-    "wolfssl-psp-ipv6.patch"
 )
 sha256sums=(
     'SKIP'
-    'b75088ef97eb31bd42a8a63384f323a250a803312c02d251088eade6bc78c789'
 )
 
 prepare() {
     cd "$pkgname-$pkgver-stable"
-    patch --batch --forward -Np1 -i "../wolfssl-psp-ipv6.patch"
+
+    # PSP does not provide IPv6. Guard wolfSSL's IPv6 alternate-name helper
+    # with WOLFSSL_IPV6 so disabling IPv6 also excludes these code paths.
+    patch --batch --forward -Np1 <<'PATCH'
+--- a/src/internal.c
++++ b/src/internal.c
+@@ -14382,7 +14382,8 @@
+ #endif /* !NO_TLS */
+ 
+ #ifndef NO_CERTS
+-#if defined(WOLFSSL_IP_ALT_NAME) && !defined(WOLFSSL_USER_IO)
++#if defined(WOLFSSL_IP_ALT_NAME) && defined(WOLFSSL_IPV6) && \
++    !defined(WOLFSSL_USER_IO)
+ static int MatchIPv6(const char* pattern, int patternLen,
+                      const char* str, word32 strLen)
+ {
+@@ -14480,7 +14481,8 @@
+     if (pattern == NULL || str == NULL || patternLen <= 0 || strLen == 0)
+         return 0;
+ 
+-#if defined(WOLFSSL_IP_ALT_NAME) && !defined(WOLFSSL_USER_IO)
++#if defined(WOLFSSL_IP_ALT_NAME) && defined(WOLFSSL_IPV6) && \
++    !defined(WOLFSSL_USER_IO)
+     /* First try to match IPv6 addresses */
+     if (MatchIPv6(pattern, patternLen, str, strLen))
+         return 1;
+PATCH
+
     sed -i 's#@prefix@#${PSPDEV}/psp#' support/wolfssl.pc.in
     sed -i 's#@exec_prefix@#${prefix}#' support/wolfssl.pc.in
     sed -i 's#@libdir@#${prefix}/lib#' support/wolfssl.pc.in
