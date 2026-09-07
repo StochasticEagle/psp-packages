@@ -336,7 +336,7 @@
 [submodule "components/zlib"]
 	path = components/zlib
 	url = https://github.com/madler/zlib.git
-	branch = develop
+	branch = master
 	shallow = true
 [submodule "components/zziplib"]
 	path = components/zziplib
