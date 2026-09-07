@@ -1,6 +1,6 @@
 pkgname=unarr
 pkgver=1.1.1
-pkgrel=5
+pkgrel=6
 pkgdesc="A decompression library for rar, tar, zip and 7z archives"
 arch=(any)
 url="https://github.com/selmf/unarr/"
@@ -19,10 +19,12 @@ sha256sums=(
 prepare() {
     cd "${pkgname}-${pkgver}"
 
-    # _7z.c uses the C99 PRIi64 format macro but upstream does not include
-    # <inttypes.h>. GCC 15 correctly rejects the undeclared macro on PSP.
-    if ! grep -q '^#include <inttypes.h>$' _7z/_7z.c; then
-        sed -i '/^#include "_7z.h"$/a #include <inttypes.h>' _7z/_7z.c
+    # newlib can fail to expose the 64-bit PRI* format macros when its internal
+    # stdint definitions are first reached indirectly. Force those definitions
+    # in before unarr's headers pull in <inttypes.h>.
+    sed -i '/^#include <inttypes.h>$/d' _7z/_7z.c
+    if ! grep -q '^#include <sys\/_stdint.h>$' _7z/_7z.c; then
+        sed -i '/^#include "_7z.h"$/i #include <sys/_stdint.h>' _7z/_7z.c
     fi
 }
 
