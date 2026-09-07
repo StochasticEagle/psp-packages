@@ -1,8 +1,7 @@
 diff --git a/src/physfs_platforms.h b/src/physfs_platforms.h
-index 1ac17d9..0a1d70e 100644
 --- a/src/physfs_platforms.h
 +++ b/src/physfs_platforms.h
-@@ -72,6 +72,10 @@
+@@ -86,6 +86,10 @@
  #elif defined(unix) || defined(__unix__)
  #  define PHYSFS_PLATFORM_UNIX 1
  #  define PHYSFS_PLATFORM_POSIX 1
@@ -10,6 +9,6 @@ index 1ac17d9..0a1d70e 100644
 +#  define PHYSFS_NO_CDROM_SUPPORT 1
 +#  define PHYSFS_PLATFORM_UNIX 1
 +#  define PHYSFS_PLATFORM_POSIX 1
- #else
- #  error Unknown platform.
- #endif
+ #elif defined(__wii__) || defined(__gamecube__)
+ #  define PHYSFS_PLATFORM_OGC 1
+ #  define PHYSFS_NO_CDROM_SUPPORT 1 // TODO
