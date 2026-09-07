@@ -1,6 +1,6 @@
 pkgname=physfs
 pkgver=3.2.0
-pkgrel=7
+pkgrel=8
 pkgdesc="PhysicsFS; a portable, flexible file i/o abstraction."
 arch=(any)
 url="https://icculus.org/physfs/"
