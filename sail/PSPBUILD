@@ -1,6 +1,6 @@
 pkgname=sail
 pkgver=1.2.0
-pkgrel=1
+pkgrel=2
 pkgdesc="SAIL cross-platform image decoding library"
 arch=(any)
 url='https://github.com/HappySeaFox/sail'
