@@ -1,6 +1,6 @@
 pkgname=opentri
 pkgver=r7.95b040d
-pkgrel=8
+pkgrel=9
 pkgdesc="openTRI is a game engine for the PSP"
 arch=(any)
 url="https://github.com/fjtrujy/openTRI"
@@ -19,10 +19,19 @@ build() {
 
 package() {
     cd openTRI
-    mkdir -m 755 -p "$pkgdir/psp/lib"
-    make CP=cp MKDIR=mkdir DOXYGEN=doxygen PSPDIR="$pkgdir/psp" install
+
+    # Upstream's install target always regenerates API documentation with
+    # host doxygen. Package the already-built library and public headers
+    # directly so installing openTRI does not require documentation tooling.
+    install -Dm644 libtri.a "$pkgdir/psp/lib/libtri.a"
+
+    mkdir -p "$pkgdir/psp/include/openTri"
+    install -m644 ./*.h "$pkgdir/psp/include/openTri/"
+
+    mkdir -p "$pkgdir/psp/include/streams"
+    install -m644 streams/*.h "$pkgdir/psp/include/streams/"
+    install -m644 streams/*.inc "$pkgdir/psp/include/streams/"
 
     mkdir -m 755 -p "$pkgdir/psp/share/licenses/$pkgname"
     install -m 644 LICENSE "$pkgdir/psp/share/licenses/$pkgname"
 }
-
