@@ -1,6 +1,6 @@
 pkgname=sdl3
 pkgver=3.4.14
-pkgrel=3
+pkgrel=1
 pkgdesc="A library designed to provide low level access to audio, input, and graphics hardware"
 arch=(any)
 url="https://wiki.libsdl.org/SDL3/FrontPage"
