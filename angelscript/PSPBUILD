@@ -1,30 +1,25 @@
 pkgname=angelscript
-pkgver=2.28.2
-pkgrel=7
+pkgver=2.38.0
+pkgrel=1
 pkgdesc="A game-oriented interpreted compiled scripting language library"
 arch=(any)
-url="http://angelcode.com/angelscript/"
+url="https://www.angelcode.com/angelscript/"
 license=('Zlib')
 groups=('psp-libraries')
 depends=()
 makedepends=()
 optdepends=()
-source=(
-    "http://www.angelcode.com/angelscript/sdk/files/${pkgname}_${pkgver}.zip"
-    "${pkgname}_${pkgver}.patch"
-)
-sha256sums=(
-    '54bc6126d2ba2509f3916ff139758d3c3c2185dddb521fc040110c5afde6000a'
-    'SKIP'
-)
+source=()
+sha256sums=()
 
 prepare() {
-    cd "sdk"
-    patch -p1 < ../${pkgname}_${pkgver}.patch
+    rm -rf "${srcdir}/angelscript-${pkgver}"
+    cp -a "${startdir}/../components/angelscript" "${srcdir}/angelscript-${pkgver}"
+    rm -rf "${srcdir}/angelscript-${pkgver}/.git"
 }
 
 build() {
-    cd "sdk/${pkgname}/projects/cmake"
+    cd "${srcdir}/angelscript-${pkgver}/sdk/angelscript/projects/cmake"
     mkdir -p build
     cd build
     cmake -Wno-dev -DCMAKE_TOOLCHAIN_FILE=$PSPDEV/psp/share/pspdev.cmake -DCMAKE_INSTALL_PREFIX=${pkgdir}/psp -DBUILD_SHARED_LIBS=OFF \
@@ -33,7 +28,7 @@ build() {
 }
 
 package() {
-    cd "sdk/${pkgname}/"
+    cd "${srcdir}/angelscript-${pkgver}/sdk/angelscript"
     mkdir -m 755 -p "$pkgdir/psp/lib" "$pkgdir/psp/include"
     install -m 644 "lib/libAngelscript.a" "$pkgdir/psp/lib"
     install -m 644 "include/angelscript.h" "$pkgdir/psp/include"
@@ -41,8 +36,6 @@ package() {
     mkdir -m 755 -p "$pkgdir/psp/share/licenses/$pkgname"
     install -m 644 ../docs/manual/doc_license.html "$pkgdir/psp/share/licenses/$pkgname/license.html"
 
-    # Install documentation
     mkdir -p "$pkgdir/psp/share/doc/"
     cp -r ../docs "$pkgdir/psp/share/doc/$pkgname"
 }
-
