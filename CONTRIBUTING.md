@@ -1,44 +1,52 @@
 # Contributing
 
-This repository contains the build scripts for all the libraries contained in the PSPDEV toolchain. If you feel any library is missing or could use an update, let us know or feel free to submit a pull request.
+This repository contains the build scripts for the libraries contained in the PSPDEV toolchain. If a library is missing or could use an update, please open an issue or submit a pull request.
+
+## Repository layout
+
+Package build instructions live under `pspbuild/<package>/`. Each package directory contains its `PSPBUILD` plus any local patches or support files required by that recipe. Generated package archives are written to the top-level `build/` directory; transient `src/` and `pkg/` trees are created in disposable temporary workspaces and are not stored in the recipe tree.
+
+Deleting `build/` resets all repository-side build output:
+
+```sh
+rm -rf build
+```
 
 ## How to add a library
 
-A ``PSPBUILD`` file is actually a ``PKGBUILD`` like you might know them from Arch Linux. Because of this documentation for making ``PKGBUILD`` files on the Arch wiki is a great resource for how to make ``PSPBUILD`` files. Take a look [here](https://wiki.archlinux.org/title/Creating_packages) and [here](https://wiki.archlinux.org/title/PKGBUILD).
+A `PSPBUILD` file is a `PKGBUILD`-style recipe. The Arch Linux PKGBUILD documentation is a useful reference for the format.
 
-Start by creating a directory for the library and a ``PSPBUILD`` file. It is recommended to base it on another ``PSPBUILD`` in this repo which uses the same build system as the new library. Do make sure pkgname, pkgdesc, pkgver and license are changed, though.
+Create `pspbuild/<package>/PSPBUILD` and place any local patches or support files in that same package directory. It is recommended to base a new recipe on an existing package using the same build system.
 
-Before making a pull request, make sure the library builds, installs and works. Building and installing can be done with:
+Build and install a package from the repository root with:
 
+```sh
+./build.sh --install <package>
 ```
-psp-makepkg -i
-```
 
-Also make sure to read the criteria for contributions below.
+Before making a pull request, make sure the library builds, installs, and works.
 
 ## Criteria for contributions
 
-For new contributions to be merged, the PSPBUILDs in them should meet the following criteria:
+For new contributions to be merged, PSPBUILDs should meet the following criteria:
 
 - For new packages:
-  - The following fields should be set:
-    - ``pkgdesc``
-    - ``license``
-  - ``arch`` should be set to ``(any)``.
-  - ``sha256sums`` should be used for integrity checks of downloaded files. Git sources and local patches are allowed to use ``SKIP``.
-  - PSPBUILDs based on versioned archive files (yourlibrary-1.2.tar.gz for instance) are preferred over those based on git/svn repositories.
-  - The license of the library should be installed in ``$pkgdir/psp/share/licenses/$pkgname/``.
-  - PSPBUILDs which use a git repository as source should use a specific tag or commit.
-  - ``pkgname`` should not contain capital letters or special characters other than ``-``.
-  - ``groups`` should be set if to ``psp-libraries`` unless the package conflicts with an existing package.
-  - Be specific in the license field and follow the [spdx](https://spdx.org/licenses/) formatting for the license name.
+  - Set `pkgdesc` and `license`.
+  - Set `arch` to `(any)`.
+  - Use `sha256sums` for downloaded files. Git sources and local patches may use `SKIP` where appropriate.
+  - Prefer versioned release sources over moving development branches.
+  - Install the license in `$pkgdir/psp/share/licenses/$pkgname/`.
+  - Git sources should use a selected tag or commit where reproducibility requires it.
+  - `pkgname` should not contain capital letters or special characters other than `-`.
+  - Set `groups` to `psp-libraries` unless the package conflicts with an existing package.
+  - Use SPDX license identifiers.
 - For existing packages:
-  - Either the ``pkgver`` or ``rel`` has been changed.
+  - Change either `pkgver` or `pkgrel` when the package contents change.
 - For all PSPBUILDs:
-  - Libraries go in ``$pkgdir/psp/lib/``.
-  - Include files go in ``$pkgdir/psp/include/``.
-  - Pkgconfig files go in ``$pkgdir/psp/lib/pkgconfig``.
-  - License files go in ``$pkgdir/psp/share/licenses/$pkgname/``.
-  - Scripts which should be in the path of the user go in ``$pkgdir/bin/``.
-  - Other scripts go in ``$pkgdir/psp/bin/`` or ``$pspdir/share/$pkgname/bin/``.
-  - Documentation goes in ``$pkgdir/psp/share/doc/$pkgname/`` or ``$pkgdir/share/doc/$pkgname/``.
+  - Libraries go in `$pkgdir/psp/lib/`.
+  - Include files go in `$pkgdir/psp/include/`.
+  - Pkg-config files go in `$pkgdir/psp/lib/pkgconfig/`.
+  - License files go in `$pkgdir/psp/share/licenses/$pkgname/`.
+  - User-facing scripts go in `$pkgdir/bin/`.
+  - Other scripts go in `$pkgdir/psp/bin/` or `$pspdir/share/$pkgname/bin/`.
+  - Documentation goes in `$pkgdir/psp/share/doc/$pkgname/` or `$pkgdir/share/doc/$pkgname/`.

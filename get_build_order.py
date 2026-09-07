@@ -17,39 +17,28 @@ class Package:
         build_order = self.get_recursive_dependencies()
         build_order.append(self.get_directory_name())
 
-        # Clean up duplicates
         already_seen = []
         to_remove = []
         for i, dependency in enumerate(build_order):
             if dependency in already_seen:
                 to_remove.append(i)
             already_seen.append(dependency)
-        to_remove.reverse()
-        for i in to_remove:
+        for i in reversed(to_remove):
             build_order.pop(i)
 
         return " ".join(build_order)
 
     def get_recursive_dependencies(self) -> list[str]:
-        """
-        Create a list of directory names of the current package and its dependencies in the order the packages in them should be build
-        The packages without dependencies are first in the list, the current package will be at the end
-        :return: List of directory names
-        """
         return_value = [self.get_directory_name()]
         for dependency in self.dependencies:
-            return_value = dependency.get_recursive_dependencies() + return_value;
+            return_value = dependency.get_recursive_dependencies() + return_value
         return return_value
 
     def get_directory_name(self) -> str:
-        return os.path.dirname(self.path)
+        return os.path.basename(os.path.dirname(self.path))
+
 
 def parse_dependencies_string(value: str) -> list[str]:
-    """
-    Create a list of dependencies from the values of the different depends variables in the PKGBUILD
-    :param value: String of depends values of PKGBUILD
-    :return: List of dependencies as strings
-    """
     initial_package_names_found = re.findall(r"[\w\t \-]{2,}", value)
     return_value = []
     for package in initial_package_names_found:
@@ -60,11 +49,6 @@ def parse_dependencies_string(value: str) -> list[str]:
 
 
 def parse_pkgbuild(path: str):
-    """
-    Extract the name and dependencies out of a build script
-    :param path: path of the build script
-    :return: a Package object with name, path and dependencies_as_strings set
-    """
     in_function = False
     current_entry = ""
     current_value = ""
@@ -79,7 +63,6 @@ def parse_pkgbuild(path: str):
                     current_entry, current_value = line.replace("\n", "").split("=", 1)
                 elif re.match(r" *[a-z]+ *\( *\) *\{.*", line):
                     in_function = True
-                # Read values we need
                 if not in_function and current_entry:
                     if current_entry == "pkgname":
                         name = current_value
@@ -91,16 +74,11 @@ def parse_pkgbuild(path: str):
     return Package(
         name=name,
         path=path,
-        dependencies_as_strings=parse_dependencies_string(dependencies_string)
+        dependencies_as_strings=parse_dependencies_string(dependencies_string),
     )
 
 
 def resolve_package_dependencies(current_package: Package, packages: list[Package]) -> None:
-    """
-    Fills out dependencies in a package based on the package names in dependencies_as_string
-    :param current_package: The package to set the dependencies of
-    :param packages: List of all packages
-    """
     for package in packages:
         if package.name in current_package.dependencies_as_strings:
             current_package.dependencies.append(package)
@@ -111,22 +89,17 @@ def main() -> None:
     if len(sys.argv) == 2:
         build_script_name = sys.argv[1]
 
+    recipes_root = "pspbuild"
     packages = []
-    for directory in os.listdir():
-        PKGBUILD = os.path.join(directory, build_script_name)
-        if os.path.isdir(directory) and os.path.exists(PKGBUILD):
-            package = parse_pkgbuild(PKGBUILD)
-            packages.append(package)
+    for directory in sorted(os.listdir(recipes_root)):
+        pspbuild = os.path.join(recipes_root, directory, build_script_name)
+        if os.path.isdir(os.path.join(recipes_root, directory)) and os.path.exists(pspbuild):
+            packages.append(parse_pkgbuild(pspbuild))
 
     for package in packages:
-        resolve_package_dependencies(current_package=package, packages=packages)
+        resolve_package_dependencies(package, packages)
 
-    build_orders = []
-    for package in packages:
-        build_order = package.get_build_order()
-        build_orders.append(build_order)
-
-    print(json.dumps(build_orders))
+    print(json.dumps([package.get_build_order() for package in packages]))
 
 
 if __name__ == '__main__':

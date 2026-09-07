@@ -1,11 +1,3 @@
-# Build files for packages
-*/*/
-*.gz
-*.xz
-*.zip
-*.bz2
+/build/
+/repo/
 __pycache__/
-repo/
-
-# do allow github workflow files
-!.github/workflows/
