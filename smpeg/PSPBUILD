@@ -1,6 +1,6 @@
 pkgname=smpeg
 pkgver=0.4.5
-pkgrel=7
+pkgrel=8
 pkgdesc="A free MPEG1 video player library with sound support"
 arch=(any)
 url="https://github.com/fungos/smpeg-psp/"
@@ -20,7 +20,7 @@ sha256sums=(
 
 prepare() {
     cd smpeg-psp
-    patch -p1 < ../${pkgname}-psp.patch
+    patch --batch --forward -p1 < ../${pkgname}-psp.patch
 }
 
 build() {
