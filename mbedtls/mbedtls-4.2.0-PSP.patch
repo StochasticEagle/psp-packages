@@ -9,3 +9,133 @@ diff --git a/library/net_sockets.c b/library/net_sockets.c
 +#if !defined(MBEDTLS_PLATFORM_IS_UNIXLIKE) && !defined(_WIN32) && !defined(PSP)
  #error "This module only works on Unix and Windows, see MBEDTLS_NET_C in mbedtls_config.h"
  #endif
+@@ -76,3 +76,6 @@
+ #include <stdio.h>
++#if defined(PSP)
++#include <stdlib.h>
++#endif
+ 
+ #if defined(MBEDTLS_HAVE_TIME)
+@@ -144,7 +147,98 @@
+ void mbedtls_net_init(mbedtls_net_context *ctx)
+ {
+     ctx->fd = -1;
+ }
++
++#if defined(PSP)
++/*
++ * PSPSDK provides the BSD socket API and gethostbyname(), but not
++ * getaddrinfo()/freeaddrinfo(). Supply the IPv4 subset used by this module.
++ */
++#ifndef AI_PASSIVE
++#define AI_PASSIVE 0x0001
++#endif
++
++struct addrinfo {
++    int ai_flags;
++    int ai_family;
++    int ai_socktype;
++    int ai_protocol;
++    socklen_t ai_addrlen;
++    struct sockaddr *ai_addr;
++    char *ai_canonname;
++    struct addrinfo *ai_next;
++};
++
++static int psp_getaddrinfo(const char *node, const char *service,
++                           const struct addrinfo *hints,
++                           struct addrinfo **result)
++{
++    char *end;
++    unsigned long port;
++    struct hostent *host_entry;
++    struct addrinfo *info;
++    struct sockaddr_in *addr;
++
++    if (service == NULL || *service == '\0' || result == NULL) {
++        return -1;
++    }
++
++    port = strtoul(service, &end, 10);
++    if (end == service || *end != '\0' || port > 65535UL) {
++        return -1;
++    }
++
++    info = (struct addrinfo *) calloc(1, sizeof(*info));
++    addr = (struct sockaddr_in *) calloc(1, sizeof(*addr));
++    if (info == NULL || addr == NULL) {
++        free(addr);
++        free(info);
++        return -1;
++    }
++
++    addr->sin_len = (uint8_t) sizeof(*addr);
++    addr->sin_family = AF_INET;
++    addr->sin_port = htons((uint16_t) port);
++
++    if (node == NULL) {
++        addr->sin_addr.s_addr = htonl((hints != NULL &&
++                                       (hints->ai_flags & AI_PASSIVE) != 0) ?
++                                      INADDR_ANY : INADDR_LOOPBACK);
++    } else {
++        host_entry = gethostbyname(node);
++        if (host_entry == NULL || host_entry->h_addr == NULL ||
++            host_entry->h_addrtype != AF_INET ||
++            host_entry->h_length != (int) sizeof(addr->sin_addr)) {
++            free(addr);
++            free(info);
++            return -1;
++        }
++
++        memcpy(&addr->sin_addr, host_entry->h_addr, sizeof(addr->sin_addr));
++    }
++
++    info->ai_flags = hints != NULL ? hints->ai_flags : 0;
++    info->ai_family = AF_INET;
++    info->ai_socktype = hints != NULL ? hints->ai_socktype : 0;
++    info->ai_protocol = hints != NULL ? hints->ai_protocol : 0;
++    info->ai_addrlen = (socklen_t) sizeof(*addr);
++    info->ai_addr = (struct sockaddr *) addr;
++    *result = info;
++
++    return 0;
++}
++
++static void psp_freeaddrinfo(struct addrinfo *info)
++{
++    if (info != NULL) {
++        free(info->ai_addr);
++        free(info);
++    }
++}
++
++#define getaddrinfo  psp_getaddrinfo
++#define freeaddrinfo psp_freeaddrinfo
++#endif /* PSP */
+ 
+ /*
+  * Initiate a TCP connection with host:port and the given protocol
+@@ -328,6 +422,7 @@
+ #if defined(__socklen_t_defined) || defined(_SOCKLEN_T) ||  \
+     defined(_SOCKLEN_T_DECLARED) || defined(__DEFINED_socklen_t) || \
+-    defined(socklen_t) || (defined(_POSIX_VERSION) && _POSIX_VERSION >= 200112L)
++    defined(socklen_t) || (defined(_POSIX_VERSION) && _POSIX_VERSION >= 200112L) || \
++    defined(PSP)
+     socklen_t n = (socklen_t) sizeof(client_addr);
+     socklen_t type_len = (socklen_t) sizeof(type);
+ #else
+@@ -405,6 +500,7 @@
+             }
+ 
+             memcpy(client_ip, &addr4->sin_addr.s_addr, *cip_len);
++#if !defined(PSP)
+         } else {
+             struct sockaddr_in6 *addr6 = (struct sockaddr_in6 *) &client_addr;
+             *cip_len = sizeof(addr6->sin6_addr.s6_addr);
+@@ -414,5 +510,6 @@
+             }
+ 
+             memcpy(client_ip, &addr6->sin6_addr.s6_addr, *cip_len);
++#endif /* !PSP */
+         }
+     }
