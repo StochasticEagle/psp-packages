@@ -1,6 +1,6 @@
 pkgname=libpspmath
 pkgver=r4.eb44107
-pkgrel=3
+pkgrel=4
 pkgdesc="Import of mrmrice's libpspmath vfpu library for psp homebrew"
 arch=(any)
 url="https://github.com/tufty/libpspmath"
@@ -12,12 +12,6 @@ optdepends=()
 source=("git+https://github.com/tufty/libpspmath.git#commit=eb44107538fa84bab299b5d7dcf71df64a674da3")
 sha256sums=('SKIP')
 
-pkgver() {
-    cd "$pkgname"
-    # Set the revision of the repo as version
-    printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
-}
-
 build() {
     cd "$pkgname"
     make --quiet $MAKEFLAGS || { exit 1; }
@@ -25,10 +19,10 @@ build() {
 
 package() {
     cd "$pkgname"
-        mkdir -m 775 -p "$pkgdir/psp/sdk/lib"
-        install -m 644 libpspmath.a "$pkgdir/psp/sdk/lib/"
-        mkdir -m 775 -p "$pkgdir/psp/sdk/include"
-	install -m 644 pspmath.h "$pkgdir/psp/sdk/include/"
+    mkdir -m 775 -p "$pkgdir/psp/sdk/lib"
+    install -m 644 libpspmath.a "$pkgdir/psp/sdk/lib/"
+    mkdir -m 775 -p "$pkgdir/psp/sdk/include"
+    install -m 644 pspmath.h "$pkgdir/psp/sdk/include/"
 
     mkdir -m 755 -p "$pkgdir/psp/share/licenses/$pkgname"
     install -m 644 "${PSPDEV}/psp/share/licenses/pspsdk/LICENSE" "$pkgdir/psp/share/licenses/$pkgname"
