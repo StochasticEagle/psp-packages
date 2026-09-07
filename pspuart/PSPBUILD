@@ -1,6 +1,6 @@
 pkgname=pspuart
 pkgver=r14.9bb4add
-pkgrel=4
+pkgrel=5
 pkgdesc="Library for PSP UART hardware communication (ex SioDriver)"
 arch=(any)
 url="https://github.com/Operation-DITTO/psp-uart-library"
@@ -11,12 +11,6 @@ makedepends=()
 optdepends=()
 source=("git+https://github.com/Operation-DITTO/psp-uart-library.git#commit=9bb4addc051c8cee563a255b79ad7a0c856cf14d")
 sha256sums=('SKIP')
-
-pkgver() {
-    cd "psp-uart-library"
-    # Set the revision of the repo as version
-    printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
-}
 
 build() {
     cd "psp-uart-library"
