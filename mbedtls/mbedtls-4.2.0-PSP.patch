@@ -223,7 +223,7 @@ diff --git a/tf-psa-crypto/scripts/generate_driver_wrappers.py b/tf-psa-crypto/s
  import jinja2
  
  import framework_scripts_path # pylint: disable=unused-import
-@@ -65,6 +68,12 @@
+@@ -71,8 +74,14 @@
  def validate_json(driverjson_data: Driver, driverschema_list: dict) -> None:
      """
      Validate the Driver JSON against an appropriate schema
