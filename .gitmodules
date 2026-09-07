@@ -415,3 +415,7 @@
 	path = components/sqlite374
 	url = https://github.com/sqlite/sqlite.git
 	shallow = true
+[submodule "components/angelscript"]
+	path = components/angelscript
+	url = https://github.com/anjo76/angelscript.git
+	shallow = true
