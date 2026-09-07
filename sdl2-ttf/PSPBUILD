@@ -1,6 +1,6 @@
 pkgname=sdl2-ttf
 pkgver=2.24.0
-pkgrel=2
+pkgrel=3
 pkgdesc="A companion library to SDL2 for working with TrueType (tm) fonts"
 arch=(any)
 url="https://wiki.libsdl.org/SDL2_ttf/FrontPage"
@@ -29,7 +29,7 @@ sha256sums=(
 prepare() {
     cd "${srcdir}/SDL2_ttf-${pkgver}"
     sed -i '/^prefix=/s/=.*$/=${PSPDEV}\/psp/' SDL2_ttf.pc.in
-    patch -Np1 -i "${srcdir}/614.patch"
+    patch --batch --forward -Np1 -i "${srcdir}/614.patch"
 }
 
 build() {
