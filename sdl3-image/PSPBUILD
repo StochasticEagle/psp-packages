@@ -1,6 +1,6 @@
 pkgname=sdl3-image
-pkgver=3.4.4
-pkgrel=2
+pkgver=3.4.6
+pkgrel=1
 pkgdesc="A simple library to load images of various formats as SDL surfaces"
 arch=(any)
 url="https://wiki.libsdl.org/SDL3_image/FrontPage"
@@ -10,11 +10,12 @@ depends=('sdl3' 'libpng' 'jpeg')
 makedepends=()
 optdepends=()
 source=(
-    "SDL3_image-${pkgver}::git+https://github.com/libsdl-org/SDL_image.git#branch=main"
+    "SDL3_image-${pkgver}::git+https://github.com/libsdl-org/SDL_image.git#commit=f661fa1ad24ab1b81e43662532f9a6a9fcf67ea6"
 )
 sha256sums=(
     "SKIP"
 )
+
 prepare() {
     cd "${srcdir}/SDL3_image-${pkgver}"
     sed -i '/^prefix=/s/=.*$/=${PSPDEV}\/psp/' cmake/sdl3-image.pc.in
@@ -22,17 +23,24 @@ prepare() {
 
 build() {
     cd "${srcdir}/SDL3_image-${pkgver}"
-    mkdir -p build && cd build
-    cmake -Wno-dev -DCMAKE_TOOLCHAIN_FILE="${PSPDEV}/psp/share/pspdev.cmake" -DCMAKE_INSTALL_PREFIX=/psp \
-        -DSDLIMAGE_VENDORED=OFF -DSDLIMAGE_STRICT=ON -DSDLIMAGE_AVIF=OFF -DSDLIMAGE_TIF=OFF -DSDLIMAGE_WEBP=OFF \
-        -DSDLIMAGE_BACKEND_STB=OFF -DCMAKE_BUILD_TYPE=Release \
-        "${XTRA_OPTS[@]}" .. || { exit 1; }
-    make --quiet $MAKEFLAGS || { exit 1; }
+    rm -rf build
+    cmake -Wno-author -S . -B build \
+        -DCMAKE_TOOLCHAIN_FILE="${PSPDEV}/psp/share/pspdev.cmake" \
+        -DCMAKE_INSTALL_PREFIX=/psp \
+        -DSDLIMAGE_VENDORED=OFF \
+        -DSDLIMAGE_STRICT=ON \
+        -DSDLIMAGE_AVIF=OFF \
+        -DSDLIMAGE_TIF=OFF \
+        -DSDLIMAGE_WEBP=OFF \
+        -DSDLIMAGE_BACKEND_STB=OFF \
+        -DCMAKE_BUILD_TYPE=Release \
+        "${XTRA_OPTS[@]}" || { exit 1; }
+    cmake --build build -- $MAKEFLAGS || { exit 1; }
 }
 
 package() {
-    cd "${srcdir}/SDL3_image-${pkgver}/build"
-    make --quiet DESTDIR="${pkgdir}" ${MAKEFLAGS} install
+    cd "${srcdir}/SDL3_image-${pkgver}"
+    DESTDIR="${pkgdir}" cmake --install build || { exit 1; }
 
     mv "${pkgdir}/psp/share/licenses/SDL3_image" "${pkgdir}/psp/share/licenses/${pkgname}"
 }
