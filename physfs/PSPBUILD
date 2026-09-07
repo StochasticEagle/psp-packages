@@ -1,6 +1,6 @@
 pkgname=physfs
 pkgver=3.2.0
-pkgrel=9
+pkgrel=10
 pkgdesc="PhysicsFS; a portable, flexible file i/o abstraction."
 arch=(any)
 url="https://icculus.org/physfs/"
@@ -11,7 +11,7 @@ makedepends=()
 optdepends=()
 provides=()
 source=(
-"${pkgname}-release-${pkgver}::git+https://github.com/icculus/physfs.git#branch=main"
+"${pkgname}-release-${pkgver}::git+https://github.com/icculus/physfs.git#tag=release-${pkgver}"
 "psp.patch"
 )
 sha256sums=(
@@ -21,7 +21,7 @@ sha256sums=(
 
 prepare() {
     cd ${pkgname}-release-${pkgver}
-    patch -p1 < ../psp.patch
+    patch --batch --forward -p1 < ../psp.patch
 
     sed -e 's#@CMAKE_INSTALL_PREFIX@#${PSPDEV}/psp#' \
         -e 's#@CMAKE_INSTALL_FULL_LIBDIR@#${prefix}/lib#' \
