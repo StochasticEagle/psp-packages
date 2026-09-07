@@ -1,7 +1,7 @@
 pkgname=sail
-pkgver=1.0.0
-pkgrel=4
-pkgdesc="SAIL is a high-quality cross-platform image decoding library providing rich APIs, from one-liners to complex use cases with custom I/O sources. It enables a client to load and save static, animated, multi-paged images along with their meta data and ICC profiles"
+pkgver=1.2.0
+pkgrel=1
+pkgdesc="SAIL cross-platform image decoding library"
 arch=(any)
 url='https://github.com/HappySeaFox/sail'
 license=('MIT')
@@ -10,29 +10,28 @@ depends=('jpeg' 'libpng' 'giflib')
 makedepends=()
 optdepends=()
 provides=()
-source=(
-	"git+https://github.com/HappySeaFox/sail.git#commit=204038b11d7c9c3a313025b153375004fd8768db"
-	"psp.patch"
-)
-sha256sums=(
-    "SKIP"
-    "SKIP"
-)
+source=("psp.patch")
+sha256sums=("SKIP")
 
 prepare() {
-    cd $pkgname
-    patch -Np2 -i ../psp.patch
+    rm -rf "$srcdir/$pkgname"
+    cp -a "$startdir/../components/sail" "$srcdir/$pkgname"
+    rm -rf "$srcdir/$pkgname/.git"
+
+    cd "$srcdir/$pkgname"
+    patch --batch --forward -Np1 -i "$srcdir/psp.patch"
     sed -i 's#@CMAKE_INSTALL_PREFIX@#${PSPDEV}/psp#' src/*/pkgconfig/*.pc.in src/bindings/sail-c++/pkgconfig/sail-c++.pc.in
 }
 
 build() {
-    cd $pkgname
-    psp-cmake -DBUILD_SHARED_LIBS=OFF "${XTRA_OPTS[@]}" -DBUILD_TESTING=OFF -DSAIL_BUILD_EXAMPLES=OFF -DSAIL_BUILD_APPS=OFF -DCMAKE_BUILD_TYPE=Release --install-prefix="${pkgdir}/psp" || { exit 1; }
+    cd "$srcdir/$pkgname"
+    psp-cmake -DBUILD_SHARED_LIBS=OFF "${XTRA_OPTS[@]}" -DBUILD_TESTING=OFF -DSAIL_BUILD_EXAMPLES=OFF -DSAIL_BUILD_APPS=OFF \
+        -DSAIL_THIRD_PARTY_CODECS_PATH=OFF -DCMAKE_BUILD_TYPE=Release --install-prefix="${pkgdir}/psp" || { exit 1; }
     make --quiet $MAKEFLAGS || { exit 1; }
 }
 
 package() {
-    cd $pkgname
+    cd "$srcdir/$pkgname"
     make --quiet $MAKEFLAGS install
 
     install -d -m 755 -p "${pkgdir}/psp/share/licenses/${pkgname}"
