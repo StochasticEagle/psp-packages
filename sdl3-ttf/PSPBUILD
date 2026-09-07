@@ -10,7 +10,7 @@ depends=('sdl3' 'harfbuzz')
 makedepends=()
 optdepends=()
 source=(
-    "SDL3_ttf-${pkgver}::git+https://github.com/libsdl-org/SDL_ttf.git#tag=release-${pkgver}"
+    "SDL3_ttf-${pkgver}::git+https://github.com/libsdl-org/SDL_ttf.git#tag=release-3.2.2"
 )
 sha256sums=(
     "SKIP"
