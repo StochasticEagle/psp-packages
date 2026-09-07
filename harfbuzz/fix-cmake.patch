@@ -1,7 +1,8 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -139,6 +139,8 @@
+@@ -139,7 +139,9 @@
+   find_package(Threads)
    if (CMAKE_USE_PTHREADS_INIT)
      add_compile_definitions(HAVE_PTHREAD)
 -    list(APPEND THIRD_PARTY_LIBS Threads::Threads)
@@ -11,7 +12,7 @@ diff --git a/CMakeLists.txt b/CMakeLists.txt
      list(APPEND PC_LIBS_PRIV -pthread)
    endif ()
  endif ()
-@@ -746,7 +748,7 @@
+@@ -746,4 +748,4 @@
 -if (UNIX OR MINGW OR VITA)
 +if (UNIX OR MINGW OR VITA OR PSP)
    # Make symbols link locally
