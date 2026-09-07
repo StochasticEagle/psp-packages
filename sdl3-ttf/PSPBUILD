@@ -1,6 +1,6 @@
 pkgname=sdl3-ttf
 pkgver=3.2.2
-pkgrel=5
+pkgrel=6
 pkgdesc="A companion library to SDL3 for working with TrueType (tm) fonts"
 arch=(any)
 url="https://wiki.libsdl.org/SDL3_ttf/FrontPage"
@@ -10,7 +10,7 @@ depends=('sdl3' 'harfbuzz')
 makedepends=()
 optdepends=()
 source=(
-    "SDL3_ttf-${pkgver}::git+https://github.com/libsdl-org/SDL_ttf.git#branch=main"
+    "SDL3_ttf-${pkgver}::git+https://github.com/libsdl-org/SDL_ttf.git#tag=release-${pkgver}"
 )
 sha256sums=(
     "SKIP"
