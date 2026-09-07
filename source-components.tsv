@@ -51,3 +51,5 @@ https://github.com/anjo76/angelscript.git	components/angelscript
 https://github.com/erincatto/box2d.git	components/box2d
 https://github.com/adriensalon/imgui_psp.git	components/imgui
 https://github.com/dogo/oslib.git	components/oslib
+https://github.com/HappySeaFox/sail.git	components/sail
+https://github.com/sabdul-khabir/SDL3_gfx.git	components/sdl3-gfx

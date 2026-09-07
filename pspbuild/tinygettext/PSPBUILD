@@ -1,6 +1,6 @@
 pkgname=tinygettext
 pkgver=20240715
-pkgrel=6
+pkgrel=7
 pkgdesc="A simple gettext replacement that works directly on .po files"
 arch=(any)
 license=('Zlib')
@@ -13,8 +13,6 @@ source=("git+https://github.com/tinygettext/tinygettext.git#commit=2e25c91ddb6c1
 sha256sums=('SKIP')
 
 prepare() {
-    rm -rf "$srcdir/$pkgname/external/tinycmmc"
-    cp -a "$startdir/../components/tinygettext/external/tinycmmc" "$srcdir/$pkgname/external/tinycmmc"
     cd $pkgname
     sed -i 's#@CMAKE_INSTALL_PREFIX@#${PSPDEV}/psp#g' tinygettext.pc.in
     sed -i 's#@LIB_SUBDIR@#lib#g' tinygettext.pc.in

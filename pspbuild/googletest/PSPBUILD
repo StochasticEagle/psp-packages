@@ -1,6 +1,6 @@
 pkgname=googletest
 pkgver=1.18.0
-pkgrel=6
+pkgrel=7
 pkgdesc="GoogleTest - Google Testing and Mocking Framework"
 arch=(any)
 url="https://github.com/google/googletest"
@@ -9,14 +9,10 @@ groups=('psp-libraries')
 depends=()
 makedepends=()
 optdepends=()
-source=()
-sha256sums=()
+source=("googletest-${pkgver}::git+https://github.com/google/googletest.git#commit=283c17563fe7a1111cd7f581aa5d541e8baeff2f")
+sha256sums=('SKIP')
 
 prepare() {
-    rm -rf "$srcdir/$pkgname-$pkgver"
-    cp -a "$startdir/../components/googletest" "$srcdir/$pkgname-$pkgver"
-    rm -rf "$srcdir/$pkgname-$pkgver/.git"
-
     cd "$srcdir/$pkgname-$pkgver"
 
     # On the PSP/newlib ABI int32_t is long int, while GoogleTest's shard

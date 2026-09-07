@@ -1,6 +1,6 @@
 pkgname=sdl-image
 pkgver=1.2.13
-pkgrel=10
+pkgrel=11
 pkgdesc="A simple library to load images of various formats as SDL2 surfaces"
 arch=(any)
 url="https://www.libsdl.org/projects/old/SDL_image/release-1.2.html"
@@ -9,14 +9,13 @@ groups=('psp-libraries')
 depends=('sdl' 'libpng' 'jpeg')
 makedepends=()
 optdepends=()
-source=()
-sha256sums=()
+source=("SDL_image::git+https://github.com/libsdl-org/SDL_image.git#commit=7adb1a70f97d62f1bb307bfb4e6c2fa0bc8c33ab")
+psp_source_components=(
+    [0]="components/SDL_image12"
+)
+sha256sums=('SKIP')
 
 prepare() {
-    rm -rf "${srcdir}/SDL_image"
-    cp -a "${startdir}/../components/SDL_image12" "${srcdir}/SDL_image"
-    rm -rf "${srcdir}/SDL_image/.git"
-
     cd "${srcdir}/SDL_image"
     sed -i 's#@prefix@#${PSPDEV}/psp#' SDL_image.pc.in
     sed -i 's#@exec_prefix@#${prefix}#' SDL_image.pc.in

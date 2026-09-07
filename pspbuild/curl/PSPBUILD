@@ -1,6 +1,6 @@
 pkgname=curl
 pkgver=8.22.0
-pkgrel=1
+pkgrel=2
 pkgdesc="A library for transferring data with URL syntax"
 arch=(any)
 url="https://curl.se/"
@@ -9,14 +9,8 @@ groups=('psp-libraries')
 depends=('zlib' 'mbedtls')
 optdepends=()
 makedepends=()
-source=()
-sha256sums=()
-
-prepare() {
-    rm -rf "$srcdir/$pkgname-$pkgver"
-    cp -a "$startdir/../components/curl" "$srcdir/$pkgname-$pkgver"
-    rm -rf "$srcdir/$pkgname-$pkgver/.git"
-}
+source=("curl-${pkgver}::git+https://github.com/curl/curl.git#commit=01346829096c61b372692f6dc43ffa778c6caccd")
+sha256sums=('SKIP')
 
 build() {
     cd "$pkgname-$pkgver"

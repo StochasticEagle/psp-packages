@@ -1,19 +1,15 @@
 pkgname=flatbuffers
 pkgver=24.3.25
-pkgrel=5
+pkgrel=6
 pkgdesc="Memory Efficient Serialization Library"
 arch=(any)
 url="https://flatbuffers.dev"
 license=('Apache-2.0')
 groups=('psp-libraries')
-source=()
-sha256sums=()
+source=("flatbuffers-${pkgver}::git+https://github.com/google/flatbuffers.git#commit=5761d6e67af841d15ee21bc1ce9a78ffa9cf939e")
+sha256sums=('SKIP')
 
 prepare() {
-    rm -rf "$srcdir/$pkgname-${pkgver}"
-    cp -a "$startdir/../components/flatbuffers" "$srcdir/$pkgname-${pkgver}"
-    rm -rf "$srcdir/$pkgname-${pkgver}/.git"
-
     cd "$srcdir/$pkgname-${pkgver}/CMake"
 
     sed -i '1 s/^/prefix=${PSPDEV}\/psp\n/' flatbuffers.pc.in

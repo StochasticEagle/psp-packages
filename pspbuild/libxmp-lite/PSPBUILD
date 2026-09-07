@@ -1,6 +1,6 @@
 pkgname=libxmp-lite
 pkgver=4.6.3
-pkgrel=3
+pkgrel=4
 pkgdesc="Libxmp is a library that renders module files to PCM data"
 arch=(any)
 url="https://github.com/libxmp/libxmp"
@@ -9,14 +9,8 @@ groups=('psp-libraries')
 depends=()
 makedepends=()
 optdepends=()
-source=()
-sha256sums=()
-
-prepare() {
-    rm -rf "$srcdir/$pkgname-$pkgver"
-    cp -a "$startdir/../components/libxmp" "$srcdir/$pkgname-$pkgver"
-    rm -rf "$srcdir/$pkgname-$pkgver/.git"
-}
+source=("libxmp-lite-${pkgver}::git+https://github.com/libxmp/libxmp.git#commit=3047863867bcb2211276937048c7b91db21b442d")
+sha256sums=('SKIP')
 
 build() {
     cd "$srcdir/$pkgname-$pkgver"

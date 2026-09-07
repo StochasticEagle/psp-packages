@@ -1,6 +1,6 @@
 pkgname=sail
 pkgver=1.2.0
-pkgrel=3
+pkgrel=4
 pkgdesc="SAIL cross-platform image decoding library"
 arch=(any)
 url='https://github.com/HappySeaFox/sail'
@@ -10,14 +10,13 @@ depends=('jpeg' 'libpng' 'giflib')
 makedepends=()
 optdepends=()
 provides=()
-source=("psp.patch")
-sha256sums=("SKIP")
+source=(
+    "sail::git+https://github.com/HappySeaFox/sail.git#commit=28426b7799d4346aa500a2d0a4236ebd3e3d011a"
+    "psp.patch"
+)
+sha256sums=('SKIP' 'SKIP')
 
 prepare() {
-    rm -rf "$srcdir/$pkgname"
-    cp -a "$startdir/../components/sail" "$srcdir/$pkgname"
-    rm -rf "$srcdir/$pkgname/.git"
-
     cd "$srcdir/$pkgname"
     patch --batch --forward -Np1 -i "$srcdir/psp.patch"
     sed -i 's#@CMAKE_INSTALL_PREFIX@#${PSPDEV}/psp#' src/*/pkgconfig/*.pc.in src/bindings/sail-c++/pkgconfig/sail-c++.pc.in

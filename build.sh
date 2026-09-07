@@ -27,8 +27,7 @@ mkdir -p "${BUILD_ROOT}" "${PACKAGES}"
 # A fresh clone must be buildable directly. Package source submodules follow
 # the gitlinks selected by psp-packages; do not float them with --remote.
 if [[ -z "${PSP_PACKAGES_SUBMODULES_READY:-}" ]]; then
-  git -C "${ROOT}" submodule sync --recursive
-  git -C "${ROOT}" submodule update --init --recursive --depth 1
+  git -C "${ROOT}" submodule update --init --recursive --depth 1 --quiet
   export PSP_PACKAGES_SUBMODULES_READY=1
 fi
 
@@ -124,8 +123,23 @@ configure_local_git_sources() {
       source_name="${source_name%.git}"
     fi
 
-    mapped=""
-    if [[ -f "${SOURCE_COMPONENTS}" ]]; then
+    # A recipe can override URL-based source mapping when two intentionally
+    # distinct components use the same upstream repository (for example the
+    # current SDL component and a historical SDL 1.2 component).
+    mapped=$(bash -c '
+      source "$1"
+      if declare -p psp_source_components >/dev/null 2>&1; then
+        printf "%s" "${psp_source_components[$2]-}"
+      fi
+    ' _ "${pspbuild}" "${source_index}")
+
+    if [[ -n "${mapped}" ]]; then
+      if [[ "${mapped}" != components/* ]]; then
+        echo "ERROR: Invalid psp_source_components[${source_index}] in ${pspbuild}:"
+        echo "  ${mapped}"
+        return 2
+      fi
+    elif [[ -f "${SOURCE_COMPONENTS}" ]]; then
       mapped=$(awk -F '\t' -v remote="${remote}" '$1 == remote { print $2; exit }' "${SOURCE_COMPONENTS}")
     fi
 

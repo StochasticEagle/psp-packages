@@ -1,6 +1,6 @@
 pkgname=mbedtls
 pkgver=4.2.0
-pkgrel=3
+pkgrel=4
 pkgdesc="Secure Socket Layer library"
 arch=(any)
 url="https://www.trustedfirmware.org/projects/mbed-tls/"
@@ -9,18 +9,10 @@ groups=('psp-libraries')
 depends=()
 optdepends=()
 makedepends=()
-source=()
-sha256sums=()
+source=("mbedtls-${pkgver}::git+https://github.com/Mbed-TLS/mbedtls.git#commit=ece41aa84d7879d7e55c59e955a5884b541f7f3b")
+sha256sums=('SKIP')
 
 prepare() {
-    rm -rf "$srcdir/$pkgname-$pkgver"
-    cp -a "$startdir/../components/mbedtls" "$srcdir/$pkgname-$pkgver"
-
-    # The parent source is a shallow submodule and Mbed TLS 4.x contains
-    # framework and TF-PSA-Crypto submodules. Strip Git metadata only from the
-    # disposable build copy; the checked-out components tree remains pristine.
-    find "$srcdir/$pkgname-$pkgver" -name .git -exec rm -rf {} + 2>/dev/null || true
-
     cd "$srcdir/$pkgname-$pkgver"
     patch --batch --forward -p1 < "$startdir/mbedtls-$pkgver-PSP.patch" || { exit 1; }
 }

@@ -1,6 +1,6 @@
 pkgname=sqlite
 pkgver=3.7.4
-pkgrel=9
+pkgrel=10
 pkgdesc="SQLite is a C-language library that implements a small, fast, self-contained, high-reliability, full-featured, SQL database engine"
 arch=(any)
 url="https://www.sqlite.org/"
@@ -9,14 +9,16 @@ groups=('psp-libraries')
 depends=()
 optdepends=()
 makedepends=()
-source=("${pkgname}-${pkgver}-PSP.patch")
-sha256sums=("SKIP")
+source=(
+    "sqlite-version-${pkgver}::git+https://github.com/sqlite/sqlite.git#commit=5480617fb14c2f5151c716b3a89feec1d38c1b85"
+    "${pkgname}-${pkgver}-PSP.patch"
+)
+psp_source_components=(
+    [0]="components/sqlite374"
+)
+sha256sums=('SKIP' 'SKIP')
 
 prepare() {
-    rm -rf "${srcdir}/${pkgname}-version-${pkgver}"
-    cp -a "${startdir}/../components/sqlite374" "${srcdir}/${pkgname}-version-${pkgver}"
-    rm -rf "${srcdir}/${pkgname}-version-${pkgver}/.git"
-
     cd "${srcdir}/${pkgname}-version-${pkgver}"
     patch --batch --forward -p1 < "${srcdir}/${pkgname}-${pkgver}-PSP.patch"
     sed -i 's#@prefix@#${PSPDEV}/psp#' sqlite.pc.in sqlite3.pc.in
