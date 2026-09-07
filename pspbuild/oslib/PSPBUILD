@@ -1,6 +1,6 @@
 pkgname=oslib
 pkgver=1.5.0
-pkgrel=2
+pkgrel=3
 pkgdesc="OldSchool Library (OSLib) is a lightweight and versatile C++ library designed to provide functionality and tools commonly used in classic game development and retro programming project"
 arch=(any)
 url="https://github.com/dogo/oslib"
@@ -12,16 +12,8 @@ optdepends=()
 source=("git+https://github.com/dogo/oslib.git#commit=19bf02c8c40be7e56a0c2c0ebf2b3bdbafedc891")
 sha256sums=('SKIP')
 
-prepare() {
-    rm -rf "$srcdir/$pkgname/lib/giflib" "$srcdir/$pkgname/lib/libintraFont" "$srcdir/$pkgname/lib/libpspmath"
-    cp -a "$startdir/../components/oslib/lib/giflib" "$srcdir/$pkgname/lib/giflib"
-    cp -a "$startdir/../components/oslib/lib/libintraFont" "$srcdir/$pkgname/lib/libintraFont"
-    cp -a "$startdir/../components/oslib/lib/libpspmath" "$srcdir/$pkgname/lib/libpspmath"
-    cd $pkgname
-}
-
 build() {
-    cd $pkgname 
+    cd $pkgname
     psp-cmake -DCMAKE_BUILD_TYPE=Release . "${XTRA_OPTS[@]}" || { exit 1; }
     make --quiet $MAKEFLAGS || { exit 1; }
 }

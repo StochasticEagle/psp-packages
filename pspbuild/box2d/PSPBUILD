@@ -1,6 +1,6 @@
 pkgname=box2d
 pkgver=3.1.1
-pkgrel=2
+pkgrel=3
 pkgdesc="Box2D is a 2D physics engine for games"
 arch=(any)
 url="https://github.com/erincatto/box2d"
@@ -10,17 +10,12 @@ depends=()
 makedepends=()
 provides=()
 conflicts=()
-source=()
-sha256sums=()
-
-prepare() {
-  rm -rf "$srcdir/$pkgname-$pkgver"
-  cp -a "$startdir/../components/box2d" "$srcdir/$pkgname-$pkgver"
-  rm -rf "$srcdir/$pkgname-$pkgver/.git"
-}
+source=("box2d-${pkgver}::git+https://github.com/erincatto/box2d.git#commit=8c661469c9507d3ad6fbd2fea3f1aa71669c2fe3")
+sha256sums=('SKIP')
 
 build() {
-  cmake -B build -S "$pkgname-$pkgver" -Wno-dev \
+  cd "$srcdir/$pkgname-$pkgver"
+  cmake -B build -S . -Wno-dev \
     -DCMAKE_TOOLCHAIN_FILE=$PSPDEV/psp/share/pspdev.cmake \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_INSTALL_PREFIX=/psp \
@@ -35,6 +30,7 @@ build() {
 }
 
 package() {
+  cd "$srcdir/$pkgname-$pkgver"
   DESTDIR="$pkgdir" cmake --install build
-  install -Dm644 $pkgname-$pkgver/LICENSE -t "$pkgdir/psp/share/licenses/$pkgname/"
+  install -Dm644 LICENSE -t "$pkgdir/psp/share/licenses/$pkgname/"
 }

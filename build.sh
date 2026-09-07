@@ -32,6 +32,19 @@ if [[ -z "${PSP_PACKAGES_SUBMODULES_READY:-}" ]]; then
   export PSP_PACKAGES_SUBMODULES_READY=1
 fi
 
+# Recipes used to live at <repo>/<package>. They now live at
+# <repo>/pspbuild/<package>, so a recipe must not escape through startdir/..
+# to reach repository files. Git-backed source components are supplied by the
+# snapshot mechanism below; local patches/support files stay beside PSPBUILD.
+legacy_startdir_paths=$(grep -RInE --include=PSPBUILD \
+  '\$startdir/(\.\./)+|\$\{startdir\}/(\.\./)+' "${RECIPES}" || true)
+if [[ -n "${legacy_startdir_paths}" ]]; then
+  echo "ERROR: PSPBUILD recipes contain repository-relative startdir paths:"
+  printf '%s\n' "${legacy_startdir_paths}"
+  echo "Use source components or package-local support files instead."
+  exit 1
+fi
+
 doinstall=""
 if [[ "${1:-}" == "--install" ]]; then
   doinstall="true"
