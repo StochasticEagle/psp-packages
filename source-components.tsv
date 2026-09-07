@@ -47,3 +47,4 @@ https://github.com/libsdl-org/SDL_mixer.git	components/SDL_mixer
 https://github.com/libsdl-org/SDL_ttf.git	components/SDL_ttf
 https://github.com/lua/lua.git	components/lua
 https://github.com/sqlite/sqlite.git	components/sqlite
+https://github.com/anjo76/angelscript.git	components/angelscript

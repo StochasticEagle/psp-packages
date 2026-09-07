@@ -1,6 +1,6 @@
 pkgname=angelscript
 pkgver=2.38.0
-pkgrel=4
+pkgrel=5
 pkgdesc="A game-oriented interpreted compiled scripting language library"
 arch=(any)
 url="https://www.angelcode.com/angelscript/"
@@ -9,14 +9,12 @@ groups=('psp-libraries')
 depends=()
 makedepends=()
 optdepends=()
-source=()
-sha256sums=()
-
-prepare() {
-    rm -rf "${srcdir}/angelscript-${pkgver}"
-    cp -a "${startdir}/../components/angelscript" "${srcdir}/angelscript-${pkgver}"
-    rm -rf "${srcdir}/angelscript-${pkgver}/.git"
-}
+source=(
+    "${pkgname}-${pkgver}::git+https://github.com/anjo76/angelscript.git#commit=0601da029d846a658bf23f2888e953a45a94450a"
+)
+sha256sums=(
+    "SKIP"
+)
 
 build() {
     # AngelScript's generic MIPS native-call backend still contains instructions
