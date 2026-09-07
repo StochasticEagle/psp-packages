@@ -1,6 +1,6 @@
 pkgname=flac
 pkgver=1.5.0
-pkgrel=3
+pkgrel=4
 pkgdesc="Free Lossless Audio Codec"
 arch=(any)
 url="https://xiph.org/flac/"
@@ -13,7 +13,10 @@ source=("${pkgname}-${pkgver}::git+https://github.com/xiph/flac.git#branch=maste
 sha256sums=('SKIP')
 
 prepare() {
-    cd "${pkgname}-${pkgver}/src/libFLAC"
+    cd "${pkgname}-${pkgver}"
+    ./autogen.sh
+
+    cd "src/libFLAC"
     sed -i 's#@prefix@#${PSPDEV}/psp#' flac.pc.in
     sed -i 's#@exec_prefix@#${prefix}#' flac.pc.in
     sed -i 's#@libdir@#${prefix}/lib#' flac.pc.in
@@ -30,7 +33,7 @@ build() {
     cd "${pkgname}-${pkgver}"
     CFLAGS="-Wno-error=incompatible-pointer-types" ./configure --build=$(uname -m) --target=psp --host=psp --prefix=${pkgdir}/psp --disable-thorough-tests \
     --disable-avx --disable-64-bit-words --disable-doxygen-docs --disable-oggtest --disable-programs --disable-examples \
-    --disable-stack-smash-protection --enable-static=yes --enable-shared=no "${XTRA_OPTS[@]}" .. || { exit 1; }
+    --disable-stack-smash-protection --enable-static=yes --enable-shared=no "${XTRA_OPTS[@]}" || { exit 1; }
     make --quiet $MAKEFLAGS || { exit 1; }
 }
 
