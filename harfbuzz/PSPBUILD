@@ -1,6 +1,6 @@
 pkgname=harfbuzz
-pkgver=8.5.0
-pkgrel=5
+pkgver=14.4.0
+pkgrel=1
 pkgdesc="OpenType text shaping engine"
 arch=(any)
 url="https://harfbuzz.github.io/"
@@ -26,7 +26,7 @@ prepare() {
     sed -i 's#%includedir%#${prefix}/include#' harfbuzz*.pc.in
 
     cd ..
-    patch -p1 < ../fix-cmake.patch
+    patch --batch --forward -p1 < ../fix-cmake.patch
 }
 
 build() {
@@ -34,7 +34,8 @@ build() {
     mkdir -p build
     cd build
     cmake -Wno-dev -DCMAKE_TOOLCHAIN_FILE=$PSPDEV/psp/share/pspdev.cmake -DCMAKE_INSTALL_PREFIX=${pkgdir}/psp -DBUILD_SHARED_LIBS=OFF \
-        -DCMAKE_BUILD_TYPE=Release -DHB_HAVE_FREETYPE=ON "${XTRA_OPTS[@]}" .. || { exit 1; }
+        -DCMAKE_BUILD_TYPE=Release -DHB_HAVE_FREETYPE=ON -DHB_BUILD_UTILS=OFF -DHB_BUILD_SUBSET=OFF \
+        -DHB_BUILD_RASTER=OFF -DHB_BUILD_VECTOR=OFF -DHB_BUILD_GPU=OFF "${XTRA_OPTS[@]}" .. || { exit 1; }
     make --quiet $MAKEFLAGS || { exit 1; }
 }
 
