@@ -39,7 +39,7 @@ diff --git a/src/sail/codec.c b/src/sail/codec.c
  #include <dlfcn.h>
  #endif
  
-@@ -70,6 +70,7 @@
+@@ -70,5 +70,6 @@
  }
  #endif
  
