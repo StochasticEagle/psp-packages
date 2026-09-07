@@ -1,22 +1,17 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index e22f2cf..b739707 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -117,7 +117,9 @@ if (NOT MSVC)
-   find_package(Threads)
+@@ -139,6 +139,8 @@
    if (CMAKE_USE_PTHREADS_INIT)
-     add_definitions("-DHAVE_PTHREAD")
+     add_compile_definitions(HAVE_PTHREAD)
 -    list(APPEND THIRD_PARTY_LIBS Threads::Threads)
 +    if (NOT PSP)
 +      list(APPEND THIRD_PARTY_LIBS Threads::Threads)
-+    endif()
++    endif ()
      list(APPEND PC_LIBS_PRIV -pthread)
    endif ()
  endif ()
-@@ -502,7 +504,7 @@ if (HB_BUILD_SUBSET)
-   endif ()
- endif ()
- 
+@@ -746,7 +748,7 @@
 -if (UNIX OR MINGW OR VITA)
 +if (UNIX OR MINGW OR VITA OR PSP)
    # Make symbols link locally
