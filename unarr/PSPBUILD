@@ -1,6 +1,6 @@
 pkgname=unarr
 pkgver=1.1.1
-pkgrel=6
+pkgrel=7
 pkgdesc="A decompression library for rar, tar, zip and 7z archives"
 arch=(any)
 url="https://github.com/selmf/unarr/"
@@ -19,12 +19,12 @@ sha256sums=(
 prepare() {
     cd "${pkgname}-${pkgver}"
 
-    # newlib can fail to expose the 64-bit PRI* format macros when its internal
-    # stdint definitions are first reached indirectly. Force those definitions
-    # in before unarr's headers pull in <inttypes.h>.
-    sed -i '/^#include <inttypes.h>$/d' _7z/_7z.c
-    if ! grep -q '^#include <sys\/_stdint.h>$' _7z/_7z.c; then
-        sed -i '/^#include "_7z.h"$/i #include <sys/_stdint.h>' _7z/_7z.c
+    # The currently installed PSP GCC can provide its own stdint.h before
+    # newlib's header, leaving newlib's internal __int64_t_defined marker unset.
+    # unarr's private implementation header is shared by all archive backends,
+    # so establish newlib's integer definitions before unarr.h includes stdint.h.
+    if ! grep -qxF '#include <sys/_stdint.h>' common/unarr-imp.h; then
+        sed -i '/^#include "unarr.h"$/i #include <sys/_stdint.h>' common/unarr-imp.h
     fi
 }
 
