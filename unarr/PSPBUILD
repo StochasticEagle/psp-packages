@@ -1,6 +1,6 @@
 pkgname=unarr
 pkgver=1.1.1
-pkgrel=4
+pkgrel=5
 pkgdesc="A decompression library for rar, tar, zip and 7z archives"
 arch=(any)
 url="https://github.com/selmf/unarr/"
@@ -18,21 +18,32 @@ sha256sums=(
 
 prepare() {
     cd "${pkgname}-${pkgver}"
+
+    # _7z.c uses the C99 PRIi64 format macro but upstream does not include
+    # <inttypes.h>. GCC 15 correctly rejects the undeclared macro on PSP.
+    if ! grep -q '^#include <inttypes.h>$' _7z/_7z.c; then
+        sed -i '/^#include "_7z.h"$/a #include <inttypes.h>' _7z/_7z.c
+    fi
 }
 
 build() {
     cd "${pkgname}-${pkgver}"
-    mkdir -p build
-    cd build
-    cmake -Wno-dev -DCMAKE_TOOLCHAIN_FILE="${PSPDEV}/psp/share/pspdev.cmake" -DCMAKE_INSTALL_PREFIX="${pkgdir}/psp" \
-        -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DCMAKE_POLICY_VERSION_MINIMUM=3.5 "${XTRA_OPTS[@]}" .. || { exit 1; }
-    make --quiet $MAKEFLAGS || { exit 1; }
+    rm -rf build
+    cmake -S . -B build \
+        -Wno-author \
+        -DCMAKE_TOOLCHAIN_FILE="${PSPDEV}/psp/share/pspdev.cmake" \
+        -DCMAKE_INSTALL_PREFIX="${pkgdir}/psp" \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DBUILD_SHARED_LIBS=OFF \
+        -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+        "${XTRA_OPTS[@]}" || { exit 1; }
+    cmake --build build -- $MAKEFLAGS || { exit 1; }
 }
 
 package() {
-    cd "${pkgname}-${pkgver}/build"
-    make --quiet $MAKEFLAGS install
-    cd ..
+    cd "${pkgname}-${pkgver}"
+    cmake --install build || { exit 1; }
+
     mkdir -m 755 -p "${pkgdir}/psp/share/licenses/${pkgname}"
     install -m 644 COPYING "${pkgdir}/psp/share/licenses/${pkgname}"
 }
