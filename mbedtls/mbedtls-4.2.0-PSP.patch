@@ -16,7 +16,7 @@ diff --git a/library/net_sockets.c b/library/net_sockets.c
 +#endif
  
  #if defined(MBEDTLS_HAVE_TIME)
-@@ -144,7 +147,98 @@
+@@ -138,7 +141,98 @@
  void mbedtls_net_init(mbedtls_net_context *ctx)
  {
      ctx->fd = -1;
@@ -115,7 +115,7 @@ diff --git a/library/net_sockets.c b/library/net_sockets.c
  
  /*
   * Initiate a TCP connection with host:port and the given protocol
-@@ -328,6 +422,7 @@
+@@ -314,6 +408,7 @@
  #if defined(__socklen_t_defined) || defined(_SOCKLEN_T) ||  \
      defined(_SOCKLEN_T_DECLARED) || defined(__DEFINED_socklen_t) || \
 -    defined(socklen_t) || (defined(_POSIX_VERSION) && _POSIX_VERSION >= 200112L)
@@ -124,7 +124,7 @@ diff --git a/library/net_sockets.c b/library/net_sockets.c
      socklen_t n = (socklen_t) sizeof(client_addr);
      socklen_t type_len = (socklen_t) sizeof(type);
  #else
-@@ -405,6 +500,7 @@
+@@ -394,6 +489,7 @@
              }
  
              memcpy(client_ip, &addr4->sin_addr.s_addr, *cip_len);
@@ -132,7 +132,7 @@ diff --git a/library/net_sockets.c b/library/net_sockets.c
          } else {
              struct sockaddr_in6 *addr6 = (struct sockaddr_in6 *) &client_addr;
              *cip_len = sizeof(addr6->sin6_addr.s6_addr);
-@@ -414,5 +510,6 @@
+@@ -403,5 +499,6 @@
              }
  
              memcpy(client_ip, &addr6->sin6_addr.s6_addr, *cip_len);
@@ -142,7 +142,7 @@ diff --git a/library/net_sockets.c b/library/net_sockets.c
 diff --git a/tf-psa-crypto/platform/platform_util.c b/tf-psa-crypto/platform/platform_util.c
 --- a/tf-psa-crypto/platform/platform_util.c
 +++ b/tf-psa-crypto/platform/platform_util.c
-@@ -204,8 +204,17 @@
+@@ -202,8 +202,17 @@
  #if defined(MBEDTLS_PLATFORM_IS_UNIXLIKE)
  #include <unistd.h>
  #endif
@@ -161,7 +161,7 @@ diff --git a/tf-psa-crypto/platform/platform_util.c b/tf-psa-crypto/platform/pla
  mbedtls_ms_time_t mbedtls_ms_time(void)
  {
      int ret;
-@@ -246,7 +255,8 @@
+@@ -246,6 +255,7 @@
  #if !defined(MBEDTLS_PLATFORM_IS_UNIXLIKE) && \
      !defined(__MVS__) /* z/OS */ &&           \
 -    !defined(_WIN32)
@@ -181,7 +181,7 @@ diff --git a/tf-psa-crypto/platform/platform_util.c b/tf-psa-crypto/platform/pla
  #if defined(_WIN32) && !defined(EFIX64) && !defined(EFI32)
  
  #include <windows.h>
-@@ -378,6 +392,26 @@
+@@ -381,6 +395,26 @@
          return PSA_ERROR_NOT_SUPPORTED;
      }
  
