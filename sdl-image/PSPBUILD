@@ -1,6 +1,6 @@
 pkgname=sdl-image
 pkgver=1.2.13
-pkgrel=9
+pkgrel=10
 pkgdesc="A simple library to load images of various formats as SDL2 surfaces"
 arch=(any)
 url="https://www.libsdl.org/projects/old/SDL_image/release-1.2.html"
@@ -9,12 +9,15 @@ groups=('psp-libraries')
 depends=('sdl' 'libpng' 'jpeg')
 makedepends=()
 optdepends=()
-source=("git+https://github.com/libsdl-org/SDL_image.git#commit=7adb1a70f97d62f1bb307bfb4e6c2fa0bc8c33ab")
-
-sha256sums=('SKIP')
+source=()
+sha256sums=()
 
 prepare() {
-    cd "SDL_image"
+    rm -rf "${srcdir}/SDL_image"
+    cp -a "${startdir}/../components/SDL_image12" "${srcdir}/SDL_image"
+    rm -rf "${srcdir}/SDL_image/.git"
+
+    cd "${srcdir}/SDL_image"
     sed -i 's#@prefix@#${PSPDEV}/psp#' SDL_image.pc.in
     sed -i 's#@exec_prefix@#${prefix}#' SDL_image.pc.in
     sed -i 's#@libdir@#${prefix}/lib#' SDL_image.pc.in
@@ -22,20 +25,19 @@ prepare() {
 }
 
 build() {
-    cd "SDL_image"
+    cd "${srcdir}/SDL_image"
     ./autogen.sh
     LDFLAGS="-L$(psp-config --pspsdk-path)/lib" LIBS="-lc -lpspuser" \
-    ./configure --host psp --prefix=/psp  --with-sdl-prefix=$(psp-config --psp-prefix)
+    ./configure --host psp --prefix=/psp --with-sdl-prefix=$(psp-config --psp-prefix)
     make
 }
 
 package() {
-    cd "SDL_image"
-    make DESTDIR="$pkgdir/" install 
+    cd "${srcdir}/SDL_image"
+    make DESTDIR="$pkgdir/" install
 
     rm "${pkgdir}/psp/lib/libSDL_image.la"
 
     mkdir -m 755 -p "$pkgdir/psp/share/licenses/$pkgname"
     install -m 644 COPYING "$pkgdir/psp/share/licenses/$pkgname"
 }
-
