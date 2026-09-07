@@ -10,7 +10,7 @@ depends=()
 makedepends=()
 optdepends=()
 source=(
-    "$pkgname-$pkgver-stable::git+https://github.com/wolfSSL/wolfssl.git#tag=v${pkgver}-stable"
+    "$pkgname-$pkgver-stable::git+https://github.com/wolfSSL/wolfssl.git#tag=v5.9.2-stable"
     "wolfssl-psp-ipv6.patch"
 )
 sha256sums=(
