@@ -2,12 +2,12 @@
 
 This repository contains the build recipes for libraries shipped with PSPDEV. Package recipes and their support files live under `pspbuild/`; checked-out upstream source components live under `components/`.
 
-Generated package archives are written flat into `build/`. Package compilation itself runs in disposable temporary workspaces, so recipe directories never accumulate `src/`, `pkg/`, downloaded source archives, or package files.
+Per-package build trees are stored under `build/<package>/`. Final package archives are written flat into `packages/`.
 
-To discard all repository-side build output and start clean:
+Neither `build/` nor `packages/` is tracked by Git. To discard all local build state and built packages:
 
 ```sh
-rm -rf build
+rm -rf build packages
 ```
 
 ## Building packages
@@ -25,6 +25,8 @@ Build and install it into the active PSPDEV prefix:
 ```
 
 Running `./build.sh` without a package name builds all non-blacklisted packages. Required package dependencies are built and installed recursively before their dependents.
+
+When a package is rebuilt, only its own `build/<package>/` directory is cleared first. The resulting build tree remains in place after success or failure for inspection. The completed package archive is placed in `packages/`.
 
 ## Installing libraries from the repository
 

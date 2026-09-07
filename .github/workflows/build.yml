@@ -42,8 +42,8 @@ jobs:
     - name: Build packages
       run: |
         adduser -D -h /build -s /bin/bash build
-        mkdir -p build
-        chown -R build:build /build ${PSPDEV} build
+        mkdir -p build packages
+        chown -R build:build /build ${PSPDEV} build packages
         for f in ${{ matrix.packages }}; do
           sudo -u build PATH=${PATH} PSPDEV=${PSPDEV} LIBMAKEPKG_LINT_PACKAGE_DOTFILES_SH=0 ./build.sh --install "$f"
         done
@@ -56,7 +56,7 @@ jobs:
     - uses: actions/upload-artifact@v7
       with:
         name: artifact-${{ env.PACKAGE }}
-        path: build/${{ env.PKGFILE }}
+        path: packages/${{ env.PKGFILE }}
 
   package_repo:
     if: contains(github.ref,'refs/heads/master')

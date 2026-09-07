@@ -4,12 +4,17 @@ This repository contains the build scripts for the libraries contained in the PS
 
 ## Repository layout
 
-Package build instructions live under `pspbuild/<package>/`. Each package directory contains its `PSPBUILD` plus any local patches or support files required by that recipe. Generated package archives are written to the top-level `build/` directory; transient `src/` and `pkg/` trees are created in disposable temporary workspaces and are not stored in the recipe tree.
+Package build instructions live under `pspbuild/<package>/`. Each package directory contains its `PSPBUILD` plus any local patches or support files required by that recipe.
 
-Deleting `build/` resets all repository-side build output:
+Generated build state is kept separate from the recipes:
+
+- `build/<package>/` contains that package's temporary build tree, including `src/`, `pkg/`, local source snapshots, and the local PSPBUILD copy used by `psp-makepkg`.
+- `packages/` contains only the final package archives and is flat.
+
+Neither directory is tracked by Git. A complete local reset is:
 
 ```sh
-rm -rf build
+rm -rf build packages
 ```
 
 ## How to add a library

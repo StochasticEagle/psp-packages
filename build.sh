@@ -1,6 +1,7 @@
 #!/bin/bash
 # Build one package or all packages. Recipe files stay read-only under
-# pspbuild/; all persistent package output is written flat into build/.
+# pspbuild/; per-package build trees live under build/ and final package
+# archives are written flat into packages/.
 
 set -e
 
@@ -8,19 +9,11 @@ BLACKLIST="pocketpy|luasocket"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 RECIPES="${ROOT}/pspbuild"
 COMPONENTS="${ROOT}/components"
-OUTPUT="${ROOT}/build"
+BUILD_ROOT="${ROOT}/build"
+PACKAGES="${ROOT}/packages"
 SOURCE_COMPONENTS="${ROOT}/source-components.tsv"
-CURRENT_WORKDIR=""
 
-cleanup_workdir() {
-  if [[ -n "${CURRENT_WORKDIR}" && -d "${CURRENT_WORKDIR}" ]]; then
-    rm -rf "${CURRENT_WORKDIR}"
-  fi
-  CURRENT_WORKDIR=""
-}
-trap cleanup_workdir EXIT
-
-mkdir -p "${OUTPUT}"
+mkdir -p "${BUILD_ROOT}" "${PACKAGES}"
 
 doinstall=""
 if [[ "${1:-}" == "--install" ]]; then
@@ -134,37 +127,41 @@ for pkg in ${PKG_LIST}; do
   done
 
   pkgfile=$("${ROOT}/parse_pspbuild.sh" "${pspbuild}" pkgoutput)
+  package_path="${PACKAGES}/${pkgfile}"
+  workdir="${BUILD_ROOT}/${pkg}"
 
-  if [[ ! -f "${OUTPUT}/${pkgfile}" ]]; then
+  if [[ ! -f "${package_path}" ]]; then
     echo "Building ${pkg} ..."
 
-    CURRENT_WORKDIR=$(mktemp -d "${TMPDIR:-/tmp}/psp-packages-${pkg}.XXXXXX")
-    cp -a "${recipe_dir}/." "${CURRENT_WORKDIR}/"
+    # Every actual rebuild starts from a clean per-package build tree. Leave the
+    # tree in place afterward so successful and failed builds can be inspected.
+    rm -rf "${workdir}"
+    mkdir -p "${workdir}"
+    cp -a "${recipe_dir}/." "${workdir}/"
 
-    local_pspbuild="${CURRENT_WORKDIR}/.PSPBUILD.local"
+    local_pspbuild="${workdir}/.PSPBUILD.local"
     configure_local_git_sources \
-      "${CURRENT_WORKDIR}/PSPBUILD" "${local_pspbuild}" "${CURRENT_WORKDIR}"
+      "${workdir}/PSPBUILD" "${local_pspbuild}" "${workdir}"
 
-    if (cd "${CURRENT_WORKDIR}" && \
-      PKGDEST="${OUTPUT}" psp-makepkg -p .PSPBUILD.local); then
+    if (cd "${workdir}" && \
+      PKGDEST="${PACKAGES}" psp-makepkg -p .PSPBUILD.local); then
       :
     else
       status=$?
-      cleanup_workdir
+      echo "ERROR: Build failed for ${pkg}. Build tree preserved at:"
+      echo "  ${workdir}"
       exit "${status}"
     fi
 
-    cleanup_workdir
-
-    if [[ ! -f "${OUTPUT}/${pkgfile}" ]]; then
+    if [[ ! -f "${package_path}" ]]; then
       echo "ERROR: Expected package was not produced:"
-      echo "  ${OUTPUT}/${pkgfile}"
+      echo "  ${package_path}"
       exit 1
     fi
   fi
 
   if [[ -n "${doinstall}" ]]; then
     echo "Installing ${pkg}"
-    psp-pacman -U --noconfirm "${OUTPUT}/${pkgfile}" --overwrite '*'
+    psp-pacman -U --noconfirm "${package_path}" --overwrite '*'
   fi
 done
