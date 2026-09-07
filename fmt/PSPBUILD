@@ -10,7 +10,7 @@ depends=()
 makedepends=()
 provides=()
 conflicts=()
-source=("$pkgname-$pkgver::git+https://github.com/fmtlib/fmt.git#branch=main")
+source=("$pkgname-$pkgver::git+https://github.com/fmtlib/fmt.git#tag=${pkgver}")
 sha256sums=("SKIP")
 
 prepare() {
