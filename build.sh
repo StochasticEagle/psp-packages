@@ -31,7 +31,8 @@ fi
 configure_local_git_sources() {
   local pspbuild="$1"
   local local_pspbuild="$2"
-  local src entry remote source_name component mapped branch component_head escaped_branch i=0 j old_count=0
+  local src entry remote source_name component mapped component_head
+  local ref_kind ref_value escaped_ref i=0 j old_count=0
   local -a git_sources=()
 
   mapfile -t git_sources < <(
@@ -81,22 +82,32 @@ configure_local_git_sources() {
 
     component_head="$(git -C "$component" rev-parse HEAD)"
 
-    # Branch tracking belongs to the parent submodule configuration. Package
-    # builds consume exactly the checked-out gitlink revision. Rewrite only the
-    # temporary build script so makepkg checks out the commit directly instead
-    # of trying to resolve an origin/<branch> remote-tracking ref in its cache.
-    if [[ "$entry" == *"#branch="* ]]; then
-      branch="${entry##*#branch=}"
-      branch="${branch%%&*}"
-      escaped_branch="${branch//&/\\&}"
-      escaped_branch="${escaped_branch//|/\\|}"
-      sed -i "s|#branch=${escaped_branch}|#commit=${component_head}|g" "$local_pspbuild"
+    # The parent repository's gitlink is authoritative. A package recipe may
+    # document an upstream branch, tag, or commit, but makepkg must consume the
+    # exact revision already checked out in the shallow component. Rewrite only
+    # the temporary build script, so no package build needs tags, ancestor
+    # history, or remote-tracking refs to exist in the shallow clone.
+    ref_kind=""
+    ref_value=""
+    for ref_kind in branch tag commit; do
+      if [[ "$entry" == *"#${ref_kind}="* ]]; then
+        ref_value="${entry##*#${ref_kind}=}"
+        ref_value="${ref_value%%&*}"
+        break
+      fi
+      ref_kind=""
+    done
 
-      # Keep a local branch ref at the synchronized HEAD so makepkg's local
-      # VCS-cache fetch can obtain the commit from a detached submodule without
-      # contacting the authoritative remote.
-      git -C "$component" update-ref "refs/heads/${branch}" "$component_head"
+    if [ -n "$ref_kind" ]; then
+      escaped_ref="${ref_value//&/\\&}"
+      escaped_ref="${escaped_ref//|/\\|}"
+      sed -i "s|#${ref_kind}=${escaped_ref}|#commit=${component_head}|g" "$local_pspbuild"
     fi
+
+    # A depth-1 submodule can be detached at its gitlink. Give its HEAD a local
+    # branch ref so makepkg's local VCS cache can fetch that object without the
+    # build contacting the authoritative remote or requiring deeper history.
+    git -C "$component" update-ref refs/heads/psp-packages-source "$component_head"
 
     export "GIT_CONFIG_KEY_${i}=url.file://${component}.insteadOf"
     export "GIT_CONFIG_VALUE_${i}=${remote}"
