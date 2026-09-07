@@ -1,6 +1,6 @@
 pkgname=sdl3-gfx
 pkgver=r21.0bbee98
-pkgrel=3
+pkgrel=4
 pkgdesc="Graphics drawing primitives and other support functions wrapped up in an add-on, C-based library for the Simple Direct Media (SDL) cross-platform API layer"
 arch=('any')
 url="https://github.com/sabdul-khabir/SDL3_gfx"
@@ -14,7 +14,7 @@ backup=()
 options=()
 install=
 changelog=
-source=("cmake-module.patch::https://patch-diff.githubusercontent.com/raw/sabdul-khabir/SDL3_gfx/pull/22.patch"
+source=("cmake-module.patch"
         "psp.patch")
 noextract=()
 sha256sums=('e0d3a84262a4892554277184429205b91e8e1f2f2d0fe31150504f9c5a427fc8'
@@ -32,8 +32,8 @@ prepare() {
         # against an existing package source tree.
         rm -f SDL3_gfxConfig.cmake.in
 
-        patch -Np1 -i "$srcdir/cmake-module.patch"
-        patch -Np1 -i "$srcdir/psp.patch"
+        patch --batch --forward -Np1 -i "$srcdir/cmake-module.patch"
+        patch --batch --forward -Np1 -i "$srcdir/psp.patch"
 
         # patch sdl3-gfx.pc.in
         sed -i 's/@CMAKE_INSTALL_PREFIX@/${PSPDEV}\/psp/g' ./sdl3-gfx.pc.in
