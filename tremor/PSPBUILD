@@ -1,6 +1,6 @@
 pkgname=tremor
-pkgver=1.2.1git
-pkgrel=7
+pkgver=1.2.1git20250403
+pkgrel=1
 pkgdesc="Integer-only, fully Ogg Vorbis compliant software decoder library"
 arch=(any)
 url="https://wiki.xiph.org/Tremor"
@@ -9,21 +9,11 @@ groups=('psp-libraries')
 depends=('libogg')
 makedepends=()
 optdepends=()
-source=(
-    "git+https://gitlab.xiph.org/xiph/tremor.git#commit=7c30a66346199f3f09017a09567c6c8a3a0eedc8"
-    "master...sezero.patch"
-    "platform-allegrex.patch"
-)
-sha256sums=(
-    'SKIP'
-    '5bd4ac5916bda07e6f9dbdcd1633ac7073c7972b874b04ca59d5edde65afc847'
-    'SKIP'
-)
+source=("git+https://gitlab.xiph.org/xiph/tremor.git#branch=main")
+sha256sums=('SKIP')
 
 prepare() {
     cd "${pkgname}"
-    patch --batch --forward -p1 < ../master...sezero.patch
-    patch --batch --forward -p1 < ../platform-allegrex.patch
 
     sed -i 's#@prefix@#${PSPDEV}/psp#' vorbisidec.pc.in
     sed -i 's#@exec_prefix@#${prefix}#' vorbisidec.pc.in
@@ -33,10 +23,19 @@ prepare() {
 
 build() {
     cd "${pkgname}"
-    ./autogen.sh --host psp
-    LDFLAGS="-L$(psp-config --pspsdk-path)/lib" LIBS="-lc -lpspuser" \
-    CFLAGS="-Wno-error=incompatible-pointer-types" \
-    ./configure --host psp --prefix=/psp
+
+    # Current upstream autogen.sh only regenerates the autotools files; it no
+    # longer runs configure itself.
+    ./autogen.sh
+
+    # Keep PSP/Allegrex policy in the package recipe rather than patching
+    # upstream configure.ac. Tremor's configure script appends caller CFLAGS to
+    # its normal GCC flags, and --enable-low-accuracy supplies _LOW_ACCURACY_.
+    LDFLAGS="-L$(psp-config --pspsdk-path)/lib" \
+    LIBS="-lc -lpspuser" \
+    CFLAGS="-G0 -DLITTLE_ENDIAN=1 -DBYTE_ORDER=LITTLE_ENDIAN -Wno-error=incompatible-pointer-types" \
+    ./configure --host=psp --prefix=/psp --enable-low-accuracy
+
     make
 }
 
@@ -49,4 +48,3 @@ package() {
     mkdir -m 755 -p "$pkgdir/psp/share/licenses/$pkgname"
     install -m 644 COPYING "$pkgdir/psp/share/licenses/$pkgname"
 }
-
