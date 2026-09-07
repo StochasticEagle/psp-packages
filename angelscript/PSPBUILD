@@ -1,6 +1,6 @@
 pkgname=angelscript
 pkgver=2.38.0
-pkgrel=3
+pkgrel=4
 pkgdesc="A game-oriented interpreted compiled scripting language library"
 arch=(any)
 url="https://www.angelcode.com/angelscript/"
@@ -42,8 +42,12 @@ package() {
     DESTDIR="$pkgdir" cmake --install "${srcdir}/angelscript-${pkgver}/build" || { exit 1; }
 
     mkdir -m 755 -p "$pkgdir/psp/share/licenses/$pkgname"
-    install -m 644 "${srcdir}/angelscript-${pkgver}/sdk/docs/manual/doc_license.html" \
-        "$pkgdir/psp/share/licenses/$pkgname/license.html"
+    # AngelScript 2.38.0 no longer ships the generated docs/manual tree or a
+    # standalone license file. The complete Zlib license is the leading comment
+    # in the public header, so extract that authoritative notice verbatim.
+    sed -n '1,/^\*\//p' \
+        "${srcdir}/angelscript-${pkgver}/sdk/angelscript/include/angelscript.h" \
+        > "$pkgdir/psp/share/licenses/$pkgname/LICENSE"
 
     mkdir -p "$pkgdir/psp/share/doc/$pkgname"
     cp -r "${srcdir}/angelscript-${pkgver}/sdk/docs/." "$pkgdir/psp/share/doc/$pkgname/"
