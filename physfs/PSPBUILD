@@ -1,6 +1,6 @@
 pkgname=physfs
 pkgver=3.2.0
-pkgrel=11
+pkgrel=12
 pkgdesc="PhysicsFS; a portable, flexible file i/o abstraction."
 arch=(any)
 url="https://icculus.org/physfs/"
@@ -26,7 +26,7 @@ prepare() {
     sed -e 's#@CMAKE_INSTALL_PREFIX@#${PSPDEV}/psp#' \
         -e 's#@CMAKE_INSTALL_FULL_LIBDIR@#${prefix}/lib#' \
         -e 's#@CMAKE_INSTALL_FULL_INCLUDEDIR@#${prefix}/include#' \
-        -i cmake/physfs.pc.in
+        -i extras/physfs.pc.in
 }
 
 build() {
