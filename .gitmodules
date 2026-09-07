@@ -160,10 +160,6 @@
 	path = components/libbulletml
 	url = https://github.com/pspdev/libbulletml.git
 	shallow = true
-[submodule "components/psp-cfw-sdk"]
-	path = components/psp-cfw-sdk
-	url = https://github.com/pspdev/psp-cfw-sdk.git
-	shallow = true
 [submodule "components/tinygettext"]
 	path = components/tinygettext
 	url = https://github.com/tinygettext/tinygettext.git
