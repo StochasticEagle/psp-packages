@@ -1,8 +1,8 @@
 pkgname=libeigen
-pkgver=3.4.0
-pkgrel=5
-url="http://eigen.tuxfamily.org"
-source=("eigen-$pkgver::git+https://gitlab.com/libeigen/eigen.git#branch=master")
+pkgver=3.4.1
+pkgrel=1
+url="https://libeigen.gitlab.io/"
+source=("eigen-$pkgver::git+https://gitlab.com/libeigen/eigen.git#commit=d71c30c47858effcbd39967097a2d99ee48db464")
 license=('MPL-2.0 AND BSD-3-Clause AND LGPL-2.1-only AND LGPL-2.1-or-later')
 groups=('psp-libraries')
 depends=()

@@ -1,6 +1,6 @@
 pkgname=cjson
-pkgver=1.7.16
-pkgrel=6
+pkgver=1.7.19
+pkgrel=1
 pkgdesc="Ultralightweight JSON parser in ANSI C."
 arch=(any)
 url="https://github.com/DaveGamble/cJSON/"
@@ -9,7 +9,7 @@ groups=('psp-libraries')
 depends=()
 makedepends=()
 optdepends=()
-source=("cJSON-$pkgver::git+https://github.com/DaveGamble/cJSON.git#branch=master")
+source=("cJSON-$pkgver::git+https://github.com/DaveGamble/cJSON.git#commit=fb16e5cf358798aabb049655975cde8427101056")
 sha256sums=('SKIP')
 
 prepare() {

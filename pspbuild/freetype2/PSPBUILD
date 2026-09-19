@@ -1,6 +1,6 @@
 pkgname=freetype2
-pkgver=2.11.0
-pkgrel=10
+pkgver=2.14.3
+pkgrel=1
 pkgdesc="A freely available software library to render fonts"
 arch=(any)
 url="https://www.freetype.org/"
@@ -10,7 +10,7 @@ depends=('zlib' 'bzip2' 'libpng')
 makedepends=()
 optdepends=()
 group=('all')
-source=("freetype-VER-${pkgver//./-}::git+https://github.com/freetype/freetype.git#branch=master")
+source=("freetype-VER-${pkgver//./-}::git+https://github.com/freetype/freetype.git#commit=4a1d62e2e1259bae709294e6ef95211375ab3fd8")
 sha256sums=('SKIP')
 
 prepare() {

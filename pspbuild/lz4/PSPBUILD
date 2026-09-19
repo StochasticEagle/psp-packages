@@ -1,6 +1,6 @@
 pkgname=lz4
-pkgver=1.9.4
-pkgrel=5
+pkgver=1.10.0
+pkgrel=1
 pkgdesc="Extremely Fast Compression algorithm"
 arch=(any)
 url="https://lz4.org/"
@@ -9,7 +9,7 @@ groups=('psp-libraries')
 depends=()
 makedepends=()
 optdepends=()
-source=("$pkgname-$pkgver::git+https://github.com/lz4/lz4.git#branch=dev")
+source=("$pkgname-$pkgver::git+https://github.com/lz4/lz4.git#commit=0774d05537f9762f838f7ab541b7765f1a729cb5")
 sha256sums=('SKIP')
 
 prepare() {

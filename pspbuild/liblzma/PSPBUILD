@@ -1,6 +1,6 @@
 pkgname=liblzma
-pkgver=5.2.10
-pkgrel=4
+pkgver=5.8.3
+pkgrel=1
 pkgdesc="LZMA provides a general-purpose data-compression library"
 arch=(any)
 url="https://github.com/tukaani-project/xz/"
@@ -9,12 +9,8 @@ depends=()
 groups=('psp-libraries')
 makedepends=()
 optdepends=()
-source=(
-    "xz-${pkgver}::git+https://github.com/tukaani-project/xz.git#branch=master"
-)
-sha256sums=(
-    "SKIP"
-)
+source=("xz-${pkgver}::git+https://github.com/tukaani-project/xz.git#commit=9fc6f5cd8774ebef8d4e030f7081fb6984c0dc3f"))
+sha256sums=("SKIP")
 
 prepare() {
     cd "xz-${pkgver}"

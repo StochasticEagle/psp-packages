@@ -1,6 +1,6 @@
 pkgname=glm
-pkgver=0.9.9
-pkgrel=5
+pkgver=1.0.3
+pkgrel=1
 pkgdesc="OpenGL Mathematics (GLM) is a header only C++ mathematics library for graphics software based on the OpenGL Shading Language (GLSL) specifications."
 arch=(any)
 url="https://glm.g-truc.net/"
@@ -10,13 +10,8 @@ depends=()
 makedepends=()
 optdepends=()
 provides=()
-source=(
-"git+https://github.com/g-truc/glm#commit=bf71a834948186f4097caa076cd2663c69a10e1e"
-)
-
-sha256sums=(
-"SKIP"
-)
+source=("git+https://github.com/g-truc/glm#commit=8d1fd52e5ab5590e2c81768ace50c72bae28f2ed")
+sha256sums=("SKIP")
 
 package() {
     cd glm

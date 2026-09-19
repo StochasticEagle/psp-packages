@@ -1,21 +1,17 @@
 pkgname=libmodplug
-pkgver=0.8.8.5
-pkgrel=7
+pkgver=0.8.9.0
+pkgrel=1
 pkgdesc="libmodplug - the library which was part of the Modplug-xmms project"
 arch=(any)
-url="http://modplug-xmms.sf.net/"
+url="https://github.com/Konstanty/libmodplug"
 license=('custom:Public-Domain')
 groups=('psp-libraries')
 depends=()
 makedepends=()
 optdepends=()
 provides=()
-source=(
-"git+https://github.com/Konstanty/libmodplug#commit=d7ba5efd5816696fba668a23194940f796d62b95"
-)
-sha256sums=(
-"SKIP"
-)
+source=("git+https://github.com/Konstanty/libmodplug#commit=d7ba5efd5816696fba668a23194940f796d62b95")
+sha256sums=("SKIP")
 
 prepare() {
     cd libmodplug

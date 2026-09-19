@@ -20,9 +20,9 @@ jobs:
     container: python:3-alpine
 
     steps:
-      - name: Install Git
+      - name: Install validation tools
         shell: sh
-        run: apk add --no-cache git
+        run: apk add --no-cache git bash
 
       - uses: actions/checkout@v6
         with:
@@ -87,6 +87,7 @@ jobs:
               errors.append(f"gitlink is missing from .gitmodules: {path}")
 
           source_map = root / "source-components.tsv"
+          source_components = {}
           if source_map.exists():
               seen_urls = set()
               for lineno, raw in enumerate(source_map.read_text().splitlines(), 1):
@@ -105,6 +106,7 @@ jobs:
                           f"source-components.tsv:{lineno}: duplicate URL: {url}"
                       )
                   seen_urls.add(url)
+                  source_components[url] = path
 
                   if path not in gitlink_paths:
                       errors.append(
@@ -117,7 +119,9 @@ jobs:
           )
           component_re = re.compile(r'components/[A-Za-z0-9_.+-]+')
 
-          for recipe in sorted((root / "pspbuild").glob("*/PSPBUILD")):
+          recipes = sorted((root / "pspbuild").glob("*/PSPBUILD"))
+
+          for recipe in recipes:
               text = recipe.read_text()
               for block in mapping_re.findall(text):
                   for path in component_re.findall(block):
@@ -126,6 +130,98 @@ jobs:
                               f"{recipe}: mapped component is not a gitlink: {path}"
                           )
 
+          git_source_count = 0
+
+          for recipe in recipes:
+              probe = subprocess.run(
+                  [
+                      "bash",
+                      "-c",
+                      r'''
+          source "$1"
+          
+          if ! declare -p source >/dev/null 2>&1; then
+              exit 0
+          fi
+          
+          for i in "${!source[@]}"; do
+              src="${source[$i]}"
+          
+              case "$src" in
+                  *git+*)
+                      mapped=""
+          
+                      if declare -p psp_source_components >/dev/null 2>&1; then
+                          mapped="${psp_source_components[$i]-}"
+                      fi
+          
+                      printf '%s\t%s\t%s\n' "$i" "$mapped" "$src"
+                      ;;
+              esac
+          done
+          ''',
+                      "_",
+                      str(recipe),
+                  ],
+                  text=True,
+                  capture_output=True,
+              )
+
+              if probe.returncode != 0:
+                  detail = probe.stderr.strip() or f"exit status {probe.returncode}"
+                  errors.append(
+                      f"{recipe}: could not evaluate Git sources: {detail}"
+                  )
+                  continue
+
+              for raw in probe.stdout.splitlines():
+                  try:
+                      source_index, mapped, src = raw.split("\t", 2)
+                  except ValueError:
+                      errors.append(
+                          f"{recipe}: malformed Git-source validation output: {raw}"
+                      )
+                      continue
+
+                  git_source_count += 1
+
+                  entry = src.split("::", 1)[1] if "::" in src else src
+                  if not entry.startswith("git+"):
+                      errors.append(
+                          f"{recipe}: source[{source_index}] contains git+ "
+                          f"but cannot be parsed: {src}"
+                      )
+                      continue
+
+                  remote = entry[len("git+"):]
+                  remote = remote.split("#", 1)[0]
+
+                  if mapped:
+                      component = mapped
+                  else:
+                      component = source_components.get(remote, "")
+                      if not component:
+                          source_name = pathlib.PurePosixPath(
+                              remote.rstrip("/")
+                          ).name
+                          if source_name.endswith(".git"):
+                              source_name = source_name[:-4]
+                          component = f"components/{source_name}"
+
+                  if not component.startswith("components/"):
+                      errors.append(
+                          f"{recipe}: source[{source_index}] maps outside "
+                          f"components/: {component}"
+                      )
+                      continue
+
+                  if component not in gitlink_paths:
+                      errors.append(
+                          f"{recipe}: Git source[{source_index}] does not "
+                          f"resolve to a component gitlink: "
+                          f"{remote} -> {component}"
+                      )
+
           if errors:
               print("Repository structure validation failed:", file=sys.stderr)
               for error in errors:
@@ -133,8 +229,9 @@ jobs:
               raise SystemExit(1)
 
           print(
-              f"Validated {len(gitlink_paths)} shallow component gitlinks "
-              f"and {len(list((root / 'pspbuild').glob('*/PSPBUILD')))} package recipes."
+              f"Validated {len(gitlink_paths)} shallow component gitlinks, "
+              f"{len(recipes)} package recipes, "
+              f"and {git_source_count} Git-backed recipe sources."
           )
           PY
 
@@ -152,6 +249,7 @@ jobs:
       - name: Build packages
         shell: sh
         run: |
+          apk add --no-cache meson ninja
           adduser -D -h /build -s /bin/bash build
           mkdir -p build packages
           chown -R build:build /build "${PSPDEV}" .

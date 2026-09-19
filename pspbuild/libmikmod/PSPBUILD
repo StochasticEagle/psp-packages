@@ -1,6 +1,6 @@
 pkgname=libmikmod
-pkgver=3.3.11.1
-pkgrel=11
+pkgver=3.3.14
+pkgrel=1
 pkgdesc="A portable sound library capable of playing samples as well as module files"
 arch=(any)
 url="http://mikmod.sourceforge.net/"
@@ -9,7 +9,7 @@ groups=('psp-libraries')
 depends=()
 makedepends=()
 optdepends=()
-source=("git+https://git.code.sf.net/p/mikmod/mikmod#commit=65efd9e7b6cec78e91af1a1e664eadffab934888")
+source=("git+https://git.code.sf.net/p/mikmod/mikmod#commit=8de19eef766d9ba30a74c19e566edfcd61851dba")
 sha256sums=('SKIP')
 
 prepare() {
