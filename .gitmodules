@@ -398,18 +398,9 @@
 	url = https://github.com/lua/lua.git
 	branch = master
 	shallow = true
-[submodule "components/sqlite"]
-	path = components/sqlite
-	url = https://github.com/sqlite/sqlite.git
-	branch = master
-	shallow = true
 [submodule "components/SDL_image12"]
 	path = components/SDL_image12
 	url = https://github.com/libsdl-org/SDL_image.git
-	shallow = true
-[submodule "components/sqlite374"]
-	path = components/sqlite374
-	url = https://github.com/sqlite/sqlite.git
 	shallow = true
 [submodule "components/angelscript"]
 	path = components/angelscript
