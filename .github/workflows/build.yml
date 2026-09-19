@@ -249,7 +249,7 @@ jobs:
       - name: Build packages
         shell: sh
         run: |
-          apk add --no-cache meson ninja
+          apk add --no-cache meson ninja coreutils grep tar
           adduser -D -h /build -s /bin/bash build
           mkdir -p build packages
           chown -R build:build /build "${PSPDEV}" .
