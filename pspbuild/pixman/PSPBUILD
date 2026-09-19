@@ -1,6 +1,6 @@
 pkgname=pixman
 pkgver=0.40.0
-pkgrel=7
+pkgrel=8
 pkgdesc="Pixman is a low-level software library for pixel manipulation"
 arch=(any)
 url="http://pixman.org/"
@@ -9,8 +9,8 @@ groups=('psp-libraries')
 depends=('libpng')
 makedepends=()
 optdepends=()
-source=("https://xorg.freedesktop.org/archive/individual/lib/${pkgname}-${pkgver}.tar.gz")
-sha256sums=('6d200dec3740d9ec4ec8d1180e25779c00bc749f94278c8b9021f5534db223fc')
+source=("pixman-${pkgver}::git+https://gitlab.freedesktop.org/pixman/pixman.git#commit=244383bf9f3493c014985de46876e40fd5db43f3")
+sha256sums=('SKIP')
 
 prepare() {
     cd "${pkgname}-${pkgver}"

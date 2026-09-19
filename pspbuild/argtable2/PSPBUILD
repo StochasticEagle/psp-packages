@@ -1,6 +1,6 @@
 pkgname=argtable2
 pkgver=13
-pkgrel=9
+pkgrel=10
 pkgdesc="Argtable is an ANSI C library for parsing GNU style command line options with a minimum of fuss"
 arch=(any)
 url="http://argtable.sourceforge.net/"
@@ -9,8 +9,8 @@ groups=('psp-libraries')
 depends=()
 makedepends=()
 optdepends=()
-source=("http://prdownloads.sourceforge.net/argtable/${pkgname}-${pkgver}.tar.gz")
-sha256sums=('8f77e8a7ced5301af6e22f47302fdbc3b1ff41f2b83c43c77ae5ca041771ddbf')
+source=("argtable2-${pkgver}::git+https://github.com/StochasticEagle/psp-argtable2.git#commit=5c5d4bfd6b8d5e337f53bd4861e4bebeb331fe87")
+sha256sums=('SKIP')
 
 prepare() {
     cd "${pkgname}-${pkgver}"

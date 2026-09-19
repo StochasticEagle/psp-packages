@@ -53,3 +53,6 @@ https://github.com/dogo/oslib.git	components/oslib
 https://github.com/HappySeaFox/sail.git	components/sail
 https://github.com/sabdul-khabir/SDL3_gfx.git	components/sdl3-gfx
 https://github.com/sqlite/sqlite.git	components/sqlite
+https://github.com/StochasticEagle/psp-argtable2.git	components/argtable2
+https://github.com/libsdl-org/mpg123.git	components/mpg123
+https://gitlab.freedesktop.org/pixman/pixman.git	components/pixman

@@ -1,6 +1,6 @@
 pkgname=mpg123
 pkgver=1.33.7
-pkgrel=1
+pkgrel=2
 pkgdesc="MPEG audio decoder library"
 arch=(any)
 url="https://www.mpg123.de/"
@@ -10,10 +10,10 @@ depends=()
 makedepends=()
 optdepends=()
 source=(
-    "https://sourceforge.net/projects/mpg123/files/mpg123/${pkgver}/mpg123-${pkgver}.tar.bz2"
+    "mpg123-${pkgver}::git+https://github.com/libsdl-org/mpg123.git#commit=20c59b07437ea6908a5b7bcb9dc43cb2833c0dcd"
 )
 sha256sums=(
-    "31d0e35a4ca567ec9b5ebda6c3062bb4435d6d3eacd6ef0d95cadd7854dc03ee"
+    "SKIP"
 )
 
 prepare() {

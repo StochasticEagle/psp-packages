@@ -442,3 +442,16 @@
 	path = components/SDL2_ttf
 	url = https://github.com/libsdl-org/SDL_ttf.git
 	shallow = true
+
+[submodule "components/argtable2"]
+	path = components/argtable2
+	url = https://github.com/StochasticEagle/psp-argtable2.git
+	shallow = true
+[submodule "components/mpg123"]
+	path = components/mpg123
+	url = https://github.com/libsdl-org/mpg123.git
+	shallow = true
+[submodule "components/pixman"]
+	path = components/pixman
+	url = https://gitlab.freedesktop.org/pixman/pixman.git
+	shallow = true
