@@ -20,6 +20,10 @@ jobs:
     container: python:3-alpine
 
     steps:
+      - name: Install Git
+        shell: sh
+        run: apk add --no-cache git
+
       - uses: actions/checkout@v6
         with:
           fetch-depth: 1
@@ -28,7 +32,6 @@ jobs:
       - name: Validate repository structure
         shell: sh
         run: |
-          apk add --no-cache git
           python3 - <<'PY'
           import configparser
           import pathlib
