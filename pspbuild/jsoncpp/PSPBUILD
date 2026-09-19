@@ -1,6 +1,6 @@
 pkgname=jsoncpp
 pkgver=1.9.8
-pkgrel=4
+pkgrel=5
 pkgdesc="A C++ library for interacting with JSON"
 arch=(any)
 license=('Unlicense')
@@ -12,6 +12,7 @@ sha256sums=('SKIP')
 
 prepare() {
     cd "$pkgname"
+    sed -i '/#include <cstddef>/a #include <cstdio>' include/json/config.h
     sed -i 's#@CMAKE_INSTALL_PREFIX@#${PSPDEV}/psp#g' pkg-config/jsoncpp.pc.in
     sed -i 's#@libdir_for_pc_file@#${prefix}/lib#' pkg-config/jsoncpp.pc.in
     sed -i 's#@includedir_for_pc_file@#${prefix}/include#' pkg-config/jsoncpp.pc.in
