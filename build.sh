@@ -27,7 +27,7 @@ mkdir -p "${BUILD_ROOT}" "${PACKAGES}"
 # A fresh clone must be buildable directly. Package source submodules follow
 # the gitlinks selected by psp-packages; do not float them with --remote.
 if [[ -z "${PSP_PACKAGES_SUBMODULES_READY:-}" ]]; then
-  git -C "${ROOT}" submodule update --init --recursive --depth 1 --quiet
+  git -C "${ROOT}" -c remote.origin.tagOpt=--no-tags submodule update --init --recursive --depth 1 --quiet
   export PSP_PACKAGES_SUBMODULES_READY=1
 fi
 
