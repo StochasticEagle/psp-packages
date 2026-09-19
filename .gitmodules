@@ -410,3 +410,36 @@
 	path = components/sqlite
 	url = https://github.com/sqlite/sqlite.git
 	shallow = true
+
+[submodule "components/SDL_gfx12"]
+	path = components/SDL_gfx12
+	url = https://github.com/pspdev/SDL_gfx.git
+	shallow = true
+[submodule "components/SDL2_gfx"]
+	path = components/SDL2_gfx
+	url = https://github.com/pspdev/SDL_gfx.git
+	shallow = true
+[submodule "components/SDL_ttf12"]
+	path = components/SDL_ttf12
+	url = https://github.com/pspdev/SDL_ttf.git
+	shallow = true
+[submodule "components/SDL2"]
+	path = components/SDL2
+	url = https://github.com/libsdl-org/SDL.git
+	shallow = true
+[submodule "components/SDL2_image"]
+	path = components/SDL2_image
+	url = https://github.com/libsdl-org/SDL_image.git
+	shallow = true
+[submodule "components/SDL2_mixer"]
+	path = components/SDL2_mixer
+	url = https://github.com/libsdl-org/SDL_mixer.git
+	shallow = true
+[submodule "components/SDL2_net"]
+	path = components/SDL2_net
+	url = https://github.com/libsdl-org/SDL_net.git
+	shallow = true
+[submodule "components/SDL2_ttf"]
+	path = components/SDL2_ttf
+	url = https://github.com/libsdl-org/SDL_ttf.git
+	shallow = true

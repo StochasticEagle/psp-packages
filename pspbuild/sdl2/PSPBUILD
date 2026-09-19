@@ -1,6 +1,6 @@
 pkgname=sdl2
 pkgver=2.32.10
-pkgrel=2
+pkgrel=3
 pkgdesc="A library designed to provide low level access to audio, input, and graphics hardware"
 arch=(any)
 url="https://wiki.libsdl.org/SDL2/FrontPage"
@@ -11,12 +11,13 @@ makedepends=()
 optdepends=()
 provides=('sdl2-main')
 source=(
-    "https://github.com/libsdl-org/SDL/releases/download/release-${pkgver}/SDL2-${pkgver}.tar.gz"
+    "SDL2-${pkgver}::git+https://github.com/libsdl-org/SDL.git#commit=5d249570393f7a37e037abf22cd6012a4cc56a71"
     "CMakeLists.txt.sample"
     "main.c.sample"
 )
+psp_source_components=([0]="components/SDL2")
 sha256sums=(
-    "5f5993c530f084535c65a6879e9b26ad441169b3e25d789d83287040a9ca5165"
+    "SKIP"
     "SKIP"
     "SKIP"
 )

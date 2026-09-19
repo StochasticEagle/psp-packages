@@ -1,6 +1,6 @@
 pkgname=sdl2-mixer
 pkgver=2.8.2
-pkgrel=2
+pkgrel=3
 pkgdesc="An audio mixer library based on the SDL2 library"
 arch=(any)
 url="https://wiki.libsdl.org/SDL2_mixer/FrontPage"
@@ -10,13 +10,14 @@ depends=('sdl2' 'libmodplug' 'libvorbis' 'libogg')
 makedepends=()
 optdepends=()
 source=(
-    "https://github.com/libsdl-org/SDL_mixer/releases/download/release-${pkgver}/SDL2_mixer-${pkgver}.tar.gz"
+    "SDL2_mixer-${pkgver}::git+https://github.com/libsdl-org/SDL_mixer.git#commit=b208916aed9250fe434360e6c6a95f0697bb7b01"
     "CMakeLists.txt.sample"
     "main.c.sample"
     "https://pspdev.github.io/resources/test.ogg"
 )
+psp_source_components=([0]="components/SDL2_mixer")
 sha256sums=(
-    "938dff531d00ace2296557a6599abe6f34599e2f34f0a4a08a397e2ccac8b8f7"
+    "SKIP"
     "SKIP"
     "SKIP"
     "b728bb95b6018ba0bb5675d614f2e25d056d04c6b471f4f080623c570f905e01"

@@ -1,6 +1,6 @@
 pkgname=sdl2-net
 pkgver=2.2.0
-pkgrel=9
+pkgrel=10
 pkgdesc="A wrapper over TCP/IP sockets"
 arch=(any)
 url="https://wiki.libsdl.org/SDL2_net/FrontPage"
@@ -10,11 +10,12 @@ depends=('sdl2')
 makedepends=()
 optdepends=()
 source=(
-    "https://github.com/libsdl-org/SDL_net/releases/download/release-${pkgver}/SDL2_net-${pkgver}.tar.gz"
+    "SDL2_net-${pkgver}::git+https://github.com/libsdl-org/SDL_net.git#commit=669e75b84632e2c6cc5c65974ec9e28052cb7a4e"
     "${pkgname}-${pkgver}-PSP.patch"
 )
+psp_source_components=([0]="components/SDL2_net")
 sha256sums=(
-    "4e4a891988316271974ff4e9585ed1ef729a123d22c08bd473129179dc857feb"
+    "SKIP"
     "SKIP"
 )
 
