@@ -171,7 +171,6 @@
 [submodule "components/cereal"]
 	path = components/cereal
 	url = https://github.com/USCiLab/cereal.git
-	branch = master
 	shallow = true
 [submodule "components/cjson"]
 	path = components/cjson
