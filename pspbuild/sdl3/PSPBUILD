@@ -10,12 +10,8 @@ depends=('libpspvram' 'pspgl')
 makedepends=()
 optdepends=()
 provides=()
-source=(
-    "SDL3-${pkgver}::git+https://github.com/libsdl-org/SDL.git#branch=main"
-)
-sha256sums=(
-    "SKIP"
-)
+source=("SDL3-${pkgver}::git+https://github.com/libsdl-org/SDL.git#commit=147a8ee32dbf9ac02f3794964490687b6bbda1bc")
+sha256sums=("SKIP")
 
 prepare() {
     cd "${srcdir}/SDL3-${pkgver}"
