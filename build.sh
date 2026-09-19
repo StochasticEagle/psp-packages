@@ -7,6 +7,8 @@ set -e
 
 BLACKLIST="pocketpy|luasocket"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${ROOT}/install-permissions.sh"
+pspdev_require_unprivileged_build
 RECIPES="${ROOT}/pspbuild"
 COMPONENTS="${ROOT}/components"
 BUILD_ROOT="${ROOT}/build"
@@ -239,6 +241,6 @@ for pkg in ${PKG_LIST}; do
 
   if [[ -n "${doinstall}" ]]; then
     echo "Installing ${pkg}"
-    psp-pacman -U --noconfirm "${package_path}" --overwrite '*'
+    pspdev_run_install psp-pacman -U --noconfirm "${package_path}" --overwrite '*'
   fi
 done
