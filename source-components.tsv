@@ -52,3 +52,4 @@ https://github.com/adriensalon/imgui_psp.git	components/imgui
 https://github.com/dogo/oslib.git	components/oslib
 https://github.com/HappySeaFox/sail.git	components/sail
 https://github.com/sabdul-khabir/SDL3_gfx.git	components/sdl3-gfx
+https://github.com/sqlite/sqlite.git	components/sqlite

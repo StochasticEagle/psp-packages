@@ -10,18 +10,28 @@ depends=()
 optdepends=()
 makedepends=()
 source=(
-    "https://www.sqlite.org/2026/sqlite-autoconf-3530400.tar.gz"
+    "sqlite-version-${pkgver}::git+https://github.com/sqlite/sqlite.git#commit=b09c88c14082339b66c7b7158d609a771e64ca69"
     "sqlite3_psp_vfs.c"
 )
-# SQLite publishes SHA3-256 for release artifacts. 3.53.4 autoconf archive:
-# 454e45f61c6bd75b7420e7190732dea03ce6639c63ada47bbc592f67fc340338
+psp_source_components=(
+    [0]="components/sqlite"
+)
 sha256sums=(
-    '0e9483900e92cd5de8fd48d16bf9200145a61f7fd5be542a5ac81d8a9516eb9c'
+    'SKIP'
     '3c1b775c94b5f360fc7727b9c67233a2ffc145d50ad6401759157c9b852a8338'
 )
 
+prepare() {
+    cd "${srcdir}/sqlite-version-${pkgver}"
+
+    # Generate the official amalgamation entirely from the pinned Git source.
+    # SQLite carries its generator scripts and JimTCL bootstrap in-tree.
+    ./configure || { exit 1; }
+    make -j1 sqlite3.c || { exit 1; }
+}
+
 build() {
-    cd "sqlite-autoconf-3530400"
+    cd "${srcdir}/sqlite-version-${pkgver}"
 
     local common_flags=(
         -G0 -O2 -std=c17
@@ -34,13 +44,13 @@ build() {
     )
 
     psp-gcc "${common_flags[@]}" -c sqlite3.c -o sqlite3.o || { exit 1; }
-    psp-gcc "${common_flags[@]}" -c ../sqlite3_psp_vfs.c -o sqlite3_psp_vfs.o || { exit 1; }
+    psp-gcc "${common_flags[@]}" -c "${srcdir}/sqlite3_psp_vfs.c" -o sqlite3_psp_vfs.o || { exit 1; }
     psp-ar rcs libsqlite3.a sqlite3.o sqlite3_psp_vfs.o || { exit 1; }
     psp-ranlib libsqlite3.a || { exit 1; }
 }
 
 package() {
-    cd "sqlite-autoconf-3530400"
+    cd "${srcdir}/sqlite-version-${pkgver}"
 
     install -d "$pkgdir/psp/include" "$pkgdir/psp/lib/pkgconfig"
     install -m 644 sqlite3.h sqlite3ext.h "$pkgdir/psp/include/"
