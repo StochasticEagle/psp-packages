@@ -8,7 +8,6 @@ set -e
 BLACKLIST="pocketpy|luasocket"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${ROOT}/install-permissions.sh"
-pspdev_require_unprivileged_build
 RECIPES="${ROOT}/pspbuild"
 COMPONENTS="${ROOT}/components"
 BUILD_ROOT="${ROOT}/build"
