@@ -1,7 +1,7 @@
 pkgname=sqlite
-pkgver=3.7.4
-pkgrel=8
-pkgdesc="SQLite is a C-language library that implements a small, fast, self-contained, high-reliability, full-featured, SQL database engine"
+pkgver=3.53.4
+pkgrel=1
+pkgdesc="SQLite is a C-language library that implements a small, fast, self-contained, high-reliability, full-featured SQL database engine"
 arch=(any)
 url="https://www.sqlite.org/"
 license=('custom:Public-Domain')
@@ -10,35 +10,53 @@ depends=()
 optdepends=()
 makedepends=()
 source=(
-    "https://github.com/sqlite/sqlite/archive/refs/tags/version-3.7.4.tar.gz"
-    "${pkgname}-${pkgver}-PSP.patch"
+    "https://www.sqlite.org/2026/sqlite-autoconf-3530400.tar.gz"
+    "sqlite3_psp_vfs.c"
 )
+# SQLite publishes SHA3-256 for release artifacts. 3.53.4 autoconf archive:
+# 454e45f61c6bd75b7420e7190732dea03ce6639c63ada47bbc592f67fc340338
 sha256sums=(
-    "5fdbe958102f6f9dc93f3fc2f9e61a327fe8067fed227cd63ae26ed210a2774a"
-    "SKIP"
+    '0e9483900e92cd5de8fd48d16bf9200145a61f7fd5be542a5ac81d8a9516eb9c'
+    '3c1b775c94b5f360fc7727b9c67233a2ffc145d50ad6401759157c9b852a8338'
 )
-
-prepare() {
-    cd "${pkgname}-version-${pkgver}"
-    patch -p1 < ../${pkgname}-${pkgver}-PSP.patch
-    sed -i 's#@prefix@#${PSPDEV}/psp#' sqlite.pc.in sqlite3.pc.in
-    sed -i 's#@exec_prefix@#${prefix}#' sqlite.pc.in sqlite3.pc.in
-    sed -i 's#@libdir@#${prefix}/lib#' sqlite.pc.in sqlite3.pc.in
-    sed -i 's#@includedir@#${prefix}/include#' sqlite.pc.in sqlite3.pc.in
-}
 
 build() {
-    cd "${pkgname}-version-${pkgver}"
-    BUILD_CFLAGS="-std=c17" \
-    LDFLAGS="-L$(psp-config --pspsdk-path)/lib -lc -lpspuser" \
-    CFLAGS="-G0 -O2 -DSQLITE_OS_OTHER=1 -DSQLITE_OS_PSP=1 -I$(psp-config --pspsdk-path)/include" \
-    ./configure --host=psp --prefix="/psp" --disable-readline --disable-tcl --disable-threadsafe --disable-amalgamation
-    make
+    cd "sqlite-autoconf-3530400"
+
+    local common_flags=(
+        -G0 -O2 -std=c17
+        -DSQLITE_OS_OTHER=1
+        -DSQLITE_THREADSAFE=0
+        -DSQLITE_OMIT_LOAD_EXTENSION=1
+        -DSQLITE_TEMP_STORE=3
+        -I.
+        -I"$(psp-config --pspsdk-path)/include"
+    )
+
+    psp-gcc "${common_flags[@]}" -c sqlite3.c -o sqlite3.o || { exit 1; }
+    psp-gcc "${common_flags[@]}" -c ../sqlite3_psp_vfs.c -o sqlite3_psp_vfs.o || { exit 1; }
+    psp-ar rcs libsqlite3.a sqlite3.o sqlite3_psp_vfs.o || { exit 1; }
+    psp-ranlib libsqlite3.a || { exit 1; }
 }
 
 package() {
-    cd "${pkgname}-version-${pkgver}"
-    make DESTDIR="$pkgdir" install
+    cd "sqlite-autoconf-3530400"
 
-    rm "${pkgdir}/psp/lib/libsqlite3.la"
+    install -d "$pkgdir/psp/include" "$pkgdir/psp/lib/pkgconfig"
+    install -m 644 sqlite3.h sqlite3ext.h "$pkgdir/psp/include/"
+    install -m 644 libsqlite3.a "$pkgdir/psp/lib/"
+
+    cat > "$pkgdir/psp/lib/pkgconfig/sqlite3.pc" <<EOF
+prefix=\${PSPDEV}/psp
+exec_prefix=\${prefix}
+libdir=\${prefix}/lib
+includedir=\${prefix}/include
+
+Name: SQLite
+Description: SQL database engine
+Version: ${pkgver}
+Libs: -L\${libdir} -lsqlite3
+Libs.private: -lpspuser -lc
+Cflags: -I\${includedir}
+EOF
 }
