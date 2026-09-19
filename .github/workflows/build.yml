@@ -3,95 +3,219 @@ name: Packages
 on:
   push:
   pull_request:
+  workflow_dispatch:
   repository_dispatch:
     types: [run_build]
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
-  packages: write
+
+concurrency:
+  group: packages-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
 
 jobs:
-  prepare_jobs:
+  validate:
     runs-on: ubuntu-latest
     container: python:3-alpine
+
     steps:
       - uses: actions/checkout@v6
-      - name: Generate build list
-        id: set-matrix
+        with:
+          fetch-depth: 1
+          submodules: false
+
+      - name: Validate repository structure
+        shell: sh
         run: |
-          echo "build_list=$(./get_build_order.py)" >> $GITHUB_OUTPUT
-          cat $GITHUB_OUTPUT
-    outputs:
-      build_list: ${{ steps.set-matrix.outputs.build_list }}
+          apk add --no-cache git
+          python3 - <<'PY'
+          import configparser
+          import pathlib
+          import re
+          import subprocess
+          import sys
+
+          root = pathlib.Path(".")
+          errors = []
+
+          modules = configparser.ConfigParser()
+          modules.read(root / ".gitmodules")
+
+          declared = {}
+          for section in modules.sections():
+              if not section.startswith('submodule "'):
+                  continue
+
+              path = modules[section].get("path", "").strip()
+              url = modules[section].get("url", "").strip()
+              shallow = modules[section].get("shallow", "").strip().lower()
+
+              if not path:
+                  errors.append(f"{section}: missing path")
+                  continue
+              if path in declared:
+                  errors.append(f"duplicate submodule path: {path}")
+              declared[path] = url
+
+              if not path.startswith("components/"):
+                  errors.append(f"{section}: path is outside components/: {path}")
+              if not url:
+                  errors.append(f"{section}: missing URL")
+              if shallow != "true":
+                  errors.append(f"{section}: shallow must be true")
+
+          gitlinks = {}
+          listing = subprocess.check_output(
+              ["git", "ls-files", "--stage"], text=True
+          )
+          for line in listing.splitlines():
+              parts = line.split(None, 3)
+              if len(parts) == 4 and parts[0] == "160000":
+                  gitlinks[parts[3]] = parts[1]
+
+          declared_paths = set(declared)
+          gitlink_paths = set(gitlinks)
+
+          for path in sorted(declared_paths - gitlink_paths):
+              errors.append(f"submodule is not recorded as a gitlink: {path}")
+          for path in sorted(gitlink_paths - declared_paths):
+              errors.append(f"gitlink is missing from .gitmodules: {path}")
+
+          source_map = root / "source-components.tsv"
+          if source_map.exists():
+              seen_urls = set()
+              for lineno, raw in enumerate(source_map.read_text().splitlines(), 1):
+                  if not raw.strip():
+                      continue
+                  try:
+                      url, path = raw.split("\t", 1)
+                  except ValueError:
+                      errors.append(
+                          f"source-components.tsv:{lineno}: expected URL<TAB>component"
+                      )
+                      continue
+
+                  if url in seen_urls:
+                      errors.append(
+                          f"source-components.tsv:{lineno}: duplicate URL: {url}"
+                      )
+                  seen_urls.add(url)
+
+                  if path not in gitlink_paths:
+                      errors.append(
+                          f"source-components.tsv:{lineno}: component is not a gitlink: {path}"
+                      )
+
+          mapping_re = re.compile(
+              r'psp_source_components\s*=\((.*?)\)',
+              re.DOTALL,
+          )
+          component_re = re.compile(r'components/[A-Za-z0-9_.+-]+')
+
+          for recipe in sorted((root / "pspbuild").glob("*/PSPBUILD")):
+              text = recipe.read_text()
+              for block in mapping_re.findall(text):
+                  for path in component_re.findall(block):
+                      if path not in gitlink_paths:
+                          errors.append(
+                              f"{recipe}: mapped component is not a gitlink: {path}"
+                          )
+
+          if errors:
+              print("Repository structure validation failed:", file=sys.stderr)
+              for error in errors:
+                  print(f"  - {error}", file=sys.stderr)
+              raise SystemExit(1)
+
+          print(
+              f"Validated {len(gitlink_paths)} shallow component gitlinks "
+              f"and {len(list((root / 'pspbuild').glob('*/PSPBUILD')))} package recipes."
+          )
+          PY
 
   build:
-    needs: [prepare_jobs]
+    needs: validate
     runs-on: ubuntu-latest
     container: ghcr.io/pspdev/pspsdk:latest
-    strategy:
-      fail-fast: false
-      matrix:
-        packages: ${{ fromJson(needs.prepare_jobs.outputs.build_list) }}
 
     steps:
-    - uses: actions/checkout@v6
-      with:
-        submodules: recursive
-    - name: Build packages
-      run: |
-        adduser -D -h /build -s /bin/bash build
-        mkdir -p build packages
-        chown -R build:build /build ${PSPDEV} build packages
-        for f in ${{ matrix.packages }}; do
-          sudo -u build PATH=${PATH} PSPDEV=${PSPDEV} LIBMAKEPKG_LINT_PACKAGE_DOTFILES_SH=0 ./build.sh --install "$f"
-        done
-    - name: Store package
-      run: |
-        PACKAGE=`echo ${{ matrix.packages }} | awk '{print $NF}'`
-        PKGFILE=`./parse_pspbuild.sh "pspbuild/${PACKAGE}/PSPBUILD" pkgoutput`
-        echo "PACKAGE=$PACKAGE" >> $GITHUB_ENV
-        echo "PKGFILE=$PKGFILE" >> $GITHUB_ENV
-    - uses: actions/upload-artifact@v7
-      with:
-        name: artifact-${{ env.PACKAGE }}
-        path: packages/${{ env.PKGFILE }}
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+          submodules: false
+
+      - name: Build packages
+        shell: sh
+        run: |
+          adduser -D -h /build -s /bin/bash build
+          mkdir -p build packages
+          chown -R build:build /build "${PSPDEV}" .
+          sudo -u build PATH="${PATH}" PSPDEV="${PSPDEV}" \
+            LIBMAKEPKG_LINT_PACKAGE_DOTFILES_SH=0 ./build.sh
+
+      - name: Verify package output
+        shell: sh
+        run: |
+          set -- packages/*.pkg.tar.gz
+          if [ ! -e "$1" ]; then
+            echo "ERROR: no package archives were produced"
+            exit 1
+          fi
+          printf 'Built %s package archives.\n' "$#"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: packages
+          path: packages/*.pkg.tar.gz
+          if-no-files-found: error
 
   package_repo:
-    if: contains(github.ref,'refs/heads/master')
-    needs: [prepare_jobs, build]
+    if: github.ref == 'refs/heads/master'
+    needs: build
     runs-on: ubuntu-latest
     container: ghcr.io/pspdev/pspsdk:latest
 
     steps:
-    - uses: actions/checkout@v6
-      with:
-        fetch-depth: 0
-    - name: Download artifacts
-      uses: actions/download-artifact@v8
-    - name: Create repo files
-      run: |
-        chown -R $(id -nu):$(id -ng) .
-        apk add --no-cache bash coreutils
-        mkdir repo
-        cp artifact-*/*.pkg.tar.gz repo/
-        ./make-repo-html.sh
-        cd repo
-        ${PSPDEV}/share/pacman/bin/repo-add pspdev.db.tar.gz *.pkg.tar.gz
-        mv pspdev.db.tar.gz pspdev.db
-        mv pspdev.files.tar.gz pspdev.files
-        tar -cvf ../repo.tar ./*
-    - name: Upload repo artifact
-      uses: actions/upload-artifact@v7
-      with:
-        name: github-pages
-        path: repo.tar
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          submodules: false
+
+      - name: Download packages
+        uses: actions/download-artifact@v8
+        with:
+          name: packages
+          path: packages
+
+      - name: Create repo files
+        shell: sh
+        run: |
+          chown -R "$(id -nu):$(id -ng)" .
+          apk add --no-cache bash coreutils
+          mkdir repo
+          cp packages/*.pkg.tar.gz repo/
+          ./make-repo-html.sh
+          cd repo
+          "${PSPDEV}/share/pacman/bin/repo-add" pspdev.db.tar.gz *.pkg.tar.gz
+          mv pspdev.db.tar.gz pspdev.db
+          mv pspdev.files.tar.gz pspdev.files
+          tar -cvf ../repo.tar ./*
+
+      - name: Upload repo artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: github-pages
+          path: repo.tar
 
   publish_repo:
-    if: contains(github.ref,'refs/heads/master')
-    needs: [package_repo]
+    if: github.ref == 'refs/heads/master'
+    needs: package_repo
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -104,41 +228,43 @@ jobs:
         uses: actions/deploy-pages@v5
 
   docker-layer:
-    if: contains(github.ref,'refs/heads/master')
-    needs: [publish_repo]
+    if: github.ref == 'refs/heads/master'
+    needs: publish_repo
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
 
     steps:
-    - uses: actions/checkout@v6
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+          submodules: false
 
-    - name: Set up QEMU
-      uses: docker/setup-qemu-action@v4
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v4
 
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
 
-    - name: Login to Github registry
-      uses: docker/login-action@v4
-      with:
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
-        registry: ghcr.io
+      - name: Login to Github registry
+        uses: docker/login-action@v4
+        with:
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          registry: ghcr.io
 
-    - uses: docker/build-push-action@v7
-      with:
-        push: true
-        tags: ghcr.io/${{ github.repository }}:latest
-        build-args: |
-          BASE_DOCKER_IMAGE=ghcr.io/${{ github.repository_owner }}/pspsdk:latest
+      - uses: docker/build-push-action@v7
+        with:
+          push: true
+          tags: ghcr.io/${{ github.repository }}:latest
+          build-args: |
+            BASE_DOCKER_IMAGE=ghcr.io/${{ github.repository_owner }}/pspsdk:latest
 
-    - name: Send Compile action
-      run: |
-        export DISPATCH_ACTION="$(echo run_build)"
-        echo "NEW_DISPATCH_ACTION=$DISPATCH_ACTION" >> $GITHUB_ENV
-    - name: Repository Dispatch to pspdev
-      uses: peter-evans/repository-dispatch@v4
-      with:
-        repository: ${{ github.repository_owner }}/pspdev
-        token: ${{ secrets.DISPATCH_TOKEN }}
-        event-type: ${{ env.NEW_DISPATCH_ACTION }}
-        client-payload: '{"ref": "refs/heads/master"}'
+      - name: Repository Dispatch to pspdev
+        uses: peter-evans/repository-dispatch@v4
+        with:
+          repository: ${{ github.repository_owner }}/pspdev
+          token: ${{ secrets.DISPATCH_TOKEN }}
+          event-type: run_build
+          client-payload: '{"ref": "refs/heads/master"}'
