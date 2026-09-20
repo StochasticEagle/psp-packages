@@ -81,10 +81,10 @@ The pacman repository produced from this repository is published to GitHub Pages
 ```ini
 [pspdev]
 SigLevel = Optional TrustAll
-Server = https://pspdev.github.io/psp-packages/
+Server = https://stochasticeagle.github.io/psp-packages/
 ```
 
-For forks or alternative repositories, replace `pspdev` in the server URL with the repository owner.
+This fork publishes its package repository from the `dev/fork` branch to `https://stochasticeagle.github.io/psp-packages/`.
 
 ## Contributing
 
