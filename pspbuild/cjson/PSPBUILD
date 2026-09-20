@@ -1,6 +1,6 @@
 pkgname=cjson
 pkgver=1.7.19
-pkgrel=1
+pkgrel=2
 pkgdesc="Ultralightweight JSON parser in ANSI C."
 arch=(any)
 url="https://github.com/DaveGamble/cJSON/"
@@ -12,30 +12,31 @@ optdepends=()
 source=("cJSON-$pkgver::git+https://github.com/DaveGamble/cJSON.git#commit=fb16e5cf358798aabb049655975cde8427101056")
 sha256sums=('SKIP')
 
-prepare() {
-    cd "$pkgname"
-
-    # PSP/newlib provides snprintf in the global namespace, not std::.
-    sed -i '/#include <cstddef>/a #include <cstdio>' include/json/config.h
-    sed -i 's/#define jsoncpp_snprintf std::snprintf/#define jsoncpp_snprintf ::snprintf/' \
-        include/json/config.h
-
-    sed -i 's#@CMAKE_INSTALL_PREFIX@#/psp#g' pkg-config/jsoncpp.pc.in
-    sed -i 's#@libdir_for_pc_file@#${prefix}/lib#' pkg-config/jsoncpp.pc.in
-    sed -i 's#@includedir_for_pc_file@#${prefix}/include#' pkg-config/jsoncpp.pc.in
-}
-
 build() {
-    cd "cJSON-$pkgver/build"
-    cmake -Wno-dev -DCMAKE_TOOLCHAIN_FILE=$PSPDEV/psp/share/pspdev.cmake -DCMAKE_INSTALL_PREFIX=${pkgdir}/psp -DBUILD_SHARED_LIBS=OFF \
-        -DENABLE_CJSON_UTILS=On -DENABLE_LOCALES=OFF -DENABLE_CJSON_TEST=OFF -DENABLE_TARGET_EXPORT=OFF -DCMAKE_BUILD_TYPE=Release \
-        -DCMAKE_POLICY_VERSION_MINIMUM=3.5 "${XTRA_OPTS[@]}" .. || { exit 1; }
-    make --quiet $MAKEFLAGS || { exit 1; }
+    cd "cJSON-$pkgver"
+
+    cmake -S . -B build -Wno-dev \
+        -DCMAKE_TOOLCHAIN_FILE="$PSPDEV/psp/share/pspdev.cmake" \
+        -DCMAKE_INSTALL_PREFIX=/psp \
+        -DBUILD_SHARED_LIBS=OFF \
+        -DENABLE_CUSTOM_COMPILER_FLAGS=OFF \
+        -DENABLE_CJSON_UTILS=ON \
+        -DENABLE_LOCALES=OFF \
+        -DENABLE_CJSON_TEST=OFF \
+        -DENABLE_CJSON_UNINSTALL=OFF \
+        -DENABLE_TARGET_EXPORT=OFF \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+        "${XTRA_OPTS[@]}" || { exit 1; }
+
+    cmake --build build --parallel || { exit 1; }
 }
 
 package() {
-    cd "cJSON-$pkgver/build"
-    make --quiet $MAKEFLAGS install
+    cd "cJSON-$pkgver"
+
+    DESTDIR="$pkgdir" cmake --install build || { exit 1; }
+
     mkdir -m 755 -p "$pkgdir/psp/share/licenses/$pkgname"
-    install -m 644 ../LICENSE "$pkgdir/psp/share/licenses/$pkgname"
+    install -m 644 LICENSE "$pkgdir/psp/share/licenses/$pkgname"
 }
