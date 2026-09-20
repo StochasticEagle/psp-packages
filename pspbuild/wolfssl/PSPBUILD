@@ -1,6 +1,6 @@
 pkgname=wolfssl
 pkgver=5.9.2
-pkgrel=3
+pkgrel=4
 pkgdesc="The wolfSSL library is a small, fast, portable implementation of TLS/SSL for embedded devices to the cloud. wolfSSL supports up to TLS 1.3!"
 arch=(any)
 url="https://www.wolfssl.com/"
@@ -16,12 +16,33 @@ sha256sums=(
     'SKIP'
 )
 
+psp_apply_patch() {
+    local patch_file="$1"
+    shift
+    local output
+    if output="$(patch --dry-run --batch --forward --fuzz=0 "$@" < "$patch_file" 2>&1)"; then
+        printf '%s\n' "$output"
+        if grep -Eq 'with fuzz|offset -?[0-9]+ lines?' <<< "$output"; then
+            echo "WARNING: patch drift detected: $patch_file" >&2
+        fi
+        patch --batch --forward --fuzz=0 "$@" < "$patch_file"
+        return
+    fi
+    if patch --dry-run --batch --reverse --fuzz=0 "$@" < "$patch_file" >/dev/null 2>&1; then
+        echo "Patch already applied: $patch_file"
+        return 0
+    fi
+    printf '%s\n' "$output" >&2
+    echo "ERROR: patch is incompatible with the current source: $patch_file" >&2
+    return 1
+}
+
 prepare() {
     cd "$pkgname-$pkgver-stable"
 
     # PSP does not provide IPv6. Guard wolfSSL's IPv6 alternate-name helper
     # with WOLFSSL_IPV6 so disabling IPv6 also excludes these code paths.
-    patch --batch --forward --fuzz=0 -Np1 <<'PATCH'
+    cat > "$srcdir/wolfssl-psp.patch" <<'PATCH'
 --- a/src/internal.c
 +++ b/src/internal.c
 @@ -14382,7 +14382,8 @@
@@ -45,7 +66,7 @@ prepare() {
      if (MatchIPv6(pattern, patternLen, str, strLen))
          return 1;
 PATCH
-
+    psp_apply_patch "$srcdir/wolfssl-psp.patch" -Np1
     sed -i 's#@prefix@#/psp#' support/wolfssl.pc.in
     sed -i 's#@exec_prefix@#${prefix}#' support/wolfssl.pc.in
     sed -i 's#@libdir@#${prefix}/lib#' support/wolfssl.pc.in
