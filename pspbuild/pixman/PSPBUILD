@@ -1,6 +1,6 @@
 pkgname=pixman
 pkgver=0.46.4
-pkgrel=3
+pkgrel=4
 pkgdesc="Pixman is a low-level software library for pixel manipulation"
 arch=(any)
 url="https://www.pixman.org/"
@@ -12,14 +12,13 @@ optdepends=()
 source=("pixman-${pkgver}::git+https://gitlab.freedesktop.org/pixman/pixman.git#commit=9cc163c9da0fb4da430641715313d95a6ec466d9")
 sha256sums=('SKIP')
 
-prepare() {
-    cd "${pkgname}-${pkgver}"
-
-    sed -i "s/dep_threads = dependency('threads')/dep_threads = dependency('threads', required : false)/" meson.build
-}
-
 build() {
     cd "${pkgname}-${pkgver}"
+
+    # Meson's built-in threads dependency injects -pthread, which psp-gcc does
+    # not support. Use the PSP pthread pkg-config metadata instead; it supplies
+    # -lpthread and the required PSPSDK pthreadglue library.
+    sed -i "/^dep_threads = dependency('threads'/c\dep_threads = dependency('pthread', method : 'pkg-config', required : true)" meson.build
 
     cat > psp-cross.ini <<EOF
 [binaries]
