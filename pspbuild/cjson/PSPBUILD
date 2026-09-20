@@ -13,12 +13,16 @@ source=("cJSON-$pkgver::git+https://github.com/DaveGamble/cJSON.git#commit=fb16e
 sha256sums=('SKIP')
 
 prepare() {
-    cd "cJSON-$pkgver"
-    sed -i 's#@CMAKE_INSTALL_FULL_LIBDIR@#/psp/lib#' library_config/libcjson.pc.in
-    sed -i 's#@CMAKE_INSTALL_FULL_LIBDIR@#/psp/lib#' library_config/libcjson_utils.pc.in
-    sed -i 's#@CMAKE_INSTALL_FULL_INCLUDEDIR@#/psp/include#' library_config/libcjson.pc.in
-    sed -i 's#@CMAKE_INSTALL_FULL_INCLUDEDIR@#/psp/include#' library_config/libcjson_utils.pc.in
-    mkdir -p build
+    cd "$pkgname"
+
+    # PSP/newlib provides snprintf in the global namespace, not std::.
+    sed -i '/#include <cstddef>/a #include <cstdio>' include/json/config.h
+    sed -i 's/#define jsoncpp_snprintf std::snprintf/#define jsoncpp_snprintf ::snprintf/' \
+        include/json/config.h
+
+    sed -i 's#@CMAKE_INSTALL_PREFIX@#/psp#g' pkg-config/jsoncpp.pc.in
+    sed -i 's#@libdir_for_pc_file@#${prefix}/lib#' pkg-config/jsoncpp.pc.in
+    sed -i 's#@includedir_for_pc_file@#${prefix}/include#' pkg-config/jsoncpp.pc.in
 }
 
 build() {
