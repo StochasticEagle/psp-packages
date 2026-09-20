@@ -1,6 +1,6 @@
 pkgname=pixman
 pkgver=0.46.4
-pkgrel=8
+pkgrel=9
 pkgdesc="Pixman is a low-level software library for pixel manipulation"
 arch=(any)
 url="https://www.pixman.org/"
@@ -21,8 +21,8 @@ build() {
     # compatible with int *. Keep the integer helper unchanged and provide a
     # fixed-point equivalent for the fixed-coordinate call sites.
     if ! grep -q '^repeat_fixed (pixman_repeat_t repeat' pixman/pixman-inlines.h; then
-        grep -q '^#if SIZEOF_LONG > 4' pixman/pixman-inlines.h || { exit 1; }
-        sed -i '/^#if SIZEOF_LONG > 4/i\
+        grep -q '^#if BILINEAR_INTERPOLATION_BITS <= 4' pixman/pixman-inlines.h || { exit 1; }
+        sed -i '/^#if BILINEAR_INTERPOLATION_BITS <= 4/i\
 static force_inline pixman_bool_t\
 repeat_fixed (pixman_repeat_t repeat, pixman_fixed_t *c, pixman_fixed_t size)\
 {\
