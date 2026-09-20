@@ -1,6 +1,6 @@
 pkgname=faudio
 pkgver=26.06
-pkgrel=3
+pkgrel=4
 pkgdesc="Accuracy-focused XAudio reimplementation for open platforms."
 arch=(any)
 license=('BSD')
@@ -17,6 +17,36 @@ prepare() {
     sed -i 's#@CMAKE_INSTALL_PREFIX@#/psp#g' cmake/FAudio.pc.in
     sed -i 's#@FAUDIO_PKGCONF_LIBDIR@#/psp/lib#g' cmake/FAudio.pc.in
     sed -i 's#@FAUDIO_PKGCONF_INCLUDEDIR@#/psp/include#g' cmake/FAudio.pc.in
+
+    # PSP newlib defines int32_t as long int, while SDL2's SDL_WaitThread()
+    # takes int *. Preserve FAudio's public int32_t API without an incompatible
+    # pointer conversion by using an SDL-compatible temporary status.
+    if grep -q 'SDL_WaitThread((SDL_Thread\*) thread, retval);' src/FAudio_platform_sdl2.c; then
+        python3 - <<'PY'
+from pathlib import Path
+path = Path("src/FAudio_platform_sdl2.c")
+text = path.read_text()
+old = """void FAudio_PlatformWaitThread(FAudioThread thread, int32_t *retval)
+{
+\tSDL_WaitThread((SDL_Thread*) thread, retval);
+}
+"""
+new = """void FAudio_PlatformWaitThread(FAudioThread thread, int32_t *retval)
+{
+\tint status;
+\tSDL_WaitThread((SDL_Thread*) thread, retval != NULL ? &status : NULL);
+\tif (retval != NULL)
+\t\t*retval = (int32_t) status;
+}
+"""
+if old not in text:
+    raise SystemExit("ERROR: FAudio SDL2 wait-thread implementation changed upstream.")
+path.write_text(text.replace(old, new, 1))
+PY
+    elif ! grep -q 'SDL_WaitThread((SDL_Thread\*) thread, retval != NULL ? &status : NULL);' src/FAudio_platform_sdl2.c; then
+        echo "ERROR: FAudio SDL2 wait-thread implementation changed upstream." >&2
+        exit 1
+    fi
 }
 
 build() {
