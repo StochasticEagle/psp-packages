@@ -68,8 +68,10 @@ jobs:
             https://github.com/StochasticEagle/pspsdk.git \
             "$RUNNER_TEMP/pspsdk"
 
+          # Package builds need the core SDK only. The CFW additions depend on
+          # PSP packages such as zlib/libpng and are built later by PSPDEV,
+          # after the package set has been installed.
           "$RUNNER_TEMP/pspsdk/build-and-install.sh"
-          "$RUNNER_TEMP/pspsdk/build-cfw-and-install.sh"
 
       - name: Build packages
         run: |

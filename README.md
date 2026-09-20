@@ -1,5 +1,7 @@
 # PSP Packages
 
+[![CI](https://img.shields.io/github/actions/workflow/status/StochasticEagle/psp-packages/.github/workflows/build.yml?branch=dev%2Ffork&style=for-the-badge&logo=github&label=CI)](https://github.com/StochasticEagle/psp-packages/actions/workflows/build.yml)
+
 This repository contains the build recipes for libraries shipped with PSPDEV. Package recipes and their support files live under `pspbuild/`; checked-out upstream source components live under `components/`.
 
 Generated state is kept separate from recipes:
