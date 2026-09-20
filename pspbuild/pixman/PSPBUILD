@@ -1,6 +1,6 @@
 pkgname=pixman
 pkgver=0.46.4
-pkgrel=9
+pkgrel=10
 pkgdesc="Pixman is a low-level software library for pixel manipulation"
 arch=(any)
 url="https://www.pixman.org/"
@@ -15,14 +15,19 @@ sha256sums=('SKIP')
 build() {
     cd "${pkgname}-${pkgver}"
 
-    # repeat() is intentionally typed for ordinary integer pixel coordinates,
-    # but pixman's scaled fast paths also call it with pixman_fixed_t vx/vy.
-    # PSP typedefs pixman_fixed_t as long int, so those calls are not type
-    # compatible with int *. Keep the integer helper unchanged and provide a
-    # fixed-point equivalent for the fixed-coordinate call sites.
-    if ! grep -q '^repeat_fixed (pixman_repeat_t repeat' pixman/pixman-inlines.h; then
-        grep -q '^#if BILINEAR_INTERPOLATION_BITS <= 4' pixman/pixman-inlines.h || { exit 1; }
-        sed -i '/^#if BILINEAR_INTERPOLATION_BITS <= 4/i\
+    # Normalize the pinned upstream source to the PSP-compatible form.
+    # These transforms are deliberately state-aware: an already-fixed source
+    # is accepted, an unfixed source is updated, and only an unrecognized
+    # upstream layout is treated as an incompatibility.
+    pixman_inlines=pixman/pixman-inlines.h
+    pixman_glyph=pixman/pixman-glyph.c
+
+    if ! grep -Eq '^[[:space:]]*repeat_fixed[[:space:]]*\(' "$pixman_inlines"; then
+        if ! grep -Eq '^[[:space:]]*#if[[:space:]]+BILINEAR_INTERPOLATION_BITS[[:space:]]*<=[[:space:]]*4' "$pixman_inlines"; then
+            echo "ERROR: pixman repeat_fixed insertion anchor changed upstream." >&2
+            exit 1
+        fi
+        sed -i '/^[[:space:]]*#if[[:space:]]\+BILINEAR_INTERPOLATION_BITS[[:space:]]*<=[[:space:]]*4/i\
 static force_inline pixman_bool_t\
 repeat_fixed (pixman_repeat_t repeat, pixman_fixed_t *c, pixman_fixed_t size)\
 {\
@@ -51,41 +56,60 @@ repeat_fixed (pixman_repeat_t repeat, pixman_fixed_t *c, pixman_fixed_t size)\
 \
     return TRUE;\
 }\
-' pixman/pixman-inlines.h
+' "$pixman_inlines"
+        echo "Applied PSP fixed-point repeat helper."
     fi
 
-    sed -i \
-        -e 's/repeat (PIXMAN_REPEAT_NORMAL, &vx/repeat_fixed (PIXMAN_REPEAT_NORMAL, \&vx/g' \
-        -e 's/repeat (PIXMAN_REPEAT_NORMAL, &vy/repeat_fixed (PIXMAN_REPEAT_NORMAL, \&vy/g' \
-        pixman/pixman-inlines.h
+    sed -E -i \
+        -e 's/repeat[[:space:]]*\([[:space:]]*PIXMAN_REPEAT_NORMAL,[[:space:]]*&vx/repeat_fixed (PIXMAN_REPEAT_NORMAL, \&vx/g' \
+        -e 's/repeat[[:space:]]*\([[:space:]]*PIXMAN_REPEAT_NORMAL,[[:space:]]*&vy/repeat_fixed (PIXMAN_REPEAT_NORMAL, \&vy/g' \
+        "$pixman_inlines"
 
-    grep -q 'repeat_fixed (PIXMAN_REPEAT_NORMAL, &vx' pixman/pixman-inlines.h || { exit 1; }
-    grep -q 'repeat_fixed (PIXMAN_REPEAT_NORMAL, &vy' pixman/pixman-inlines.h || { exit 1; }
+    if ! grep -Eq 'repeat_fixed[[:space:]]*\([[:space:]]*PIXMAN_REPEAT_NORMAL,[[:space:]]*&vx' "$pixman_inlines" ||
+       ! grep -Eq 'repeat_fixed[[:space:]]*\([[:space:]]*PIXMAN_REPEAT_NORMAL,[[:space:]]*&vy' "$pixman_inlines"; then
+        echo "ERROR: pixman fixed-point repeat call sites changed upstream." >&2
+        exit 1
+    fi
 
+    # PSP typedefs int32_t as long int. Normalize the PAD helper's temporary
+    # widths to the same type as its pointer outputs.
+    sed -E -i \
+        -e 's/^([[:space:]]*)int([[:space:]]+)width1([[:space:]]*=)/\1int32_t\2width1\3/' \
+        -e 's/^([[:space:]]*)int([[:space:]]+)width2([[:space:]]*=)/\1int32_t\2width2\3/' \
+        "$pixman_inlines"
 
-    # The bilinear PAD helper exposes int32_t pointer outputs but used plain
-    # int locals for the intermediate bounds. PSP's int32_t is long int, so
-    # those pointers are incompatible even though both types are 32-bit.
-    sed -i \
-        -e 's/^    int width1 = \*width, left_pad1, right_pad1;/    int32_t width1 = *width, left_pad1, right_pad1;/' \
-        -e 's/^    int width2 = \*width, left_pad2, right_pad2;/    int32_t width2 = *width, left_pad2, right_pad2;/' \
-        pixman/pixman-inlines.h
+    if ! grep -Eq '^[[:space:]]*int32_t[[:space:]]+width1[[:space:]]*=' "$pixman_inlines" ||
+       ! grep -Eq '^[[:space:]]*int32_t[[:space:]]+width2[[:space:]]*=' "$pixman_inlines"; then
+        echo "ERROR: pixman PAD width declarations changed upstream." >&2
+        exit 1
+    fi
 
-    grep -q '^    int32_t width1 = \*width, left_pad1, right_pad1;' pixman/pixman-inlines.h || { exit 1; }
-    grep -q '^    int32_t width2 = \*width, left_pad2, right_pad2;' pixman/pixman-inlines.h || { exit 1; }
+    # force_align_arg_pointer is an i386-only stack-alignment workaround.
+    # If upstream still carries the broad GCC guard, narrow it to i386.
+    if grep -q 'force_align_arg_pointer' "$pixman_glyph"; then
+        sed -E -i \
+            's/#if[[:space:]]+defined\(__GNUC__\)[[:space:]]*&&[[:space:]]*!defined\(__x86_64__\)[[:space:]]*&&[[:space:]]*!defined\(__amd64__\)/#if defined(__GNUC__) \&\& defined(__i386__)/' \
+            "$pixman_glyph"
+        if ! grep -q '#if defined(__GNUC__) && defined(__i386__)' "$pixman_glyph"; then
+            echo "ERROR: pixman force_align_arg_pointer guard changed upstream." >&2
+            exit 1
+        fi
+    fi
 
-    # force_align_arg_pointer is an i386 stack-alignment workaround. Pixman
-    # 0.46.4 applies it to every GCC target except x86-64, which incorrectly
-    # includes PSP/MIPS and produces an ignored-attribute warning.
-    sed -i \
-        's/#if defined(__GNUC__) && !defined(__x86_64__) && !defined(__amd64__)/#if defined(__GNUC__) \&\& defined(__i386__)/g' \
-        pixman/pixman-glyph.c
-
-    grep -q '#if defined(__GNUC__) && defined(__i386__)' pixman/pixman-glyph.c || { exit 1; }
-    # Meson's built-in threads dependency injects -pthread, which psp-gcc does
-    # not support. Use the PSP pthread pkg-config metadata instead; it supplies
-    # -lpthread and the required PSPSDK pthreadglue library.
-    sed -i "/^dep_threads = dependency('threads'/c\\dep_threads = dependency('pthread', method : 'pkg-config', required : true)" meson.build
+    # Meson's built-in threads dependency injects -pthread, unsupported by
+    # psp-gcc. Prefer the PSP pthread pkg-config metadata. Accept an already
+    # normalized source and update the stock dependency when present.
+    if ! grep -Eq "dependency\('pthread',[[:space:]]*method[[:space:]]*:[[:space:]]*'pkg-config'" meson.build; then
+        if grep -Eq "^dep_threads[[:space:]]*=[[:space:]]*dependency\('threads'" meson.build; then
+            sed -E -i \
+                "s|^dep_threads[[:space:]]*=[[:space:]]*dependency\('threads'[^)]*\)|dep_threads = dependency('pthread', method : 'pkg-config', required : true)|" \
+                meson.build
+            echo "Switched pixman thread detection to PSP pthread pkg-config metadata."
+        else
+            echo "ERROR: pixman thread dependency declaration changed upstream." >&2
+            exit 1
+        fi
+    fi
 
     cat > psp-cross.ini <<EOF
 [binaries]
