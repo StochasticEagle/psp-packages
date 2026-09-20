@@ -18,6 +18,14 @@ PKGDIR_INSTALL_PREFIX = re.compile(
 PKGDIR_INSTALL_DIR = re.compile(
     r"CMAKE_INSTALL_(?:LIBDIR|INCLUDEDIR|BINDIR)[^\n]*\$\{?pkgdir\}?"
 )
+AUTOCONF_INSTALL_DIR = re.compile(
+    r"--(?:prefix|exec-prefix|bindir|sbindir|libexecdir|sysconfdir|sharedstatedir|"
+    r"localstatedir|runstatedir|libdir|includedir|datarootdir|datadir|infodir|"
+    r"localedir|mandir|docdir|htmldir|dvidir|pdfdir|psdir)"
+    r"(?:=|\s+)[^\s\\]*\$\{?pkgdir\}?"
+)
+AUTOCONF_CONFIGURE = re.compile(r"(?m)(?:^|\s)(?:\./)?configure(?:\s|\\|$)")
+MAKE_INSTALL = re.compile(r"(?m)^\s*(?:\$\{?MAKE\}?|make)(?:\s+[^\n]*)?\s+install(?:\s|$)")
 
 
 def probe_recipe(path: pathlib.Path) -> dict[str, list[str]]:
@@ -163,6 +171,12 @@ def main() -> int:
                 f"{rel}: CMake install directories must be target-relative, not under pkgdir"
             )
 
+        if AUTOCONF_INSTALL_DIR.search(text):
+            errors.append(
+                f"{rel}: configure-time install directories must be target-relative; "
+                "stage with DESTDIR, not pkgdir"
+            )
+
         for lineno, line in enumerate(text.splitlines(), 1):
             if ".pc" in line and "${PSPDEV}/psp" in line:
                 errors.append(
@@ -183,6 +197,18 @@ def main() -> int:
                 errors.append(
                     f"{rel}: package() cmake --install must stage with DESTDIR"
                 )
+
+        if AUTOCONF_CONFIGURE.search(text):
+            for lineno, line in enumerate(body.splitlines(), 1):
+                if (
+                    MAKE_INSTALL.search(line)
+                    and "DESTDIR=" not in line
+                    and "DESTDIR =" not in line
+                ):
+                    errors.append(
+                        f"{rel}: package() Autotools make install must stage with DESTDIR"
+                    )
+                    break
 
     for key, reason in sorted(declared_assets.items()):
         if key not in seen_assets:
