@@ -30,19 +30,30 @@ TOOLS = {
     "make": "build-essential",
 }
 
-AUTOGEN_PACKAGES = {
+AUTOGEN_TOOLS = {
     "autoconf",
+    "autoheader",
     "automake",
+    "aclocal",
+    "autoreconf",
     "autopoint",
     "gettext",
     "libtool",
-    "libtool-bin",
+    "libtoolize",
     "pkg-config",
 }
 
 def main() -> int:
     workflow = WORKFLOW.read_text()
+    verify_match = re.search(
+        r"- name: Verify host build tools\n(?P<body>.*?)(?=\n\s+- name:|\Z)",
+        workflow,
+        re.DOTALL,
+    )
+    verify_block = verify_match.group("body") if verify_match else ""
+
     required: dict[str, set[str]] = {}
+    required_tools: dict[str, set[str]] = {}
 
     for recipe in sorted(RECIPES.glob("*/PSPBUILD")):
         text = "\n".join(
@@ -52,10 +63,13 @@ def main() -> int:
         for tool, package in TOOLS.items():
             if re.search(rf"(?<![A-Za-z0-9_-]){re.escape(tool)}(?![A-Za-z0-9_-])", text):
                 required.setdefault(package, set()).add(recipe.parent.name)
+                required_tools.setdefault(tool, set()).add(recipe.parent.name)
 
         if re.search(r"(?:^|[\s/])autogen\.sh(?:\s|$)", text):
-            for package in AUTOGEN_PACKAGES:
+            for tool in AUTOGEN_TOOLS:
+                package = TOOLS[tool]
                 required.setdefault(package, set()).add(recipe.parent.name)
+                required_tools.setdefault(tool, set()).add(recipe.parent.name)
 
         if "import jinja2" in text:
             required.setdefault("python3-jinja2", set()).add(recipe.parent.name)
@@ -68,15 +82,31 @@ def main() -> int:
         if not re.search(rf"(?<![A-Za-z0-9.+-]){re.escape(package)}(?![A-Za-z0-9.+-])", workflow)
     ]
 
-    if missing:
-        print("Undeclared CI host build dependencies:", file=sys.stderr)
-        for package, users in missing:
-            print(f"  - {package}: required by {', '.join(users)}", file=sys.stderr)
+    missing_tools = [
+        (tool, sorted(users))
+        for tool, users in sorted(required_tools.items())
+        if not re.search(
+            rf"(?<![A-Za-z0-9_-]){re.escape(tool)}(?![A-Za-z0-9_-])",
+            verify_block,
+        )
+    ]
+
+    if missing or missing_tools:
+        if missing:
+            print("Undeclared CI host build dependencies:", file=sys.stderr)
+            for package, users in missing:
+                print(f"  - {package}: required by {', '.join(users)}", file=sys.stderr)
+        if missing_tools:
+            print("Host executables missing from CI command -v verification:", file=sys.stderr)
+            for tool, users in missing_tools:
+                print(f"  - {tool}: required by {', '.join(users)}", file=sys.stderr)
         return 1
 
     print(
-        "Host build dependency envelope covers "
+        "Host build dependency envelope covers packages "
         + ", ".join(sorted(required))
+        + " and verifies executables "
+        + ", ".join(sorted(required_tools))
         + "."
     )
     return 0
