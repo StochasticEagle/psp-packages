@@ -13,6 +13,11 @@ source=("mbedtls-${pkgver}::git+https://github.com/Mbed-TLS/mbedtls.git#commit=e
 sha256sums=('SKIP')
 
 prepare() {
+    if ! python3 -c 'import jinja2, jsonschema' >/dev/null 2>&1; then
+        echo "ERROR: mbedtls requires the host Python modules jinja2 and jsonschema." >&2
+        exit 1
+    fi
+
     cd "$srcdir/$pkgname-$pkgver"
     patch --batch --forward -p1 < "$startdir/mbedtls-$pkgver-PSP.patch" || { exit 1; }
 }

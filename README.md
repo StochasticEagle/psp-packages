@@ -23,6 +23,10 @@ Build one package from the repository root:
 ./build.sh <package>
 ```
 
+The Mbed TLS 4.x generator requires the host Python modules `jinja2` and
+`jsonschema`. On Debian/Ubuntu these are provided by `python3-jinja2` and
+`python3-jsonschema`.
+
 Build and install it into the active PSPDEV prefix:
 
 ```sh

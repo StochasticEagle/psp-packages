@@ -10,7 +10,7 @@ permissions:
 
 concurrency:
   group: packages-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.ref != 'refs/heads/dev/fork' }}
+  cancel-in-progress: true
 
 jobs:
   validate:
@@ -43,7 +43,7 @@ jobs:
             git libarchive-dev libarchive-tools libcurl4-openssl-dev libgmp-dev \
             libgpgme-dev libgsl-dev libmpc-dev libmpfr-dev libreadline-dev \
             libssl-dev libtool libusb-dev meson ninja-build patch pkg-config \
-            texinfo wget xz-utils zlib1g-dev
+            python3-jinja2 python3-jsonschema texinfo wget xz-utils zlib1g-dev
 
       - name: Build forked PSP toolchain
         run: |
