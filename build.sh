@@ -5,7 +5,7 @@
 
 set -e
 
-BLACKLIST="pocketpy|luasocket"
+BLACKLIST="luasocket"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${ROOT}/install-permissions.sh"
 RECIPES="${ROOT}/pspbuild"
