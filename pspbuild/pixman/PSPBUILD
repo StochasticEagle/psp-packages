@@ -1,6 +1,6 @@
 pkgname=pixman
 pkgver=0.46.4
-pkgrel=6
+pkgrel=7
 pkgdesc="Pixman is a low-level software library for pixel manipulation"
 arch=(any)
 url="https://www.pixman.org/"
@@ -61,6 +61,27 @@ repeat_fixed (pixman_repeat_t repeat, pixman_fixed_t *c, pixman_fixed_t size)\
 
     grep -q 'repeat_fixed (PIXMAN_REPEAT_NORMAL, &vx' pixman/pixman-inlines.h || { exit 1; }
     grep -q 'repeat_fixed (PIXMAN_REPEAT_NORMAL, &vy' pixman/pixman-inlines.h || { exit 1; }
+
+
+    # The bilinear PAD helper exposes int32_t pointer outputs but used plain
+    # int locals for the intermediate bounds. PSP's int32_t is long int, so
+    # those pointers are incompatible even though both types are 32-bit.
+    sed -i \
+        -e 's/^    int width1 = \*width, left_pad1, right_pad1;/    int32_t width1 = *width, left_pad1, right_pad1;/' \
+        -e 's/^    int width2 = \*width, left_pad2, right_pad2;/    int32_t width2 = *width, left_pad2, right_pad2;/' \
+        pixman/pixman-inlines.h
+
+    grep -q '^    int32_t width1 = \*width, left_pad1, right_pad1;' pixman/pixman-inlines.h || { exit 1; }
+    grep -q '^    int32_t width2 = \*width, left_pad2, right_pad2;' pixman/pixman-inlines.h || { exit 1; }
+
+    # force_align_arg_pointer is an i386 stack-alignment workaround. Pixman
+    # 0.46.4 applies it to every GCC target except x86-64, which incorrectly
+    # includes PSP/MIPS and produces an ignored-attribute warning.
+    sed -i \
+        's/#if defined(__GNUC__) && !defined(__x86_64__) && !defined(__amd64__)/#if defined(__GNUC__) \&\& defined(__i386__)/g' \
+        pixman/pixman-glyph.c
+
+    grep -q '#if defined(__GNUC__) && defined(__i386__)' pixman/pixman-glyph.c || { exit 1; }
     # Meson's built-in threads dependency injects -pthread, which psp-gcc does
     # not support. Use the PSP pthread pkg-config metadata instead; it supplies
     # -lpthread and the required PSPSDK pthreadglue library.
