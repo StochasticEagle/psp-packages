@@ -20,8 +20,9 @@ build() {
     # PSP typedefs pixman_fixed_t as long int, so those calls are not type
     # compatible with int *. Keep the integer helper unchanged and provide a
     # fixed-point equivalent for the fixed-coordinate call sites.
-    grep -q '^#if SIZEOF_LONG > 4' pixman/pixman-inlines.h || { exit 1; }
-    sed -i '/^#if SIZEOF_LONG > 4/i\
+    if ! grep -q '^repeat_fixed (pixman_repeat_t repeat' pixman/pixman-inlines.h; then
+        grep -q '^#if SIZEOF_LONG > 4' pixman/pixman-inlines.h || { exit 1; }
+        sed -i '/^#if SIZEOF_LONG > 4/i\
 static force_inline pixman_bool_t\
 repeat_fixed (pixman_repeat_t repeat, pixman_fixed_t *c, pixman_fixed_t size)\
 {\
@@ -51,6 +52,7 @@ repeat_fixed (pixman_repeat_t repeat, pixman_fixed_t *c, pixman_fixed_t size)\
     return TRUE;\
 }\
 ' pixman/pixman-inlines.h
+    fi
 
     sed -i \
         -e 's/repeat (PIXMAN_REPEAT_NORMAL, &vx/repeat_fixed (PIXMAN_REPEAT_NORMAL, \&vx/g' \
