@@ -91,6 +91,42 @@ def load_network_assets(errors: list[str]) -> dict[tuple[str, str], str]:
     return assets
 
 
+def shell_function(text: str, name: str) -> str:
+    match = re.search(rf"(?m)^\s*{re.escape(name)}\s*\(\s*\)\s*\{{", text)
+    if not match:
+        return ""
+
+    start = match.end()
+    depth = 1
+    index = start
+    while index < len(text) and depth:
+        if text[index] == "{":
+            depth += 1
+        elif text[index] == "}":
+            depth -= 1
+        index += 1
+    return text[start : index - 1] if depth == 0 else ""
+
+
+def strip_shell_function(text: str, name: str) -> str:
+    match = re.search(rf"(?m)^\s*{re.escape(name)}\s*\(\s*\)\s*\{{", text)
+    if not match:
+        return text
+
+    start = match.start()
+    depth = 1
+    index = match.end()
+    while index < len(text) and depth:
+        if text[index] == "{":
+            depth += 1
+        elif text[index] == "}":
+            depth -= 1
+        index += 1
+    if depth != 0:
+        return text
+    return text[:start] + text[index:]
+
+
 def package_function(text: str) -> str:
     match = re.search(r"(?m)^package\s*\(\s*\)\s*\{", text)
     if not match:
@@ -176,6 +212,33 @@ def main() -> int:
                 f"{rel}: configure-time install directories must be target-relative; "
                 "stage with DESTDIR, not pkgdir"
             )
+
+        patch_helper = shell_function(text, "psp_apply_patch")
+        patch_scan_text = strip_shell_function(text, "psp_apply_patch")
+
+        if patch_helper:
+            required_patch_helper_fragments = (
+                "patch --dry-run --batch --forward --fuzz=0",
+                "patch --dry-run --batch --reverse --fuzz=0",
+                "Patch already applied:",
+                "patch is incompatible with the current source:",
+            )
+            for fragment in required_patch_helper_fragments:
+                if fragment not in patch_helper:
+                    errors.append(
+                        f"{rel}: psp_apply_patch is missing required state-aware behavior: "
+                        f"{fragment}"
+                    )
+
+        for lineno, line in enumerate(patch_scan_text.splitlines(), 1):
+            if (
+                not line.lstrip().startswith("#")
+                and re.search(r"(^|\s)patch\s", line)
+            ):
+                errors.append(
+                    f"{rel}:{lineno}: raw patch application is not allowed; "
+                    "use state-aware psp_apply_patch"
+                )
 
         for lineno, line in enumerate(text.splitlines(), 1):
             if ".pc" in line and "${PSPDEV}/psp" in line:
