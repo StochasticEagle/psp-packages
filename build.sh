@@ -46,22 +46,69 @@ if [[ -n "${legacy_startdir_paths}" ]]; then
 fi
 
 doinstall=""
-if [[ "${1:-}" == "--install" ]]; then
-  doinstall="true"
+doclean=""
+requested_package=""
+
+while (( $# > 0 )); do
+  case "$1" in
+    --install)
+      doinstall="true"
+      ;;
+    --clean)
+      doclean="true"
+      ;;
+    -*)
+      echo "ERROR: Unknown option: $1"
+      exit 1
+      ;;
+    *)
+      if [[ -n "${requested_package}" ]]; then
+        echo "ERROR: Only one package may be specified."
+        exit 1
+      fi
+      requested_package="$1"
+      ;;
+  esac
   shift
+done
+
+if [[ -n "${doclean}" && -n "${doinstall}" ]]; then
+  echo "ERROR: --clean and --install cannot be used together."
+  exit 1
 fi
 
-if [[ -z "${1:-}" ]]; then
+if [[ -z "${requested_package}" ]]; then
   PKG_LIST=$(find "${RECIPES}" -mindepth 2 -maxdepth 2 -type f -name PSPBUILD \
     -exec sh -c 'basename "$(dirname "$1")"' _ {} \; | LC_ALL=C sort)
   PKG_LIST=$(printf "%s\n" ${PKG_LIST} | grep -Ev "^(${BLACKLIST})$")
-  printf 'Will build packages:'
-  while IFS= read -r pkg; do
-    [[ -n "${pkg}" ]] && printf ' %s' "${pkg}"
-  done <<< "${PKG_LIST}"
-  printf '\n'
+  if [[ -z "${doclean}" ]]; then
+    printf 'Will build packages:'
+    while IFS= read -r pkg; do
+      [[ -n "${pkg}" ]] && printf ' %s' "${pkg}"
+    done <<< "${PKG_LIST}"
+    printf '\n'
+  fi
 else
-  PKG_LIST="$1"
+  PKG_LIST="${requested_package}"
+fi
+
+if [[ -n "${doclean}" ]]; then
+  for pkg in ${PKG_LIST}; do
+    pspbuild="${RECIPES}/${pkg}/PSPBUILD"
+
+    if [[ ! -f "${pspbuild}" ]]; then
+      echo "Package ${pkg} does not exist!"
+      continue
+    fi
+
+    pkgfile=$("${ROOT}/parse_pspbuild.sh" "${pspbuild}" pkgoutput)
+    pkgbase=$(bash -c 'source "$1"; printf "%s\n" "${pkgbase:-${pkgname[0]}}"' _ "${pspbuild}")
+
+    echo "Cleaning ${pkg} ..."
+    rm -rf "${BUILD_ROOT}/${pkgbase}"
+    rm -f "${PACKAGES}/${pkgfile}"
+  done
+  exit 0
 fi
 
 create_local_source_snapshot() {
@@ -72,15 +119,16 @@ create_local_source_snapshot() {
   local archive
 
   mkdir -p "${source_cache}"
-  archive=$(mktemp --suffix=.tar \
-    "${source_cache}/.psp-source-${source_index}.XXXXXX")
+  archive="${source_cache}/psp-source-${source_index}.tar"
 
-  (
-    cd "${component}"
-    tar --exclude='./.git' --exclude='*/.git' \
-      --transform="s|^\\./|${source_name}/|" \
-      -cf "${archive}" .
-  )
+  if [[ ! -f "${archive}" ]]; then
+    (
+      cd "${component}"
+      tar --exclude='./.git' --exclude='*/.git' \
+        --transform="s|^\\./|${source_name}/|" \
+        -cf "${archive}" .
+    )
+  fi
 
   printf '%s\n' "${archive}"
 }
@@ -189,15 +237,21 @@ for pkg in ${PKG_LIST}; do
   if [[ ! -f "${package_path}" ]]; then
     echo "Building ${pkg} ..."
 
-    # Native makepkg BUILDDIR handling creates build/<pkgbase>/src and
-    # build/<pkgbase>/pkg while keeping startdir at pspbuild/<package>.
-    rm -rf "${workdir}"
+    # Keep the existing source/build tree for incremental rebuilds.
+    # Use ./build.sh --clean <package> when a fresh source tree is required.
     mkdir -p "${source_cache}"
 
     cleanup_local_buildfile
     CURRENT_LOCAL_BUILD_FILE=$(mktemp "${recipe_dir}/.PSPBUILD.local.XXXXXX")
 
     makepkg_args=()
+    if [[ -d "${workdir}/src" ]] &&
+       find "${workdir}/src" -mindepth 1 -print -quit | grep -q .; then
+      echo "Reusing existing source/build tree for ${pkg}."
+      echo "Run ./build.sh --clean ${pkg} for a fresh build."
+      makepkg_args+=(--noextract)
+    fi
+
     set +e
     configure_local_git_sources \
       "${pspbuild}" "${CURRENT_LOCAL_BUILD_FILE}" "${source_cache}"
@@ -212,7 +266,7 @@ for pkg in ${PKG_LIST}; do
       cleanup_local_buildfile
       exit "${source_status}"
     else
-      makepkg_args=(-p "$(basename "${CURRENT_LOCAL_BUILD_FILE}")")
+      makepkg_args+=(-p "$(basename "${CURRENT_LOCAL_BUILD_FILE}")")
     fi
 
     if (cd "${recipe_dir}" && \
