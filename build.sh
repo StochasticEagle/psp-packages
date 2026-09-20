@@ -25,13 +25,6 @@ trap cleanup_local_buildfile EXIT
 
 mkdir -p "${BUILD_ROOT}" "${PACKAGES}"
 
-# A fresh clone must be buildable directly. Package source submodules follow
-# the gitlinks selected by psp-packages; do not float them with --remote.
-if [[ -z "${PSP_PACKAGES_SUBMODULES_READY:-}" ]]; then
-  git -C "${ROOT}" -c remote.origin.tagOpt=--no-tags submodule update --init --recursive --depth 1 --quiet
-  export PSP_PACKAGES_SUBMODULES_READY=1
-fi
-
 # Recipes used to live at <repo>/<package>. They now live at
 # <repo>/pspbuild/<package>, so a recipe must not escape through startdir/..
 # to reach repository files. Git-backed source components are supplied by the
@@ -109,6 +102,14 @@ if [[ -n "${doclean}" ]]; then
     rm -f "${PACKAGES}/${pkgfile}"
   done
   exit 0
+fi
+
+# A fresh clone must be buildable directly. Package source submodules follow
+# the gitlinks selected by psp-packages; do not float them with --remote.
+# Cleaning is intentionally local and does not initialize or fetch submodules.
+if [[ -z "${PSP_PACKAGES_SUBMODULES_READY:-}" ]]; then
+  git -C "${ROOT}" -c remote.origin.tagOpt=--no-tags submodule update --init --recursive --depth 1 --quiet
+  export PSP_PACKAGES_SUBMODULES_READY=1
 fi
 
 create_local_source_snapshot() {
