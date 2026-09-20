@@ -9,7 +9,7 @@ groups=('psp-libraries')
 depends=()
 makedepends=()
 optdepends=()
-source=("${pkgname}-${pkgver}::git+https://github.com/madler/zlib.git#branch=master")
+source=("${pkgname}-${pkgver}::git+https://github.com/madler/zlib.git#commit=da607da739fa6047df13e66a2af6b8bec7c2a498")
 sha256sums=('SKIP')
 
 prepare() {

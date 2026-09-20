@@ -11,7 +11,7 @@ makedepends=()
 optdepends=()
 provides=()
 source=(
-"${pkgname}-release-${pkgver}::git+https://github.com/icculus/physfs.git#tag=release-3.2.0"
+"${pkgname}-release-${pkgver}::git+https://github.com/icculus/physfs.git#commit=eb3383b532c5f74bfeb42ec306ba2cf80eed988c"
 "psp.patch"
 )
 sha256sums=(

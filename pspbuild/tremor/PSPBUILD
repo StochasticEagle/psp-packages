@@ -9,7 +9,7 @@ groups=('psp-libraries')
 depends=('libogg')
 makedepends=()
 optdepends=()
-source=("git+https://gitlab.xiph.org/xiph/tremor.git#branch=main")
+source=("git+https://gitlab.xiph.org/xiph/tremor.git#commit=820fb3237ea81af44c9cc468c8b4e20128e3e5ad")
 sha256sums=('SKIP')
 
 prepare() {

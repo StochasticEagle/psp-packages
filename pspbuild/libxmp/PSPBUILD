@@ -9,7 +9,7 @@ groups=('psp-libraries')
 depends=()
 makedepends=()
 optdepends=()
-source=("${pkgname}-${pkgver}::git+https://github.com/libxmp/libxmp.git#branch=master")
+source=("${pkgname}-${pkgver}::git+https://github.com/libxmp/libxmp.git#commit=3047863867bcb2211276937048c7b91db21b442d")
 sha256sums=('SKIP')
 
 prepare() {
@@ -22,17 +22,19 @@ prepare() {
 
 build() {
     cd "${pkgname}-${pkgver}"
-    mkdir -p build
-    cd build
-    cmake -Wno-dev -DCMAKE_TOOLCHAIN_FILE=$PSPDEV/psp/share/pspdev.cmake -DCMAKE_INSTALL_PREFIX=${pkgdir}/psp -DBUILD_SHARED=OFF \
-        -DCMAKE_BUILD_TYPE=Release -DCMAKE_POLICY_VERSION_MINIMUM=3.5 "${XTRA_OPTS[@]}" .. || { exit 1; }
-    make --quiet $MAKEFLAGS || { exit 1; }
+    cmake -S . -B build -Wno-dev \
+        -DCMAKE_TOOLCHAIN_FILE="$PSPDEV/psp/share/pspdev.cmake" \
+        -DCMAKE_INSTALL_PREFIX="${pkgdir}/psp" \
+        -DBUILD_SHARED=OFF \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+        "${XTRA_OPTS[@]}" || { exit 1; }
+    cmake --build build --parallel || { exit 1; }
 }
 
 package() {
-    cd "${pkgname}-${pkgver}/build"
-    make --quiet $MAKEFLAGS install
-    cd ..
+    cd "${pkgname}-${pkgver}"
+    cmake --install build || { exit 1; }
 
     mkdir -m 755 -p "$pkgdir/psp/share/licenses/$pkgname"
     install -m 644 docs/COPYING "$pkgdir/psp/share/licenses/$pkgname"

@@ -9,7 +9,7 @@ url="https://github.com/leethomason/tinyxml2"
 depends=()
 optdepends=()
 makedepends=()
-source=("${pkgname}-${pkgver}::git+https://github.com/leethomason/tinyxml2.git#branch=master")
+source=("${pkgname}-${pkgver}::git+https://github.com/leethomason/tinyxml2.git#commit=8224e427b655b83dae5e2298f1e6919523a78737")
 sha256sums=('SKIP')
 
 prepare() {
@@ -19,17 +19,20 @@ prepare() {
 
 build() {
   cd "${pkgname}-${pkgver}"
-  mkdir -p build
-  cd build
-  cmake -DCMAKE_TOOLCHAIN_FILE=$PSPDEV/psp/share/pspdev.cmake -DCMAKE_INSTALL_PREFIX=${pkgdir}/psp -DBUILD_SHARED_LIBS=OFF \
-        -DCMAKE_BUILD_TYPE=Release -Dtinyxml2_BUILD_TESTING=OFF -DCMAKE_POLICY_VERSION_MINIMUM=3.5 "${XTRA_OPTS[@]}" .. || { exit 1; }
-  make --quiet $MAKEFLAGS || { exit 1; }
+  cmake -S . -B build \
+        -DCMAKE_TOOLCHAIN_FILE="$PSPDEV/psp/share/pspdev.cmake" \
+        -DCMAKE_INSTALL_PREFIX="${pkgdir}/psp" \
+        -DBUILD_SHARED_LIBS=OFF \
+        -DCMAKE_BUILD_TYPE=Release \
+        -Dtinyxml2_BUILD_TESTING=OFF \
+        -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+        "${XTRA_OPTS[@]}" || { exit 1; }
+  cmake --build build --parallel || { exit 1; }
 }
 
 package () {
-  cd "${pkgname}-${pkgver}/build"
-  make --quiet $MAKEFLAGS install
-  cd ..
+  cd "${pkgname}-${pkgver}"
+  cmake --install build || { exit 1; }
 
   mkdir -m 755 -p "$pkgdir/psp/share/licenses/$pkgname"
   install -m 644 LICENSE.txt "$pkgdir/psp/share/licenses/$pkgname"

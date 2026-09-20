@@ -10,7 +10,7 @@ depends=('sdl3' 'libxmp-lite')
 makedepends=()
 optdepends=()
 source=(
-    "SDL3_mixer-${pkgver}::git+https://github.com/libsdl-org/SDL_mixer.git#branch=main"
+    "SDL3_mixer-${pkgver}::git+https://github.com/libsdl-org/SDL_mixer.git#commit=00d108dc09e78817112e4bf542012c91e066892a"
 )
 sha256sums=(
     "SKIP"
@@ -23,21 +23,39 @@ prepare() {
 
 build() {
     cd "${srcdir}/SDL3_mixer-${pkgver}"
-    mkdir -p build && cd build
-    cmake -DCMAKE_TOOLCHAIN_FILE="${PSPDEV}/psp/share/pspdev.cmake" -DCMAKE_INSTALL_PREFIX=/psp \
-        -DBUILD_SHARED_LIBS=OFF -DCMAKE_POSITION_INDEPENDENT_CODE=OFF -DSDLMIXER_DEPS_SHARED=OFF \
-        -DSDLMIXER_INSTALL=ON -DSDLMIXER_EXAMPLES=OFF -DSDLMIXER_TESTS=OFF -DSDLMIXER_VENDORED=OFF \
-        -DSDLMIXER_FLAC=OFF -DSDLMIXER_MIDI=OFF -DSDLMIXER_OPUS=OFF -DSDLMIXER_GME=OFF \
-        -DSDLMIXER_VORBIS_STB=ON -DSDLMIXER_VORBIS_VORBISFILE=OFF -DSDLMIXER_VORBIS_TREMOR=OFF \
-        -DSDLMIXER_MOD=ON -DSDLMIXER_MOD_XMP=OFF -DSDLMIXER_MOD_XMP_LITE=ON -DSDLMIXER_MOD_XMP_SHARED=OFF \
-        -DSDLMIXER_MP3=ON -DSDLMIXER_MP3_DRMP3=ON -DSDLMIXER_MP3_MPG123=OFF \
-        -DSDLMIXER_WAVPACK=OFF -DCMAKE_BUILD_TYPE=Release .. "${XTRA_OPTS[@]}" || { exit 1; }
-    make --quiet $MAKEFLAGS || { exit 1; }
+    cmake -S . -B build \
+        -DCMAKE_TOOLCHAIN_FILE="${PSPDEV}/psp/share/pspdev.cmake" \
+        -DCMAKE_INSTALL_PREFIX=/psp \
+        -DBUILD_SHARED_LIBS=OFF \
+        -DCMAKE_POSITION_INDEPENDENT_CODE=OFF \
+        -DSDLMIXER_DEPS_SHARED=OFF \
+        -DSDLMIXER_INSTALL=ON \
+        -DSDLMIXER_EXAMPLES=OFF \
+        -DSDLMIXER_TESTS=OFF \
+        -DSDLMIXER_VENDORED=OFF \
+        -DSDLMIXER_FLAC=OFF \
+        -DSDLMIXER_MIDI=OFF \
+        -DSDLMIXER_OPUS=OFF \
+        -DSDLMIXER_GME=OFF \
+        -DSDLMIXER_VORBIS_STB=ON \
+        -DSDLMIXER_VORBIS_VORBISFILE=OFF \
+        -DSDLMIXER_VORBIS_TREMOR=OFF \
+        -DSDLMIXER_MOD=ON \
+        -DSDLMIXER_MOD_XMP=OFF \
+        -DSDLMIXER_MOD_XMP_LITE=ON \
+        -DSDLMIXER_MOD_XMP_SHARED=OFF \
+        -DSDLMIXER_MP3=ON \
+        -DSDLMIXER_MP3_DRMP3=ON \
+        -DSDLMIXER_MP3_MPG123=OFF \
+        -DSDLMIXER_WAVPACK=OFF \
+        -DCMAKE_BUILD_TYPE=Release \
+        "${XTRA_OPTS[@]}" || { exit 1; }
+    cmake --build build --parallel || { exit 1; }
 }
 
 package() {
-    cd "${srcdir}/SDL3_mixer-${pkgver}/build"
-    make --quiet DESTDIR="${pkgdir}" ${MAKEFLAGS} install
+    cd "${srcdir}/SDL3_mixer-${pkgver}"
+    DESTDIR="${pkgdir}" cmake --install build || { exit 1; }
 
     mv "${pkgdir}/psp/share/licenses/SDL3_mixer" "${pkgdir}/psp/share/licenses/${pkgname}"
 }

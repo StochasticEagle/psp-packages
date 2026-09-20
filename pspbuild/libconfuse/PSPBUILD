@@ -9,7 +9,7 @@ groups=('psp-libraries')
 depends=()
 makedepends=()
 optdepends=()
-source=("${pkgname}-${pkgver}::git+https://github.com/libconfuse/libconfuse.git#branch=master")
+source=("${pkgname}-${pkgver}::git+https://github.com/libconfuse/libconfuse.git#commit=040efe8ece8c9ba5528096db281025ea715ab098")
 sha256sums=('SKIP')
 
 prepare() {

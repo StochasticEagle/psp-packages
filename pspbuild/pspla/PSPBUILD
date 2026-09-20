@@ -9,7 +9,7 @@ groups=('psp-libraries')
 depends=()
 makedepends=()
 optdepends=()
-source=("${pkgname}-${pkgver}::git+https://github.com/Jayanky/pspla.git#branch=main")
+source=("${pkgname}-${pkgver}::git+https://github.com/Jayanky/pspla.git#commit=ae7c09c9cc08dcfa94f04db3fbe367ea008051a5")
 sha256sums=('SKIP')
 
 build() {

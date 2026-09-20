@@ -10,7 +10,7 @@ depends=()
 optdepends=('zlib' 'bzip2' 'liblzma')
 makedepends=()
 source=(
-    "${pkgname}-${pkgver}::git+https://github.com/selmf/unarr.git#branch=master"
+    "${pkgname}-${pkgver}::git+https://github.com/selmf/unarr.git#commit=3307cd3fdcffe3b98326872c601bbf7235386441"
 )
 sha256sums=(
     "SKIP"

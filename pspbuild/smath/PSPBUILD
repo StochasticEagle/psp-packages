@@ -10,7 +10,7 @@ depends=()
 makedepends=()
 optdepends=()
 provides=()
-source=("$pkgname-$pkgver::git+https://github.com/slendidev/smath.git#branch=master")
+source=("$pkgname-$pkgver::git+https://github.com/slendidev/smath.git#commit=c390ef3761e96626b37485c6ae3ff0ebe073dfc6")
 sha256sums=('SKIP')
 
 build() {

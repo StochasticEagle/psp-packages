@@ -9,7 +9,7 @@ groups=('psp-libraries')
 depends=()
 makedepends=()
 optdepends=()
-source=("libjpeg-turbo-${pkgver}::git+https://github.com/libjpeg-turbo/libjpeg-turbo.git#branch=main")
+source=("libjpeg-turbo-${pkgver}::git+https://github.com/libjpeg-turbo/libjpeg-turbo.git#commit=1157d37cfab977f8f7f8344aededdfd951222c89")
 sha256sums=('SKIP')
 
 prepare() {
@@ -21,17 +21,20 @@ prepare() {
 
 build() {
     cd "libjpeg-turbo-${pkgver}"
-    mkdir -p build
-    cd build
-    cmake -Wno-dev -DCMAKE_TOOLCHAIN_FILE=$PSPDEV/psp/share/pspdev.cmake -DCMAKE_INSTALL_PREFIX=${pkgdir}/psp -DBUILD_SHARED_LIBS=OFF \
-        -DCMAKE_BUILD_TYPE=Release -DENABLE_SHARED=FALSE -DWITH_SIMD=0 "${XTRA_OPTS[@]}" .. || { exit 1; }
-    make --quiet $MAKEFLAGS || { exit 1; }
+    cmake -S . -B build -Wno-dev \
+        -DCMAKE_TOOLCHAIN_FILE="$PSPDEV/psp/share/pspdev.cmake" \
+        -DCMAKE_INSTALL_PREFIX="${pkgdir}/psp" \
+        -DBUILD_SHARED_LIBS=OFF \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DENABLE_SHARED=FALSE \
+        -DWITH_SIMD=0 \
+        "${XTRA_OPTS[@]}" || { exit 1; }
+    cmake --build build --parallel || { exit 1; }
 }
 
 package() {
-    cd "libjpeg-turbo-${pkgver}/build"
-    make --quiet $MAKEFLAGS install
-    cd ..
+    cd "libjpeg-turbo-${pkgver}"
+    cmake --install build || { exit 1; }
 
     mkdir -m 755 -p "$pkgdir/psp/share/licenses/$pkgname"
     install -m 644 README.ijg "$pkgdir/psp/share/licenses/$pkgname"

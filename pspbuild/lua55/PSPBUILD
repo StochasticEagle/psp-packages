@@ -11,7 +11,7 @@ makedepends=()
 optdepends=()
 conflicts=('lua')
 provides=('lua=5.5')
-source=("lua-${pkgver}::git+https://github.com/lua/lua.git#branch=master")
+source=("lua-${pkgver}::git+https://github.com/lua/lua.git#commit=7579fc9d7ed90240487251dfb69168f8e64e9294")
 sha256sums=('SKIP')
 
 prepare() {

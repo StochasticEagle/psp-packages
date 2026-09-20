@@ -10,7 +10,7 @@ depends=('lua55')
 makedepends=()
 optdepends=()
 source=(
-    "${pkgname}-${pkgver}::git+https://github.com/lunarmodules/luasocket.git#branch=master"
+    "${pkgname}-${pkgver}::git+https://github.com/lunarmodules/luasocket.git#commit=35187983315e3a9bb920e73ca94d19ffe17ba385"
 )
 sha256sums=(
     'SKIP'

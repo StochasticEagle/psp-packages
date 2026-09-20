@@ -9,7 +9,7 @@ groups=('psp-libraries')
 depends=()
 makedepends=()
 optdepends=()
-source=("${pkgname}-${pkgver}::git+https://github.com/xiph/opusfile.git#branch=main")
+source=("${pkgname}-${pkgver}::git+https://github.com/xiph/opusfile.git#commit=6dfd29e7adb87f2e193575fc3fa88cbf1a0b27df")
 sha256sums=('SKIP')
 depends=('libogg' 'opus')
 

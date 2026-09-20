@@ -9,7 +9,6 @@ BLACKLIST="pocketpy|luasocket"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${ROOT}/install-permissions.sh"
 RECIPES="${ROOT}/pspbuild"
-COMPONENTS="${ROOT}/components"
 BUILD_ROOT="${ROOT}/build"
 PACKAGES="${ROOT}/packages"
 SOURCE_COMPONENTS="${ROOT}/source-components.tsv"
@@ -104,6 +103,14 @@ if [[ -n "${doclean}" ]]; then
   exit 0
 fi
 
+# Fail before source acquisition if a recipe, source map, submodule URL, or
+# gitlink has drifted out of sync. Recursive dependency builds inherit the
+# validation result.
+if [[ -z "${PSP_PACKAGES_INVARIANTS_VALIDATED:-}" ]]; then
+  python3 "${ROOT}/scripts/check-source-components.py"
+  export PSP_PACKAGES_INVARIANTS_VALIDATED=1
+fi
+
 # A fresh clone must be buildable directly. Package source submodules follow
 # the gitlinks selected by psp-packages; do not float them with --remote.
 # Cleaning is intentionally local and does not initialize or fetch submodules.
@@ -190,14 +197,23 @@ configure_local_git_sources() {
         return 2
       fi
     elif [[ -f "${SOURCE_COMPONENTS}" ]]; then
-      mapped=$(awk -F '\t' -v remote="${remote}" '$1 == remote { print $2; exit }' "${SOURCE_COMPONENTS}")
+      mapped=$(awk -F '\t' -v remote="${remote}" '
+        function normalize(url) {
+          sub(/\/$/, "", url)
+          sub(/\.git$/, "", url)
+          return url
+        }
+        normalize($1) == normalize(remote) { print $2; exit }
+      ' "${SOURCE_COMPONENTS}")
     fi
 
-    if [[ -n "${mapped}" ]]; then
-      component="${ROOT}/${mapped}"
-    else
-      component="${COMPONENTS}/${source_name}"
+    if [[ -z "${mapped}" ]]; then
+      echo "ERROR: Git source has no source-component mapping:"
+      echo "  ${remote}"
+      return 2
     fi
+
+    component="${ROOT}/${mapped}"
 
     if [[ ! -e "${component}" ]]; then
       echo "ERROR: Git source submodule is not initialized:"

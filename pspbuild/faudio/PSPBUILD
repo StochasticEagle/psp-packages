@@ -9,7 +9,7 @@ url="https://fna-xna.github.io/"
 depends=('sdl2')
 optdepends=()
 makedepends=()
-source=("FAudio-${pkgver}::git+https://github.com/FNA-XNA/FAudio.git#branch=master")
+source=("FAudio-${pkgver}::git+https://github.com/FNA-XNA/FAudio.git#commit=667942a9097991f5cb6d1532a7ac3142e0581102")
 sha256sums=('SKIP')
 
 prepare() {
@@ -21,17 +21,20 @@ prepare() {
 
 build() {
   cd "FAudio-${pkgver}"
-  mkdir -p build
-  cd build
-  cmake -DCMAKE_TOOLCHAIN_FILE=$PSPDEV/psp/share/pspdev.cmake -DCMAKE_INSTALL_PREFIX=${pkgdir}/psp -DBUILD_SHARED_LIBS=OFF \
-        -DCMAKE_BUILD_TYPE=Release -DBUILD_SDL3=OFF -DCMAKE_C_FLAGS="-Wno-incompatible-pointer-types" "${XTRA_OPTS[@]}" .. || { exit 1; }
-  make --quiet $MAKEFLAGS || { exit 1; }
+  cmake -S . -B build \
+        -DCMAKE_TOOLCHAIN_FILE="$PSPDEV/psp/share/pspdev.cmake" \
+        -DCMAKE_INSTALL_PREFIX="${pkgdir}/psp" \
+        -DBUILD_SHARED_LIBS=OFF \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DBUILD_SDL3=OFF \
+        -DCMAKE_C_FLAGS="-Wno-incompatible-pointer-types" \
+        "${XTRA_OPTS[@]}" || { exit 1; }
+  cmake --build build --parallel || { exit 1; }
 }
 
 package () {
-  cd "FAudio-${pkgver}/build"
-  make --quiet $MAKEFLAGS install
-  cd ..
+  cd "FAudio-${pkgver}"
+  cmake --install build || { exit 1; }
 
   mkdir -m 755 -p "$pkgdir/psp/share/licenses/$pkgname"
   install -m 644 LICENSE "$pkgdir/psp/share/licenses/$pkgname"

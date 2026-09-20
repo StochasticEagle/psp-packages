@@ -10,7 +10,7 @@ depends=()
 makedepends=()
 optdepends=()
 source=(
-    "$pkgname-$pkgver-stable::git+https://github.com/wolfSSL/wolfssl.git#tag=v5.9.2-stable"
+    "$pkgname-$pkgver-stable::git+https://github.com/wolfSSL/wolfssl.git#commit=ac01707f552c611fbd135cc723b2682b3e7f80f2"
 )
 sha256sums=(
     'SKIP'
@@ -54,19 +54,23 @@ PATCH
 
 build() {
     cd "$pkgname-$pkgver-stable"
-    mkdir -p build
-    cd build
-    CFLAGS="-DNO_WRITEV" \
-        cmake -Wno-dev -DCMAKE_TOOLCHAIN_FILE=$PSPDEV/psp/share/pspdev.cmake -DCMAKE_INSTALL_PREFIX=${pkgdir}/psp \
-        -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DWOLFSSL_CRYPT_TESTS=OFF -DWOLFSSL_EXAMPLES=OFF \
-        -DWOLFSSL_CURL=ON -DWOLFSSL_IPV6=no -DWARNING_C_FLAGS=-w "${XTRA_OPTS[@]}" .. || { exit 1; }
-    make --quiet $MAKEFLAGS || { exit 1; }
+    CFLAGS="-DNO_WRITEV" cmake -S . -B build -Wno-dev \
+        -DCMAKE_TOOLCHAIN_FILE="$PSPDEV/psp/share/pspdev.cmake" \
+        -DCMAKE_INSTALL_PREFIX="${pkgdir}/psp" \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DBUILD_SHARED_LIBS=OFF \
+        -DWOLFSSL_CRYPT_TESTS=OFF \
+        -DWOLFSSL_EXAMPLES=OFF \
+        -DWOLFSSL_CURL=ON \
+        -DWOLFSSL_IPV6=no \
+        -DWARNING_C_FLAGS=-w \
+        "${XTRA_OPTS[@]}" || { exit 1; }
+    cmake --build build --parallel || { exit 1; }
 }
 
 package() {
-    cd "$pkgname-$pkgver-stable/build"
-    make --quiet $MAKEFLAGS install
-    cd ..
+    cd "$pkgname-$pkgver-stable"
+    cmake --install build || { exit 1; }
 
     mkdir -m 755 -p "$pkgdir/psp/share/licenses/$pkgname"
     install -m 644 LICENSING "$pkgdir/psp/share/licenses/$pkgname"

@@ -9,23 +9,29 @@ groups=('psp-libraries')
 depends=('zlib')
 makedepends=()
 optdepends=()
-source=("$pkgname-$pkgver::git+https://github.com/gdraheim/zziplib.git#branch=master")
+source=("$pkgname-$pkgver::git+https://github.com/gdraheim/zziplib.git#commit=cb6e89d075bd98a3f42664753e5d01c8fd0539f4")
 sha256sums=('SKIP')
 
 build() {
     cd "$pkgname-$pkgver"
-    mkdir -p build
-    cd build
-    cmake -Wno-dev -DCMAKE_TOOLCHAIN_FILE=$PSPDEV/psp/share/pspdev.cmake -DCMAKE_INSTALL_PREFIX=${pkgdir}/psp -DBUILD_SHARED_LIBS=OFF \
-        -DZZIPSDL=OFF -DZZIPBINS=OFF -DZZIPTEST=OFF -DZZIPDOCS=OFF -DGCOV_PATH=psp-gcov -DCMAKE_BUILD_TYPE=Release \
-        -DCMAKE_POLICY_VERSION_MINIMUM=3.5 "${XTRA_OPTS[@]}" .. || { exit 1; }
-    make --quiet $MAKEFLAGS || { exit 1; }
+    cmake -S . -B build -Wno-dev \
+        -DCMAKE_TOOLCHAIN_FILE="$PSPDEV/psp/share/pspdev.cmake" \
+        -DCMAKE_INSTALL_PREFIX="${pkgdir}/psp" \
+        -DBUILD_SHARED_LIBS=OFF \
+        -DZZIPSDL=OFF \
+        -DZZIPBINS=OFF \
+        -DZZIPTEST=OFF \
+        -DZZIPDOCS=OFF \
+        -DGCOV_PATH=psp-gcov \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+        "${XTRA_OPTS[@]}" || { exit 1; }
+    cmake --build build --parallel || { exit 1; }
 }
 
 package() {
-    cd "$pkgname-$pkgver/build"
-    make --quiet $MAKEFLAGS install
-    cd ..
+    cd "$pkgname-$pkgver"
+    cmake --install build || { exit 1; }
 
     mkdir -m 755 -p "$pkgdir/psp/share/licenses/$pkgname"
     install -m 644 COPYING.LIB "$pkgdir/psp/share/licenses/$pkgname"

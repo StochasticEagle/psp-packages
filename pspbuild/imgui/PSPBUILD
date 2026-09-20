@@ -9,7 +9,7 @@ groups=("psp-libraries")
 depends=()
 makedepends=()
 optdepends=()
-source=("$pkgname::git+https://github.com/adriensalon/imgui_psp.git#tag=v${pkgver}")
+source=("$pkgname::git+https://github.com/adriensalon/imgui_psp.git#commit=c4c7480864af95331b08762825f4d82690e154ff")
 sha256sums=("SKIP")
 
 prepare() {
@@ -18,12 +18,16 @@ prepare() {
 }
 
 build() {
-    cd "$srcdir/$pkgname"
-    cmake --toolchain "${PSPDEV}/psp/share/pspdev.cmake" . -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/psp "${XTRA_OPTS[@]}" || { exit 1; }
-    make --quiet $MAKEFLAGS || { exit 1; }
+    cd "$pkgname"
+    cmake -S . -B build \
+        -DCMAKE_TOOLCHAIN_FILE="${PSPDEV}/psp/share/pspdev.cmake" \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_PREFIX=/psp \
+        "${XTRA_OPTS[@]}" || { exit 1; }
+    cmake --build build --parallel || { exit 1; }
 }
 
 package() {
-    cd "$srcdir/$pkgname"
-    make --quiet ${MAKEFLAGS} DESTDIR="$pkgdir" install
+    cd "$pkgname"
+    DESTDIR="$pkgdir" cmake --install build || { exit 1; }
 }

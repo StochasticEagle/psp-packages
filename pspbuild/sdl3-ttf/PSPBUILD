@@ -10,7 +10,7 @@ depends=('sdl3' 'harfbuzz')
 makedepends=()
 optdepends=()
 source=(
-    "SDL3_ttf-${pkgver}::git+https://github.com/libsdl-org/SDL_ttf.git#tag=release-3.2.2"
+    "SDL3_ttf-${pkgver}::git+https://github.com/libsdl-org/SDL_ttf.git#commit=a1ce3670aec736ecbf0936c43f2f0cc53aa61e5b"
 )
 sha256sums=(
     "SKIP"
@@ -23,17 +23,21 @@ prepare() {
 
 build() {
     cd "${srcdir}/SDL3_ttf-${pkgver}"
-    mkdir -p build
-    cd build
-    cmake -Wno-dev -DCMAKE_TOOLCHAIN_FILE="${PSPDEV}/psp/share/pspdev.cmake" -DCMAKE_INSTALL_PREFIX=/psp \
-        -DSDLTTF_VENDORED=OFF -DSDLTTF_STRICT=ON -DSDLTTF_SAMPLES=OFF -DSDLTTF_PLUTOSVG=OFF -DCMAKE_BUILD_TYPE=Release \
-        "${XTRA_OPTS[@]}" .. || { exit 1; }
-    make --quiet $MAKEFLAGS || { exit 1; }
+    cmake -S . -B build -Wno-dev \
+        -DCMAKE_TOOLCHAIN_FILE="${PSPDEV}/psp/share/pspdev.cmake" \
+        -DCMAKE_INSTALL_PREFIX=/psp \
+        -DSDLTTF_VENDORED=OFF \
+        -DSDLTTF_STRICT=ON \
+        -DSDLTTF_SAMPLES=OFF \
+        -DSDLTTF_PLUTOSVG=OFF \
+        -DCMAKE_BUILD_TYPE=Release \
+        "${XTRA_OPTS[@]}" || { exit 1; }
+    cmake --build build --parallel || { exit 1; }
 }
 
 package() {
-    cd "${srcdir}/SDL3_ttf-${pkgver}/build"
-    make --quiet DESTDIR="${pkgdir}" ${MAKEFLAGS} install
+    cd "${srcdir}/SDL3_ttf-${pkgver}"
+    DESTDIR="${pkgdir}" cmake --install build || { exit 1; }
 
     mv "${pkgdir}/psp/share/licenses/SDL3_ttf" "${pkgdir}/psp/share/licenses/${pkgname}"
 }

@@ -10,7 +10,7 @@ groups=('psp-libraries')
 makedepends=()
 optdepends=()
 source=(
-  "harfbuzz-${pkgver}::git+https://github.com/harfbuzz/harfbuzz.git#tag=14.4.0"
+  "harfbuzz-${pkgver}::git+https://github.com/harfbuzz/harfbuzz.git#commit=36cb489cb02ce4b92099669ba9f9bea348eff93f"
   "fix-cmake.patch"
 )
 sha256sums=(
@@ -31,19 +31,25 @@ prepare() {
 
 build() {
     cd "harfbuzz-${pkgver}"
-    rm -rf build
-    mkdir -p build
-    cd build
-    cmake -Wno-author -DCMAKE_TOOLCHAIN_FILE=$PSPDEV/psp/share/pspdev.cmake -DCMAKE_INSTALL_PREFIX=${pkgdir}/psp -DBUILD_SHARED_LIBS=OFF \
-        -DCMAKE_BUILD_TYPE=Release -DHB_HAVE_FREETYPE=ON -DHB_BUILD_UTILS=OFF -DHB_BUILD_SUBSET=OFF \
-        -DHB_BUILD_RASTER=OFF -DHB_BUILD_VECTOR=OFF -DHB_BUILD_GPU=OFF "${XTRA_OPTS[@]}" .. || { exit 1; }
-    make --quiet $MAKEFLAGS || { exit 1; }
+    cmake -S . -B build -Wno-author \
+        -DCMAKE_TOOLCHAIN_FILE="$PSPDEV/psp/share/pspdev.cmake" \
+        -DCMAKE_INSTALL_PREFIX="${pkgdir}/psp" \
+        -DBUILD_SHARED_LIBS=OFF \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DHB_HAVE_FREETYPE=ON \
+        -DHB_BUILD_UTILS=OFF \
+        -DHB_BUILD_SUBSET=OFF \
+        -DHB_BUILD_RASTER=OFF \
+        -DHB_BUILD_VECTOR=OFF \
+        -DHB_BUILD_GPU=OFF \
+        "${XTRA_OPTS[@]}" || { exit 1; }
+    cmake --build build --parallel || { exit 1; }
 }
 
 package() {
-    cd "harfbuzz-${pkgver}/build"
-    make --quiet $MAKEFLAGS install
+    cd "harfbuzz-${pkgver}"
+    cmake --install build || { exit 1; }
 
     mkdir -m 755 -p "$pkgdir/psp/share/licenses/$pkgname"
-    install -m 644 ../COPYING "$pkgdir/psp/share/licenses/$pkgname"
+    install -m 644 COPYING "$pkgdir/psp/share/licenses/$pkgname"
 }

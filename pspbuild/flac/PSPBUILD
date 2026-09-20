@@ -9,7 +9,7 @@ groups=('psp-libraries')
 depends=('libogg')
 makedepends=()
 optdepends=()
-source=("${pkgname}-${pkgver}::git+https://github.com/xiph/flac.git#branch=master")
+source=("${pkgname}-${pkgver}::git+https://github.com/xiph/flac.git#commit=e94ff9f68b8e7dbd3e9f8b1ac18a8eca1914f181")
 sha256sums=('SKIP')
 
 prepare() {

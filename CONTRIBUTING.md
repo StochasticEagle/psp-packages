@@ -43,13 +43,15 @@ For new contributions to be merged, PSPBUILDs should meet the following criteria
   - Use `sha256sums` for downloaded files. Git sources and local patches may use `SKIP` where appropriate.
   - Prefer versioned release sources over moving development branches.
   - Install the license in `$pkgdir/psp/share/licenses/$pkgname/`.
-  - Git sources should use a selected tag or commit where reproducibility requires it.
+  - Git sources must use an exact 40-character `#commit=` selector and have a matching component under `components/`.
+  - The Git source URL, `source-components.tsv` mapping, `.gitmodules` URL, and component gitlink must remain consistent. Run `python3 scripts/check-source-components.py` before committing.
   - `pkgname` should not contain capital letters or special characters other than `-`.
   - Set `groups` to `psp-libraries` unless the package conflicts with an existing package.
   - Use SPDX license identifiers.
 - For existing packages:
   - Change either `pkgver` or `pkgrel` when the package contents change.
 - For all PSPBUILDs:
+  - For CMake projects, prefer `cmake -S/-B`, `cmake --build`, and `cmake --install` instead of manually creating and entering a build directory and invoking `make` directly.
   - Libraries go in `$pkgdir/psp/lib/`.
   - Include files go in `$pkgdir/psp/include/`.
   - Pkg-config files go in `$pkgdir/psp/lib/pkgconfig/`.

@@ -9,7 +9,7 @@ groups=('psp-libraries')
 depends=()
 makedepends=()
 optdepends=()
-source=("$pkgname-${pkgver}::git+https://github.com/libexpat/libexpat.git#branch=master")
+source=("$pkgname-${pkgver}::git+https://github.com/libexpat/libexpat.git#commit=76c4da5224f9277c7b1a6d5866004fb576292247")
 sha256sums=('SKIP')
 
 build() {

@@ -33,6 +33,20 @@ Running `./build.sh` without a package name builds all non-blacklisted packages.
 
 When a package is rebuilt, only its own `build/<package>/` tree is cleared first. Build trees remain available after success or failure for inspection. Completed package archives are written to `packages/`.
 
+## Source components and reproducibility
+
+Every Git-backed upstream source is represented by a shallow submodule under `components/`. A Git source in a `PSPBUILD` must use an exact 40-character `#commit=` selector that matches the component gitlink selected by this repository.
+
+`source-components.tsv` maps each unique upstream URL to its default component. Recipes that intentionally use a different component for the same upstream repository, such as historical SDL 1.2/2.x sources alongside SDL3, use `psp_source_components` to disambiguate the source index.
+
+The invariant checker verifies the recipe URL and commit, `source-components.tsv`, `.gitmodules`, and the component gitlink together:
+
+```sh
+python3 scripts/check-source-components.py
+```
+
+`build.sh` runs this check before source acquisition. Git-backed package builds are then fed tar snapshots of the already-selected local components; makepkg does not clone those Git sources during the package build. This keeps source selection in the repository/component layer and is the basis for eventually prohibiting package-build network access entirely.
+
 ## Installing libraries from the repository
 
 Installing libraries from the published repository can be done with `psp-pacman`:

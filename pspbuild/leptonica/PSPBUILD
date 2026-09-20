@@ -10,7 +10,7 @@ groups=('psp-libraries')
 makedepends=()
 optdepends=()
 source=(
-    "$pkgname-${pkgver}::git+https://github.com/DanBloomberg/leptonica.git#tag=1.87.0"
+    "$pkgname-${pkgver}::git+https://github.com/DanBloomberg/leptonica.git#commit=13275a278eb55b5746e33f95fbf5a2c8f604b3ab"
     "${pkgname}-${pkgver}-PSP.patch"
 )
 sha256sums=(
