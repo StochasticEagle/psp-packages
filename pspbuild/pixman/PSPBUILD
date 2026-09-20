@@ -1,6 +1,6 @@
 pkgname=pixman
 pkgver=0.46.4
-pkgrel=5
+pkgrel=6
 pkgdesc="Pixman is a low-level software library for pixel manipulation"
 arch=(any)
 url="https://www.pixman.org/"
@@ -14,6 +14,150 @@ sha256sums=('SKIP')
 
 build() {
     cd "${pkgname}-${pkgver}"
+
+    # pixman's repeat() helper assumes int32_t is typedef'd as int. On PSP,
+    # int32_t (and therefore pixman_fixed_t) is long int, so its int * API is
+    # incompatible with the fixed-point vx/vy pointers used by the fast paths.
+    # Keep every coordinate 32-bit and make the helper's actual API explicit.
+    sed -i \
+        -e 's/repeat (pixman_repeat_t repeat, int \\*c, int size)/repeat (pixman_repeat_t repeat, int32_t *c, int32_t size)/' \
+        -e 's/int y; \\\\/int32_t y; \\\\/' \
+        -e 's/int y1, y2; \\\\/int32_t y1, y2; \\\\/' \
+        pixman/pixman-inlines.h
+
+    grep -q 'repeat (pixman_repeat_t repeat, int32_t \*c, int32_t size)' pixman/pixman-inlines.h || { exit 1; }
+    grep -q 'int32_t y;.*\\    # not support. Use the PSP pthread pkg-config metadata instead; it supplies
+    # -lpthread and the required PSPSDK pthreadglue library.
+    sed -i "/^dep_threads = dependency('threads'/c\\dep_threads = dependency('pthread', method : 'pkg-config', required : true)" meson.build
+
+    cat > psp-cross.ini <<EOF
+[binaries]
+c = '${PSPDEV}/bin/psp-gcc'
+ar = '${PSPDEV}/bin/psp-ar'
+ranlib = '${PSPDEV}/bin/psp-ranlib'
+strip = '${PSPDEV}/bin/psp-strip'
+pkg-config = 'pkg-config'
+
+[properties]
+needs_exe_wrapper = true
+
+[host_machine]
+system = 'psp'
+cpu_family = 'mips'
+cpu = 'allegrex'
+endian = 'little'
+
+[built-in options]
+c_args = ['-G0', '-I${PSPDEV}/psp/include', '-I${PSPDEV}/psp/sdk/include', '-DPSP', '-D__PSP__', '-D_PSP_FW_VERSION=600']
+c_link_args = ['-L${PSPDEV}/lib', '-L${PSPDEV}/psp/lib', '-L${PSPDEV}/psp/sdk/lib', '-Wl,-zmax-page-size=128']
+EOF
+
+    # PSP's EABI toolchain cannot emit PIC. Meson defaults b_staticpic=true,
+    # even for static-only builds, so override it explicitly. Reconfigure is
+    # required here because package builds intentionally reuse build trees.
+    meson setup --reconfigure build \
+        --cross-file psp-cross.ini \
+        --prefix=/psp \
+        --libdir=lib \
+        --buildtype=release \
+        --default-library=static \
+        -Db_staticpic=false \
+        -Dtests=disabled \
+        -Ddemos=disabled \
+        -Dgtk=disabled \
+        -Dlibpng=disabled \
+        -Dopenmp=disabled \
+        -Dtls=disabled \
+        -Dloongson-mmi=disabled \
+        -Dmmx=disabled \
+        -Dsse2=disabled \
+        -Dssse3=disabled \
+        -Dvmx=disabled \
+        -Darm-simd=disabled \
+        -Dneon=disabled \
+        -Da64-neon=disabled \
+        -Dmips-dspr2=disabled \
+        -Drvv=disabled \
+        -Dgnu-inline-asm=disabled || { exit 1; }
+
+    meson compile -C build || { exit 1; }
+}
+
+package() {
+    cd "${pkgname}-${pkgver}"
+
+    DESTDIR="$pkgdir" meson install -C build --no-rebuild || { exit 1; }
+
+    mkdir -m 755 -p "$pkgdir/psp/share/licenses/$pkgname"
+    install -m 644 COPYING "$pkgdir/psp/share/licenses/$pkgname"
+}
+ pixman/pixman-inlines.h || { exit 1; }
+    grep -q 'int32_t y1, y2;.*\\    # not support. Use the PSP pthread pkg-config metadata instead; it supplies
+    # -lpthread and the required PSPSDK pthreadglue library.
+    sed -i "/^dep_threads = dependency('threads'/c\\dep_threads = dependency('pthread', method : 'pkg-config', required : true)" meson.build
+
+    cat > psp-cross.ini <<EOF
+[binaries]
+c = '${PSPDEV}/bin/psp-gcc'
+ar = '${PSPDEV}/bin/psp-ar'
+ranlib = '${PSPDEV}/bin/psp-ranlib'
+strip = '${PSPDEV}/bin/psp-strip'
+pkg-config = 'pkg-config'
+
+[properties]
+needs_exe_wrapper = true
+
+[host_machine]
+system = 'psp'
+cpu_family = 'mips'
+cpu = 'allegrex'
+endian = 'little'
+
+[built-in options]
+c_args = ['-G0', '-I${PSPDEV}/psp/include', '-I${PSPDEV}/psp/sdk/include', '-DPSP', '-D__PSP__', '-D_PSP_FW_VERSION=600']
+c_link_args = ['-L${PSPDEV}/lib', '-L${PSPDEV}/psp/lib', '-L${PSPDEV}/psp/sdk/lib', '-Wl,-zmax-page-size=128']
+EOF
+
+    # PSP's EABI toolchain cannot emit PIC. Meson defaults b_staticpic=true,
+    # even for static-only builds, so override it explicitly. Reconfigure is
+    # required here because package builds intentionally reuse build trees.
+    meson setup --reconfigure build \
+        --cross-file psp-cross.ini \
+        --prefix=/psp \
+        --libdir=lib \
+        --buildtype=release \
+        --default-library=static \
+        -Db_staticpic=false \
+        -Dtests=disabled \
+        -Ddemos=disabled \
+        -Dgtk=disabled \
+        -Dlibpng=disabled \
+        -Dopenmp=disabled \
+        -Dtls=disabled \
+        -Dloongson-mmi=disabled \
+        -Dmmx=disabled \
+        -Dsse2=disabled \
+        -Dssse3=disabled \
+        -Dvmx=disabled \
+        -Darm-simd=disabled \
+        -Dneon=disabled \
+        -Da64-neon=disabled \
+        -Dmips-dspr2=disabled \
+        -Drvv=disabled \
+        -Dgnu-inline-asm=disabled || { exit 1; }
+
+    meson compile -C build || { exit 1; }
+}
+
+package() {
+    cd "${pkgname}-${pkgver}"
+
+    DESTDIR="$pkgdir" meson install -C build --no-rebuild || { exit 1; }
+
+    mkdir -m 755 -p "$pkgdir/psp/share/licenses/$pkgname"
+    install -m 644 COPYING "$pkgdir/psp/share/licenses/$pkgname"
+}
+ pixman/pixman-inlines.h || { exit 1; }
 
     # Meson's built-in threads dependency injects -pthread, which psp-gcc does
     # not support. Use the PSP pthread pkg-config metadata instead; it supplies
