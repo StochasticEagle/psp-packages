@@ -1,6 +1,6 @@
 pkgname=pixman
 pkgver=0.46.4
-pkgrel=1
+pkgrel=2
 pkgdesc="Pixman is a low-level software library for pixel manipulation"
 arch=(any)
 url="https://www.pixman.org/"
@@ -35,20 +35,8 @@ cpu = 'allegrex'
 endian = 'little'
 
 [built-in options]
-c_args = [
-    '-G0',
-    '-I${PSPDEV}/psp/include',
-    '-I${PSPDEV}/psp/sdk/include',
-    '-DPSP',
-    '-D__PSP__',
-    '-D_PSP_FW_VERSION=600'
-]
-c_link_args = [
-    '-L${PSPDEV}/lib',
-    '-L${PSPDEV}/psp/lib',
-    '-L${PSPDEV}/psp/sdk/lib',
-    '-Wl,-zmax-page-size=128'
-]
+c_args = ['-G0', '-I${PSPDEV}/psp/include', '-I${PSPDEV}/psp/sdk/include', '-DPSP', '-D__PSP__', '-D_PSP_FW_VERSION=600']
+c_link_args = ['-L${PSPDEV}/lib', '-L${PSPDEV}/psp/lib', '-L${PSPDEV}/psp/sdk/lib', '-Wl,-zmax-page-size=128']
 EOF
 }
 
