@@ -125,7 +125,7 @@ if [[ -n "${doclean}" ]]; then
       continue
     fi
 
-    pkgbase=$(bash -c 'source "$1"; printf "%s\\n" "${pkgbase:-${pkgname[0]}}"' _ "${pspbuild}")
+    pkgbase=$(bash -c 'source "$1"; printf "%s\n" "${pkgbase:-${pkgname[0]}}"' _ "${pspbuild}")
     pkgname=$("${ROOT}/parse_pspbuild.sh" "${pspbuild}" pkgname)
 
     echo "Cleaning ${pkg} ..."
@@ -299,7 +299,7 @@ for pkg in ${PKG_LIST}; do
   done
 
   pkgfile=$("${ROOT}/parse_pspbuild.sh" "${pspbuild}" pkgoutput)
-  pkgbase=$(bash -c 'source "$1"; printf "%s\\n" "${pkgbase:-${pkgname[0]}}"' _ "${pspbuild}")
+  pkgbase=$(bash -c 'source "$1"; printf "%s\n" "${pkgbase:-${pkgname[0]}}"' _ "${pspbuild}")
   pkgname=$("${ROOT}/parse_pspbuild.sh" "${pspbuild}" pkgname)
   package_path="${PACKAGES}/${pkgfile}"
   workdir="${BUILD_ROOT}/${pkgbase}"
