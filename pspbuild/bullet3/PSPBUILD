@@ -1,6 +1,6 @@
 pkgname=bullet3
 pkgver=3.25
-pkgrel=2
+pkgrel=3
 pkgdesc="Bullet Physics SDK: real-time collision detection and multi-physics simulation for VR, games, visual effects, robotics, machine learning etc."
 arch=(any)
 url="https://github.com/bulletphysics/bullet3"
@@ -12,9 +12,30 @@ optdepends=()
 source=("git+https://github.com/bulletphysics/bullet3.git#commit=2c204c49e56ed15ec5fcfa71d199ab6d6570b3f5" "psp.patch")
 sha256sums=("SKIP" "SKIP")
 
+psp_apply_patch() {
+    local patch_file="$1"
+    shift
+    local output
+    if output="$(patch --dry-run --batch --forward --fuzz=0 "$@" < "$patch_file" 2>&1)"; then
+        printf '%s\n' "$output"
+        if grep -Eq 'with fuzz|offset -?[0-9]+ lines?' <<< "$output"; then
+            echo "WARNING: patch drift detected: $patch_file" >&2
+        fi
+        patch --batch --forward --fuzz=0 "$@" < "$patch_file"
+        return
+    fi
+    if patch --dry-run --batch --reverse --fuzz=0 "$@" < "$patch_file" >/dev/null 2>&1; then
+        echo "Patch already applied: $patch_file"
+        return 0
+    fi
+    printf '%s\n' "$output" >&2
+    echo "ERROR: patch is incompatible with the current source: $patch_file" >&2
+    return 1
+}
+
 prepare() {
     cd $pkgname
-    patch --batch --forward --fuzz=0 -Np1 -i ../psp.patch
+    psp_apply_patch ../psp.patch -Np1
     sed -i 's#@PREFIX@#/psp#' bullet.pc.cmake
 }
 

@@ -1,6 +1,6 @@
 pkgname=leptonica
 pkgver=1.87.0
-pkgrel=1
+pkgrel=2
 pkgdesc="An open source C library for efficient image processing and image analysis operations"
 arch=(any)
 url="https://www.leptonica.org/"
@@ -18,10 +18,31 @@ sha256sums=(
     "SKIP"
 )
 
+psp_apply_patch() {
+    local patch_file="$1"
+    shift
+    local output
+    if output="$(patch --dry-run --batch --forward --fuzz=0 "$@" < "$patch_file" 2>&1)"; then
+        printf '%s\n' "$output"
+        if grep -Eq 'with fuzz|offset -?[0-9]+ lines?' <<< "$output"; then
+            echo "WARNING: patch drift detected: $patch_file" >&2
+        fi
+        patch --batch --forward --fuzz=0 "$@" < "$patch_file"
+        return
+    fi
+    if patch --dry-run --batch --reverse --fuzz=0 "$@" < "$patch_file" >/dev/null 2>&1; then
+        echo "Patch already applied: $patch_file"
+        return 0
+    fi
+    printf '%s\n' "$output" >&2
+    echo "ERROR: patch is incompatible with the current source: $patch_file" >&2
+    return 1
+}
+
 prepare() {
     cd "$pkgname-${pkgver}"
 
-    patch --batch --forward --fuzz=0 -p1 < ../${pkgname}-${pkgver}-PSP.patch
+    psp_apply_patch "../${pkgname}-${pkgver}-PSP.patch" -p1
 
     sed -i 's#@prefix@#/psp#' lept.pc.in
     sed -i 's#@exec_prefix@#${prefix}#' lept.pc.in

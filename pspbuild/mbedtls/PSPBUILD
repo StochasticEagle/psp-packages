@@ -1,6 +1,6 @@
 pkgname=mbedtls
 pkgver=4.2.0
-pkgrel=5
+pkgrel=6
 pkgdesc="Secure Socket Layer library"
 arch=(any)
 url="https://www.trustedfirmware.org/projects/mbed-tls/"
@@ -12,6 +12,27 @@ makedepends=()
 source=("mbedtls-${pkgver}::git+https://github.com/Mbed-TLS/mbedtls.git#commit=ece41aa84d7879d7e55c59e955a5884b541f7f3b")
 sha256sums=('SKIP')
 
+psp_apply_patch() {
+    local patch_file="$1"
+    shift
+    local output
+    if output="$(patch --dry-run --batch --forward --fuzz=0 "$@" < "$patch_file" 2>&1)"; then
+        printf '%s\n' "$output"
+        if grep -Eq 'with fuzz|offset -?[0-9]+ lines?' <<< "$output"; then
+            echo "WARNING: patch drift detected: $patch_file" >&2
+        fi
+        patch --batch --forward --fuzz=0 "$@" < "$patch_file"
+        return
+    fi
+    if patch --dry-run --batch --reverse --fuzz=0 "$@" < "$patch_file" >/dev/null 2>&1; then
+        echo "Patch already applied: $patch_file"
+        return 0
+    fi
+    printf '%s\n' "$output" >&2
+    echo "ERROR: patch is incompatible with the current source: $patch_file" >&2
+    return 1
+}
+
 prepare() {
     if ! python3 -c 'import jinja2, jsonschema' >/dev/null 2>&1; then
         echo "ERROR: mbedtls requires the host Python modules jinja2 and jsonschema." >&2
@@ -19,7 +40,7 @@ prepare() {
     fi
 
     cd "$srcdir/$pkgname-$pkgver"
-    patch --batch --forward --fuzz=0 -p1 < "$startdir/mbedtls-$pkgver-PSP.patch" || { exit 1; }
+    psp_apply_patch "$startdir/mbedtls-$pkgver-PSP.patch" -p1 || { exit 1; }
 }
 
 build() {
