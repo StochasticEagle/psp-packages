@@ -1,6 +1,6 @@
 pkgname=argtable2
 pkgver=2.14
-pkgrel=1
+pkgrel=2
 pkgdesc="Argtable is an ANSI C library for parsing GNU style command line options with a minimum of fuss"
 arch=(any)
 url="https://github.com/StochasticEagle/psp-argtable2"
@@ -9,22 +9,22 @@ groups=('psp-libraries')
 depends=()
 makedepends=()
 optdepends=()
-source=("argtable2-${pkgver}::git+https://github.com/StochasticEagle/psp-argtable2.git#commit=67f9a55db7f8af8b4b6f10d77188d430831a73a6")
+source=("argtable2-${pkgver}::git+https://github.com/StochasticEagle/psp-argtable2.git#commit=1531306e70758c499ce1696c97002a6ec31e547e")
 sha256sums=('SKIP')
 
 build() {
     cd "${pkgname}-${pkgver}"
-    mkdir -p build
-    cd build
-    cmake -Wno-dev -DCMAKE_TOOLCHAIN_FILE=$PSPDEV/psp/share/pspdev.cmake -DCMAKE_INSTALL_PREFIX=${pkgdir}/psp -DBUILD_SHARED_LIBS=OFF \
-        -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_FLAGS="-D__GNU_LIBRARY__" "${XTRA_OPTS[@]}" .. || { exit 1; }
-    make --quiet $MAKEFLAGS || { exit 1; }
+    cmake -S . -B build \
+        -DCMAKE_TOOLCHAIN_FILE="$PSPDEV/psp/share/pspdev.cmake" \
+        -DCMAKE_INSTALL_PREFIX="${pkgdir}/psp" \
+        -DCMAKE_BUILD_TYPE=Release \
+        "${XTRA_OPTS[@]}" || { exit 1; }
+    cmake --build build --parallel || { exit 1; }
 }
 
 package() {
-    cd "${pkgname}-${pkgver}/build"
-    make --quiet $MAKEFLAGS install
-    cd ..
+    cd "${pkgname}-${pkgver}"
+    cmake --install build || { exit 1; }
 
     mkdir -m 755 -p "$pkgdir/psp/share/licenses/$pkgname"
     install -m 644 LICENSE.md "$pkgdir/psp/share/licenses/$pkgname"
