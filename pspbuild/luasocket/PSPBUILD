@@ -1,11 +1,11 @@
 pkgname=luasocket
 pkgver=3.1.0
-pkgrel=2
+pkgrel=3
 pkgdesc="Network support for the Lua language"
 arch=(any)
 url="https://lunarmodules.github.io/luasocket/"
 license=('MIT')
-groups=()
+groups=('psp-libraries')
 depends=('lua55')
 makedepends=()
 optdepends=()
