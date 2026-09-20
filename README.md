@@ -35,7 +35,7 @@ Build and install it into the active PSPDEV prefix:
 ./build.sh --install <package>
 ```
 
-Running `./build.sh` without a package name builds all non-blacklisted packages. Required package dependencies are built and installed recursively before their dependents.
+Running `./build.sh` without a package name builds all packages. Required package dependencies are built and installed recursively before their dependents.
 
 When a package is rebuilt, only its own `build/<package>/` tree is cleared first. Build trees remain available after success or failure for inspection. Completed package archives are written to `packages/`.
 

@@ -45,7 +45,7 @@ https://github.com/libsdl-org/SDL.git	components/SDL3
 https://github.com/libxmp/libxmp.git	components/libxmp
 https://github.com/lsalzman/enet.git	components/enet
 https://github.com/lua/lua.git	components/lua
-https://github.com/lunarmodules/luasocket.git	components/luasocket
+https://github.com/StochasticEagle/psp-luasocket.git	components/luasocket
 https://github.com/lz4/lz4.git	components/lz4
 https://github.com/madler/zlib.git	components/zlib
 https://github.com/Mbed-TLS/mbedtls.git	components/mbedtls
