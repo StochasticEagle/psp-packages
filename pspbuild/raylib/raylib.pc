@@ -1,4 +1,4 @@
-prefix=${PSPDEV}/psp
+prefix=/psp
 exec_prefix=${prefix}
 libdir=${prefix}/lib
 includedir=${prefix}/include

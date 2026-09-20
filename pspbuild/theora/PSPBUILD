@@ -14,7 +14,7 @@ sha256sums=('SKIP')
 
 prepare() {
     cd "theora"
-    sed -i 's#@prefix@#${PSPDEV}/psp#' theora*.pc.in
+    sed -i 's#@prefix@#/psp#' theora*.pc.in
     sed -i 's#@exec_prefix@#${prefix}#' theora*.pc.in
     sed -i 's#@libdir@#${prefix}/lib#' theora*.pc.in
     sed -i 's#@includedir@#${prefix}/include#' theora*.pc.in

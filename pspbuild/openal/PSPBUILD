@@ -12,7 +12,7 @@ sha256sums=('SKIP')
 
 prepare() {
   cd $pkgname-soft-psp-$pkgver
-  sed -i 's#@prefix@#${PSPDEV}/psp#' openal.pc.in
+  sed -i 's#@prefix@#/psp#' openal.pc.in
   sed -i 's#@exec_prefix@#${prefix}#' openal.pc.in
   sed -i 's#@libdir@#${prefix}/lib#' openal.pc.in
   sed -i 's#@includedir@#${prefix}/include#' openal.pc.in

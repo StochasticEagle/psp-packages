@@ -12,7 +12,7 @@ sha256sums=('SKIP')
 prepare() {
     cd "$srcdir/$pkgname-${pkgver}/CMake"
 
-    sed -i '1 s/^/prefix=${PSPDEV}\/psp\n/' flatbuffers.pc.in
+    sed -i '1 s/^/prefix=\/psp\n/' flatbuffers.pc.in
 
     sed -i 's#@CMAKE_INSTALL_FULL_LIBDIR@#${prefix}/lib#' flatbuffers.pc.in
     sed -i 's#@CMAKE_INSTALL_FULL_INCLUDEDIR@#${prefix}/include#' flatbuffers.pc.in
@@ -25,7 +25,7 @@ build() {
     cd "$srcdir/$pkgname-${pkgver}"
     mkdir -p build
     cd build
-    psp-cmake -Wno-dev -DCMAKE_INSTALL_PREFIX=${pkgdir}/psp \
+    cmake --toolchain "${PSPDEV}/psp/share/pspdev.cmake" -Wno-dev -DCMAKE_INSTALL_PREFIX=${pkgdir}/psp \
         -DFLATBUFFERS_BUILD_FLATC=OFF -DFLATBUFFERS_BUILD_TESTS=OFF \
         -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release "${XTRA_OPTS[@]}" .. || { exit 1; }
     make --quiet $MAKEFLAGS || { exit 1; }

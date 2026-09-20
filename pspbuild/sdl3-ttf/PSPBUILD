@@ -18,7 +18,7 @@ sha256sums=(
 
 prepare() {
     cd "${srcdir}/SDL3_ttf-${pkgver}"
-    sed -i '/^prefix=/s/=.*$/=${PSPDEV}\/psp/' cmake/sdl3-ttf.pc.in
+    sed -i '/^prefix=/s/=.*$/=\/psp/' cmake/sdl3-ttf.pc.in
 }
 
 build() {

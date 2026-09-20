@@ -15,7 +15,7 @@ sha256sums=('SKIP')
 
 prepare() {
     cd "yaml-cpp"
-    sed -i 's#@CMAKE_INSTALL_PREFIX@#${PSPDEV}/psp#' yaml-cpp.pc.in
+    sed -i 's#@CMAKE_INSTALL_PREFIX@#/psp#' yaml-cpp.pc.in
     sed -i 's#@CMAKE_INSTALL_FULL_LIBDIR@#${prefix}/lib#' yaml-cpp.pc.in
     sed -i 's#@CMAKE_INSTALL_FULL_INCLUDEDIR@#${prefix}/include#' yaml-cpp.pc.in
 }

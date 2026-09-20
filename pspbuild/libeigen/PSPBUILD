@@ -13,7 +13,7 @@ sha256sums=('SKIP')
 
 prepare() {
     cd "$srcdir/eigen-$pkgver"
-    sed -i 's#@CMAKE_INSTALL_PREFIX@#${PSPDEV}/psp#' eigen3.pc.in
+    sed -i 's#@CMAKE_INSTALL_PREFIX@#/psp#' eigen3.pc.in
 }
 
 build() {

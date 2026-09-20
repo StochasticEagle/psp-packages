@@ -23,7 +23,7 @@ prepare() {
     cd ${pkgname}-release-${pkgver}
     patch --batch --forward -p1 < ../psp.patch
 
-    sed -e 's#@CMAKE_INSTALL_PREFIX@#${PSPDEV}/psp#' \
+    sed -e 's#@CMAKE_INSTALL_PREFIX@#/psp#' \
         -e 's#@CMAKE_INSTALL_FULL_LIBDIR@#${prefix}/lib#' \
         -e 's#@CMAKE_INSTALL_FULL_INCLUDEDIR@#${prefix}/include#' \
         -i extras/physfs.pc.in
@@ -32,7 +32,7 @@ prepare() {
 build() {
     cd ${pkgname}-release-${pkgver}
     rm -rf pspbuild
-    psp-cmake -S . -B pspbuild -Wno-author \
+    cmake --toolchain "${PSPDEV}/psp/share/pspdev.cmake" -S . -B pspbuild -Wno-author \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_INSTALL_PREFIX=${pkgdir}/psp \
         -DPHYSFS_BUILD_TEST=Off \

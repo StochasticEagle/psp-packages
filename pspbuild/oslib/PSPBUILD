@@ -14,7 +14,7 @@ sha256sums=('SKIP')
 
 build() {
     cd $pkgname
-    psp-cmake -DCMAKE_BUILD_TYPE=Release . "${XTRA_OPTS[@]}" || { exit 1; }
+    cmake --toolchain "${PSPDEV}/psp/share/pspdev.cmake" -DCMAKE_BUILD_TYPE=Release . "${XTRA_OPTS[@]}" || { exit 1; }
     make --quiet $MAKEFLAGS || { exit 1; }
 }
 

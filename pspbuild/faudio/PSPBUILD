@@ -14,9 +14,9 @@ sha256sums=('SKIP')
 
 prepare() {
     cd "FAudio-${pkgver}"
-    sed -i 's#@CMAKE_INSTALL_PREFIX@#${PSPDEV}/psp#g' cmake/FAudio.pc.in
-    sed -i 's#@FAUDIO_PKGCONF_LIBDIR@#${PSPDEV}/psp/lib#g' cmake/FAudio.pc.in
-    sed -i 's#@FAUDIO_PKGCONF_INCLUDEDIR@#${PSPDEV}/psp/include#g' cmake/FAudio.pc.in
+    sed -i 's#@CMAKE_INSTALL_PREFIX@#/psp#g' cmake/FAudio.pc.in
+    sed -i 's#@FAUDIO_PKGCONF_LIBDIR@#/psp/lib#g' cmake/FAudio.pc.in
+    sed -i 's#@FAUDIO_PKGCONF_INCLUDEDIR@#/psp/include#g' cmake/FAudio.pc.in
 }
 
 build() {

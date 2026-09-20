@@ -15,12 +15,12 @@ sha256sums=("SKIP" "SKIP")
 prepare() {
     cd $pkgname
     patch --batch --forward -Np1 -i ../psp.patch
-    sed -i 's#@PREFIX@#${PSPDEV}/psp#' bullet.pc.cmake
+    sed -i 's#@PREFIX@#/psp#' bullet.pc.cmake
 }
 
 build() {
     cd $pkgname 
-    psp-cmake . -DCMAKE_POLICY_VERSION_MINIMUM=3.10 -DBUILD_EXTRAS=OFF -DBUILD_CPU_DEMOS=OFF -DBUILD_OPENGL3_DEMOS=OFF -DBUILD_BULLET2_DEMOS=OFF -DBUILD_UNIT_TESTS=OFF -DBUILD_CLSOCKET=OFF -DBUILD_BULLET3_OPENCL=OFF -DCMAKE_BUILD_TYPE=Release --install-prefix="${pkgdir}/psp" "${XTRA_OPTS[@]}" || { exit 1; }
+    cmake --toolchain "${PSPDEV}/psp/share/pspdev.cmake" . -DCMAKE_POLICY_VERSION_MINIMUM=3.10 -DBUILD_EXTRAS=OFF -DBUILD_CPU_DEMOS=OFF -DBUILD_OPENGL3_DEMOS=OFF -DBUILD_BULLET2_DEMOS=OFF -DBUILD_UNIT_TESTS=OFF -DBUILD_CLSOCKET=OFF -DBUILD_BULLET3_OPENCL=OFF -DCMAKE_BUILD_TYPE=Release --install-prefix="${pkgdir}/psp" "${XTRA_OPTS[@]}" || { exit 1; }
     make --quiet $MAKEFLAGS || { exit 1; }
 }
 

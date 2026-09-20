@@ -32,9 +32,9 @@ prepare() {
         patch --batch --forward -Np1 -i "$srcdir/cmake-module.patch"
         patch --batch --forward -Np1 -i "$srcdir/psp.patch"
 
-        sed -i 's/@CMAKE_INSTALL_PREFIX@/${PSPDEV}\/psp/g' ./sdl3-gfx.pc.in
-        sed -i 's/@CMAKE_INSTALL_FULL_LIBDIR@/${PSPDEV}\/psp\/lib/g' ./sdl3-gfx.pc.in
-        sed -i 's/@CMAKE_INSTALL_FULL_INCLUDEDIR@/${PSPDEV}\/psp\/include/g' ./sdl3-gfx.pc.in
+        sed -i 's/@CMAKE_INSTALL_PREFIX@/\/psp/g' ./sdl3-gfx.pc.in
+        sed -i 's/@CMAKE_INSTALL_FULL_LIBDIR@/\/psp\/lib/g' ./sdl3-gfx.pc.in
+        sed -i 's/@CMAKE_INSTALL_FULL_INCLUDEDIR@/\/psp\/include/g' ./sdl3-gfx.pc.in
 }
 
 build() {

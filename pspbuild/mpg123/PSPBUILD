@@ -18,7 +18,7 @@ sha256sums=(
 
 prepare() {
     cd "${srcdir}/${pkgname}-${pkgver}"
-    sed -i 's#@prefix@#${PSPDEV}/psp#' *.pc.in
+    sed -i 's#@prefix@#/psp#' *.pc.in
     sed -i 's#@exec_prefix@#${prefix}#' *.pc.in
     sed -i 's#@libdir@#${prefix}/lib#' *.pc.in
     sed -i 's#@includedir@#${prefix}/include#' *.pc.in

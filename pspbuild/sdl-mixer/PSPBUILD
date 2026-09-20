@@ -24,7 +24,7 @@ sha256sums=(
 prepare() {
     cd "${srcdir}/SDL_mixer"
     cp "../config.sub" build-scripts/
-    sed -i 's#@prefix@#${PSPDEV}/psp#' SDL_mixer.pc.in
+    sed -i 's#@prefix@#/psp#' SDL_mixer.pc.in
     sed -i 's#@exec_prefix@#${prefix}#' SDL_mixer.pc.in
     sed -i 's#@libdir@#${prefix}/lib#' SDL_mixer.pc.in
     sed -i 's#@includedir@#${prefix}/include#' SDL_mixer.pc.in

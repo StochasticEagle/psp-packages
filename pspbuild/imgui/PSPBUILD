@@ -14,12 +14,12 @@ sha256sums=("SKIP")
 
 prepare() {
     cd "$srcdir/$pkgname"
-    sed -i 's/@CMAKE_INSTALL_PREFIX@/${PSPDEV}\/psp/' imgui.pc.in
+    sed -i 's/@CMAKE_INSTALL_PREFIX@/\/psp/' imgui.pc.in
 }
 
 build() {
     cd "$srcdir/$pkgname"
-    psp-cmake . -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/psp "${XTRA_OPTS[@]}" || { exit 1; }
+    cmake --toolchain "${PSPDEV}/psp/share/pspdev.cmake" . -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/psp "${XTRA_OPTS[@]}" || { exit 1; }
     make --quiet $MAKEFLAGS || { exit 1; }
 }
 

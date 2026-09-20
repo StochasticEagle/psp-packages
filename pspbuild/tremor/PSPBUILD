@@ -15,7 +15,7 @@ sha256sums=('SKIP')
 prepare() {
     cd "${pkgname}"
 
-    sed -i 's#@prefix@#${PSPDEV}/psp#' vorbisidec.pc.in
+    sed -i 's#@prefix@#/psp#' vorbisidec.pc.in
     sed -i 's#@exec_prefix@#${prefix}#' vorbisidec.pc.in
     sed -i 's#@libdir@#${prefix}/lib#' vorbisidec.pc.in
     sed -i 's#@includedir@#${prefix}/include#' vorbisidec.pc.in

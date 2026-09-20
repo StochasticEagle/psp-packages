@@ -46,7 +46,7 @@ prepare() {
          return 1;
 PATCH
 
-    sed -i 's#@prefix@#${PSPDEV}/psp#' support/wolfssl.pc.in
+    sed -i 's#@prefix@#/psp#' support/wolfssl.pc.in
     sed -i 's#@exec_prefix@#${prefix}#' support/wolfssl.pc.in
     sed -i 's#@libdir@#${prefix}/lib#' support/wolfssl.pc.in
     sed -i 's#@includedir@#${prefix}/include#' support/wolfssl.pc.in

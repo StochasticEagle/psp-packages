@@ -23,7 +23,7 @@ prepare() {
 
     patch --batch --forward -p1 < ../${pkgname}-${pkgver}-PSP.patch
 
-    sed -i 's#@prefix@#${PSPDEV}/psp#' lept.pc.in
+    sed -i 's#@prefix@#/psp#' lept.pc.in
     sed -i 's#@exec_prefix@#${prefix}#' lept.pc.in
     sed -i 's#@libdir@#${prefix}/lib#' lept.pc.in
     sed -i 's#@includedir@#${prefix}/include#' lept.pc.in

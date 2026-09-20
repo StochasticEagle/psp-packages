@@ -17,13 +17,13 @@ prepare() {
     ./autogen.sh
 
     cd "src/libFLAC"
-    sed -i 's#@prefix@#${PSPDEV}/psp#' flac.pc.in
+    sed -i 's#@prefix@#/psp#' flac.pc.in
     sed -i 's#@exec_prefix@#${prefix}#' flac.pc.in
     sed -i 's#@libdir@#${prefix}/lib#' flac.pc.in
     sed -i 's#@includedir@#${prefix}/include#' flac.pc.in
 
     cd "../libFLAC++"
-    sed -i 's#@prefix@#${PSPDEV}/psp#' flac++.pc.in
+    sed -i 's#@prefix@#/psp#' flac++.pc.in
     sed -i 's#@exec_prefix@#${prefix}#' flac++.pc.in
     sed -i 's#@libdir@#${prefix}/lib#' flac++.pc.in
     sed -i 's#@includedir@#${prefix}/include#' flac++.pc.in

@@ -15,7 +15,7 @@ sha256sums=("SKIP")
 
 prepare() {
     cd "${srcdir}/SDL3-${pkgver}"
-    sed -i 's#@SDL_PKGCONFIG_PREFIX@#${PSPDEV}/psp#' cmake/sdl3.pc.in
+    sed -i 's#@SDL_PKGCONFIG_PREFIX@#/psp#' cmake/sdl3.pc.in
     sed -i 's#@LIBDIR_FOR_PKG_CONFIG@#${prefix}/lib#' cmake/sdl3.pc.in
     sed -i 's#@INCLUDEDIR_FOR_PKG_CONFIG@#${prefix}\/include#' cmake/sdl3.pc.in
 }

@@ -20,7 +20,7 @@ prepare() {
   patch --batch --forward -p1 < ../spdlog-psp.patch
 
   # patch spdlog.pc.in
-  sed -i 's/@CMAKE_INSTALL_PREFIX@/${PSPDEV}\/psp/' ./cmake/spdlog.pc.in
+  sed -i 's/@CMAKE_INSTALL_PREFIX@/\/psp/' ./cmake/spdlog.pc.in
 }
 
 build() {

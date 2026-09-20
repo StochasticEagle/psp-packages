@@ -14,7 +14,7 @@ sha256sums=('SKIP')
 
 prepare() {
     cd "$pkgname-$pkgver"
-    sed -i 's#@CMAKE_INSTALL_PREFIX@#${PSPDEV}/psp#' libzip.pc.in
+    sed -i 's#@CMAKE_INSTALL_PREFIX@#/psp#' libzip.pc.in
 }
 
 build() {

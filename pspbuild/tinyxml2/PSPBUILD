@@ -14,7 +14,7 @@ sha256sums=('SKIP')
 
 prepare() {
     cd "${pkgname}-${pkgver}"
-    sed -i 's#@CMAKE_INSTALL_PREFIX@#${PSPDEV}/psp#g' cmake/tinyxml2.pc.in
+    sed -i 's#@CMAKE_INSTALL_PREFIX@#/psp#g' cmake/tinyxml2.pc.in
 }
 
 build() {

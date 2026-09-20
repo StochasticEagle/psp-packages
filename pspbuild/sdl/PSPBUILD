@@ -14,7 +14,8 @@ sha256sums=('SKIP')
 
 prepare() {
     cd "SDL"
-    sed -i 's#@prefix@#${PSPDEV}/psp#' sdl-config.in sdl.pc.in
+    sed -i 's#@prefix@#${PSPDEV}/psp#' sdl-config.in
+    sed -i 's#@prefix@#/psp#' sdl.pc.in
     sed -i 's#@exec_prefix@#${prefix}#' sdl-config.in sdl.pc.in
     sed -i 's#@libdir@#${prefix}/lib#' sdl-config.in sdl.pc.in
     sed -i 's#@includedir@#${prefix}/include#' sdl-config.in sdl.pc.in

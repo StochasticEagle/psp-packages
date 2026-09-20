@@ -14,7 +14,7 @@ sha256sums=('SKIP')
 
 prepare() {
     cd "vorbis-${pkgver}"
-    sed -i 's#@prefix@#${PSPDEV}/psp#' vorbisenc.pc.in vorbisfile.pc.in vorbis.pc.in
+    sed -i 's#@prefix@#/psp#' vorbisenc.pc.in vorbisfile.pc.in vorbis.pc.in
     sed -i 's#@exec_prefix@#${prefix}#' vorbisenc.pc.in vorbisfile.pc.in vorbis.pc.in
     sed -i 's#@libdir@#${prefix}/lib#' vorbisenc.pc.in vorbisfile.pc.in vorbis.pc.in
     sed -i 's#@includedir@#${prefix}/include#' vorbisenc.pc.in vorbisfile.pc.in vorbis.pc.in

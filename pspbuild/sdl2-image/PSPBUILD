@@ -18,7 +18,7 @@ sha256sums=(
 )
 prepare() {
     cd "${srcdir}/SDL2_image-${pkgver}"
-    sed -i '/^prefix=/s/=.*$/=${PSPDEV}\/psp/' SDL2_image.pc.in
+    sed -i '/^prefix=/s/=.*$/=\/psp/' SDL2_image.pc.in
 }
 
 build() {

@@ -15,7 +15,7 @@ sha256sums=('SKIP')
 prepare() {
     cd "$pkgname-$pkgver"
 
-    sed -i 's#@PREFIX@#${PSPDEV}/psp#' lib/liblz4.pc.in
+    sed -i 's#@PREFIX@#/psp#' lib/liblz4.pc.in
 
     # can't disable building all the programs, so just delete them
     rm programs/*.c

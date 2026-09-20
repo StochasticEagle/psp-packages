@@ -14,10 +14,10 @@ sha256sums=('SKIP')
 
 prepare() {
     cd "cJSON-$pkgver"
-    sed -i 's#@CMAKE_INSTALL_FULL_LIBDIR@#${PSPDEV}/psp/lib#' library_config/libcjson.pc.in
-    sed -i 's#@CMAKE_INSTALL_FULL_LIBDIR@#${PSPDEV}/psp/lib#' library_config/libcjson_utils.pc.in
-    sed -i 's#@CMAKE_INSTALL_FULL_INCLUDEDIR@#${PSPDEV}/psp/include#' library_config/libcjson.pc.in
-    sed -i 's#@CMAKE_INSTALL_FULL_INCLUDEDIR@#${PSPDEV}/psp/include#' library_config/libcjson_utils.pc.in
+    sed -i 's#@CMAKE_INSTALL_FULL_LIBDIR@#/psp/lib#' library_config/libcjson.pc.in
+    sed -i 's#@CMAKE_INSTALL_FULL_LIBDIR@#/psp/lib#' library_config/libcjson_utils.pc.in
+    sed -i 's#@CMAKE_INSTALL_FULL_INCLUDEDIR@#/psp/include#' library_config/libcjson.pc.in
+    sed -i 's#@CMAKE_INSTALL_FULL_INCLUDEDIR@#/psp/include#' library_config/libcjson_utils.pc.in
     mkdir -p build
 }
 

@@ -14,7 +14,7 @@ sha256sums=('SKIP')
 
 prepare() {
     cd "$pkgname-${pkgver}"
-    sed -i 's#@CMAKE_INSTALL_PREFIX@#${PSPDEV}/psp#' pkg-config.pc.in
+    sed -i 's#@CMAKE_INSTALL_PREFIX@#/psp#' pkg-config.pc.in
     sed -i 's#@CMAKE_INSTALL_FULL_LIBDIR@#${prefix}/lib#' pkg-config.pc.in
     sed -i 's#@CMAKE_INSTALL_FULL_INCLUDEDIR@#${prefix}/include#' pkg-config.pc.in
 }

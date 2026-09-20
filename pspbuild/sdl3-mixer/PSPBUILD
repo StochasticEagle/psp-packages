@@ -18,7 +18,7 @@ sha256sums=(
 
 prepare() {
     cd "${srcdir}/SDL3_mixer-${pkgver}"
-    sed -i '/^prefix=/s/=.*$/=${PSPDEV}\/psp/' cmake/sdl3-mixer.pc.in
+    sed -i '/^prefix=/s/=.*$/=\/psp/' cmake/sdl3-mixer.pc.in
 }
 
 build() {

@@ -17,7 +17,7 @@ sha256sums=('SKIP')
 
 prepare() {
     cd "${srcdir}/SDL_image"
-    sed -i 's#@prefix@#${PSPDEV}/psp#' SDL_image.pc.in
+    sed -i 's#@prefix@#/psp#' SDL_image.pc.in
     sed -i 's#@exec_prefix@#${prefix}#' SDL_image.pc.in
     sed -i 's#@libdir@#${prefix}/lib#' SDL_image.pc.in
     sed -i 's#@includedir@#${prefix}/include#' SDL_image.pc.in

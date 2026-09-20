@@ -57,7 +57,7 @@ package() {
     install -m 644 libsqlite3.a "$pkgdir/psp/lib/"
 
     cat > "$pkgdir/psp/lib/pkgconfig/sqlite3.pc" <<EOF
-prefix=\${PSPDEV}/psp
+prefix=/psp
 exec_prefix=\${prefix}
 libdir=\${prefix}/lib
 includedir=\${prefix}/include

@@ -14,7 +14,7 @@ sha256sums=('SKIP')
 
 prepare() {
     cd "ogg-${pkgver}"
-    sed -i 's#@prefix@#${PSPDEV}/psp#' ogg.pc.in
+    sed -i 's#@prefix@#/psp#' ogg.pc.in
     sed -i 's#@exec_prefix@#${prefix}#' ogg.pc.in
     sed -i 's#@libdir@#${prefix}/lib#' ogg.pc.in
     sed -i 's#@includedir@#${prefix}/include#' ogg.pc.in
