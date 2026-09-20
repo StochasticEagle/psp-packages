@@ -53,7 +53,7 @@ def main() -> int:
             if re.search(rf"(?<![A-Za-z0-9_-]){re.escape(tool)}(?![A-Za-z0-9_-])", text):
                 required.setdefault(package, set()).add(recipe.parent.name)
 
-        if re.search(r"(?:^|[\\s/])autogen\\.sh(?:\\s|$)", text):
+        if re.search(r"(?:^|[\s/])autogen\.sh(?:\s|$)", text):
             for package in AUTOGEN_PACKAGES:
                 required.setdefault(package, set()).add(recipe.parent.name)
 
