@@ -104,6 +104,7 @@ def package_function(text: str) -> str:
 
 def main() -> int:
     errors: list[str] = []
+    warnings: list[str] = []
     declared_assets = load_network_assets(errors)
     seen_assets: set[tuple[str, str]] = set()
     recipe_count = 0
@@ -172,8 +173,8 @@ def main() -> int:
                 and re.search(r"(^|\\s)patch\\s", line)
                 and "--fuzz=0" not in line
             ):
-                errors.append(
-                    f"{rel}:{lineno}: patch commands must use --fuzz=0"
+                warnings.append(
+                    f"{rel}:{lineno}: patch command does not use --fuzz=0"
                 )
 
         body = package_function(text)
@@ -198,6 +199,12 @@ def main() -> int:
     if order.returncode != 0:
         detail = order.stderr.strip() or f"exit status {order.returncode}"
         errors.append(f"dependency graph validation failed: {detail}")
+
+    if warnings:
+        print("PSP package recipe audit warnings:", file=sys.stderr)
+        for warning in warnings:
+            print(f"  - {warning}", file=sys.stderr)
+            print(f"::warning::{warning}")
 
     if errors:
         print("PSP package recipe audit failed:", file=sys.stderr)

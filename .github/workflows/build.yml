@@ -94,7 +94,24 @@ jobs:
       - name: Build packages
         run: |
           export PATH="$PSPDEV/bin:$PATH"
-          ./build.sh
+
+          build_log="$RUNNER_TEMP/psp-packages-build.log"
+          set +e
+          set -o pipefail
+          ./build.sh 2>&1 | tee "$build_log"
+          build_status=${PIPESTATUS[0]}
+          set +o pipefail
+          set -e
+
+          drift="$(
+            grep -E 'with fuzz|offset -?[0-9]+ lines?' "$build_log" || true
+          )"
+          if [[ -n "$drift" ]]; then
+            echo "::warning::Patch drift detected during package builds; refresh affected patches."
+            printf '%s\n' "$drift"
+          fi
+
+          exit "$build_status"
 
       - name: Verify package output
         run: |
