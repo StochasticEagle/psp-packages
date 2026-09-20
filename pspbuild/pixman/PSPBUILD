@@ -1,6 +1,6 @@
 pkgname=pixman
 pkgver=0.46.4
-pkgrel=2
+pkgrel=3
 pkgdesc="Pixman is a low-level software library for pixel manipulation"
 arch=(any)
 url="https://www.pixman.org/"
@@ -16,6 +16,10 @@ prepare() {
     cd "${pkgname}-${pkgver}"
 
     sed -i "s/dep_threads = dependency('threads')/dep_threads = dependency('threads', required : false)/" meson.build
+}
+
+build() {
+    cd "${pkgname}-${pkgver}"
 
     cat > psp-cross.ini <<EOF
 [binaries]
@@ -38,10 +42,6 @@ endian = 'little'
 c_args = ['-G0', '-I${PSPDEV}/psp/include', '-I${PSPDEV}/psp/sdk/include', '-DPSP', '-D__PSP__', '-D_PSP_FW_VERSION=600']
 c_link_args = ['-L${PSPDEV}/lib', '-L${PSPDEV}/psp/lib', '-L${PSPDEV}/psp/sdk/lib', '-Wl,-zmax-page-size=128']
 EOF
-}
-
-build() {
-    cd "${pkgname}-${pkgver}"
 
     meson setup build \
         --cross-file psp-cross.ini \
