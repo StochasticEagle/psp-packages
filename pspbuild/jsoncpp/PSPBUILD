@@ -13,6 +13,7 @@ sha256sums=('SKIP')
 prepare() {
     cd "$pkgname"
     sed -i '/#include <cstddef>/a #include <cstdio>' include/json/config.h
+    sed -i 's/#define jsoncpp_snprintf std::snprintf/#define jsoncpp_snprintf ::snprintf/' include/json/config.h
     sed -i 's#@CMAKE_INSTALL_PREFIX@#/psp#g' pkg-config/jsoncpp.pc.in
     sed -i 's#@libdir_for_pc_file@#${prefix}/lib#' pkg-config/jsoncpp.pc.in
     sed -i 's#@includedir_for_pc_file@#${prefix}/include#' pkg-config/jsoncpp.pc.in
