@@ -48,10 +48,10 @@ The pacman repository created from this repo is published to GitHub Pages by the
 ```
 [pspdev]
 SigLevel = Optional TrustAll
-Server = https://pspdev.github.io/psp-packages/
+Server = https://stochasticeagle.github.io/psp-packages/
 ```
 
-For forks or alternative repos, pspdev in the url in the `Server` setting should be replaced with the owner of the fork. When forking, make sure to set the GitHub Pages source to `GitHub Actions` in the settings of the GitHub repo.
+This fork publishes its active package repository from `dev/fork` to `https://stochasticeagle.github.io/psp-packages/`. The GitHub Pages source should be set to `GitHub Actions`.
 
 ## Contributing
 
