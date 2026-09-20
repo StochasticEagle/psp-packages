@@ -1,6 +1,6 @@
 pkgname=luasocket
 pkgver=3.1.0
-pkgrel=4
+pkgrel=5
 pkgdesc="Network support for the Lua language"
 arch=(any)
 url="https://lunarmodules.github.io/luasocket/"
@@ -10,7 +10,7 @@ depends=('lua55')
 makedepends=()
 optdepends=()
 source=(
-    "${pkgname}-${pkgver}::git+https://github.com/StochasticEagle/psp-luasocket.git#commit=fa489eee5f35e2dbd731dcb99e3ee941ca53fafa"
+    "${pkgname}-${pkgver}::git+https://github.com/StochasticEagle/psp-luasocket.git#commit=024d5a0473aace0a7e22dd8aef5d37dbcd3847c7"
 )
 sha256sums=(
     'SKIP'
