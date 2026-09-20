@@ -80,8 +80,8 @@ fi
 if [[ -z "${requested_package}" ]]; then
   PKG_LIST=$(find "${RECIPES}" -mindepth 2 -maxdepth 2 -type f -name PSPBUILD \
     -exec sh -c 'basename "$(dirname "$1")"' _ {} \; | LC_ALL=C sort)
-  PKG_LIST=$(printf "%s\n" ${PKG_LIST} | grep -Ev "^(${BLACKLIST})$")
   if [[ -z "${doclean}" ]]; then
+    PKG_LIST=$(printf "%s\n" ${PKG_LIST} | grep -Ev "^(${BLACKLIST})$")
     printf 'Will build packages:'
     while IFS= read -r pkg; do
       [[ -n "${pkg}" ]] && printf ' %s' "${pkg}"
