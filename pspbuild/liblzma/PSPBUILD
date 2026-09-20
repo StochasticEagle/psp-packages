@@ -9,7 +9,7 @@ depends=()
 groups=('psp-libraries')
 makedepends=()
 optdepends=()
-source=("xz-${pkgver}::git+https://github.com/tukaani-project/xz.git#commit=9fc6f5cd8774ebef8d4e030f7081fb6984c0dc3f"))
+source=("xz-${pkgver}::git+https://github.com/tukaani-project/xz.git#commit=9fc6f5cd8774ebef8d4e030f7081fb6984c0dc3f")
 sha256sums=("SKIP")
 
 prepare() {
