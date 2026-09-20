@@ -1,6 +1,6 @@
 pkgname=pixman
 pkgver=0.46.4
-pkgrel=7
+pkgrel=8
 pkgdesc="Pixman is a low-level software library for pixel manipulation"
 arch=(any)
 url="https://www.pixman.org/"
@@ -110,9 +110,15 @@ c_link_args = ['-L${PSPDEV}/lib', '-L${PSPDEV}/psp/lib', '-L${PSPDEV}/psp/sdk/li
 EOF
 
     # PSP's EABI toolchain cannot emit PIC. Meson defaults b_staticpic=true,
-    # even for static-only builds, so override it explicitly. Reconfigure is
-    # required here because package builds intentionally reuse build trees.
-    meson setup --reconfigure build \
+    # even for static-only builds, so override it explicitly. Reconfigure only
+    # when this is an existing Meson build tree; a fresh invalidated package
+    # build must use normal setup.
+    meson_setup_mode=()
+    if [[ -f build/meson-private/coredata.dat ]]; then
+        meson_setup_mode=(--reconfigure)
+    fi
+
+    meson setup "${meson_setup_mode[@]}" build \
         --cross-file psp-cross.ini \
         --prefix=/psp \
         --libdir=lib \
