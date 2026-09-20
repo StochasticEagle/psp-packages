@@ -1,6 +1,6 @@
 pkgname=zziplib
 pkgver=0.13.81
-pkgrel=1
+pkgrel=2
 pkgdesc="Provides read access to zipped files in a zip-archive"
 arch=(any)
 url="http://zziplib.sourceforge.net/"
@@ -16,7 +16,7 @@ build() {
     cd "$pkgname-$pkgver"
     cmake -S . -B build -Wno-dev \
         -DCMAKE_TOOLCHAIN_FILE="$PSPDEV/psp/share/pspdev.cmake" \
-        -DCMAKE_INSTALL_PREFIX="${pkgdir}/psp" \
+        -DCMAKE_INSTALL_PREFIX=/psp \
         -DBUILD_SHARED_LIBS=OFF \
         -DZZIPSDL=OFF \
         -DZZIPBINS=OFF \
@@ -31,7 +31,7 @@ build() {
 
 package() {
     cd "$pkgname-$pkgver"
-    cmake --install build || { exit 1; }
+    DESTDIR="$pkgdir" cmake --install build || { exit 1; }
 
     mkdir -m 755 -p "$pkgdir/psp/share/licenses/$pkgname"
     install -m 644 COPYING.LIB "$pkgdir/psp/share/licenses/$pkgname"

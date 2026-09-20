@@ -1,6 +1,6 @@
 pkgname=libvorbis
 pkgver=1.3.7
-pkgrel=9
+pkgrel=10
 pkgdesc="Vorbis audio compression reference implementation"
 arch=(any)
 url="https://gitlab.xiph.org/xiph/vorbis"
@@ -24,14 +24,14 @@ build() {
     cd "vorbis-${pkgver}"
     mkdir -p build
     cd build
-    cmake -Wno-author -DCMAKE_TOOLCHAIN_FILE=$PSPDEV/psp/share/pspdev.cmake -DCMAKE_INSTALL_PREFIX=${pkgdir}/psp -DBUILD_SHARED_LIBS=OFF \
+    cmake -Wno-author -DCMAKE_TOOLCHAIN_FILE=$PSPDEV/psp/share/pspdev.cmake -DCMAKE_INSTALL_PREFIX=/psp -DBUILD_SHARED_LIBS=OFF \
         -DUNIX:BOOL=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_POLICY_VERSION_MINIMUM=3.5 "${XTRA_OPTS[@]}" .. || { exit 1; }
     make --quiet $MAKEFLAGS || { exit 1; }
 }
 
 package() {
     cd "vorbis-${pkgver}/build"
-    make --quiet $MAKEFLAGS install
+    make --quiet $MAKEFLAGS DESTDIR="$pkgdir" install
 
     mkdir -m 755 -p "$pkgdir/psp/share/licenses/$pkgname"
     install -m 644 ../COPYING "$pkgdir/psp/share/licenses/$pkgname"

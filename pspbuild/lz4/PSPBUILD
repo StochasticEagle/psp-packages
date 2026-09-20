@@ -1,6 +1,6 @@
 pkgname=lz4
 pkgver=1.10.0
-pkgrel=1
+pkgrel=2
 pkgdesc="Extremely Fast Compression algorithm"
 arch=(any)
 url="https://lz4.org/"
@@ -25,7 +25,7 @@ build() {
     cd "$pkgname-$pkgver"
     mkdir -p build/psp
     cd build/psp
-    cmake -Wno-dev -DCMAKE_TOOLCHAIN_FILE=$PSPDEV/psp/share/pspdev.cmake -DCMAKE_INSTALL_PREFIX=${pkgdir}/psp -DBUILD_SHARED_LIBS=OFF \
+    cmake -Wno-dev -DCMAKE_TOOLCHAIN_FILE=$PSPDEV/psp/share/pspdev.cmake -DCMAKE_INSTALL_PREFIX=/psp -DBUILD_SHARED_LIBS=OFF \
         -DBUILD_STATIC_LIBS=ON -DLZ4_POSITION_INDEPENDENT_LIB=OFF -DLZ4_BUILD_CLI=OFF -DLZ4_BUILD_LEGACY_LZ4C=OFF \
         -DCMAKE_BUILD_TYPE=Release -DCMAKE_POLICY_VERSION_MINIMUM=3.5 "${XTRA_OPTS[@]}" ../cmake || { exit 1; }
     make --quiet $MAKEFLAGS || { exit 1; }
@@ -33,7 +33,7 @@ build() {
 
 package() {
     cd "$pkgname-$pkgver/build/psp"
-    make --quiet $MAKEFLAGS install
+    make --quiet $MAKEFLAGS DESTDIR="$pkgdir" install
     cd ../../lib
 
     mkdir -m 755 -p "$pkgdir/psp/share/licenses/$pkgname"

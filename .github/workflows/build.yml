@@ -25,6 +25,12 @@ jobs:
       - name: Validate source-component invariants
         run: python3 scripts/check-source-components.py
 
+      - name: Audit package recipes
+        run: python3 scripts/check-package-recipes.py
+
+      - name: Validate host build dependencies
+        run: python3 scripts/check-host-dependencies.py
+
   build:
     needs: validate
     runs-on: ubuntu-latest
@@ -43,7 +49,7 @@ jobs:
             git libarchive-dev libarchive-tools libcurl4-openssl-dev libgmp-dev \
             libgpgme-dev libgsl-dev libmpc-dev libmpfr-dev libreadline-dev \
             libssl-dev libtool libusb-dev meson ninja-build patch pkg-config \
-            python3-jinja2 python3-jsonschema texinfo wget xz-utils zlib1g-dev
+            python3 python3-jinja2 python3-jsonschema texinfo wget xz-utils zlib1g-dev
 
       - name: Build forked PSP toolchain
         run: |

@@ -51,7 +51,11 @@ The invariant checker verifies the recipe URL and commit, `source-components.tsv
 python3 scripts/check-source-components.py
 ```
 
-`build.sh` runs this check before source acquisition. Git-backed package builds are then fed tar snapshots of the already-selected local components; makepkg does not clone those Git sources during the package build. This keeps source selection in the repository/component layer and is the basis for eventually prohibiting package-build network access entirely.
+`build.sh` runs this check before source acquisition. Git-backed package builds are then fed tar snapshots of the already-selected local components; makepkg does not clone those Git sources during the package build. Source snapshots are keyed by the selected gitlink and must come from a clean component checkout.
+
+Package build state is fingerprinted from the package recipe/support files, its relevant component gitlinks, and the package archives of its required PSP dependencies. A changed input invalidates the package archive and build tree automatically; older archives for the same package are pruned so repository generation cannot accidentally publish stale versions.
+
+Two SDK sample assets remain ordinary checksum-pinned network downloads because they are data, not upstream source trees. They are explicitly listed in `network-source-assets.tsv`; `scripts/check-package-recipes.py` rejects any additional undeclared network source.
 
 ## Installing libraries from the repository
 

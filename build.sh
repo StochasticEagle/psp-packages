@@ -13,6 +13,7 @@ BUILD_ROOT="${ROOT}/build"
 PACKAGES="${ROOT}/packages"
 SOURCE_COMPONENTS="${ROOT}/source-components.tsv"
 CURRENT_LOCAL_BUILD_FILE=""
+PACKAGE_INPUT_STAMP=".psp-package-input.sha256"
 
 cleanup_local_buildfile() {
   if [[ -n "${CURRENT_LOCAL_BUILD_FILE}" ]]; then
@@ -37,6 +38,37 @@ if [[ -n "${legacy_startdir_paths}" ]]; then
   exit 1
 fi
 
+archive_package_name() {
+  local archive="$1"
+  local base stem rest
+
+  base="$(basename "${archive}")"
+  stem="${base%%.pkg.tar.*}"
+  rest="${stem%-*}"
+  rest="${rest%-*}"
+  rest="${rest%-*}"
+  printf '%s\n' "${rest}"
+}
+
+prune_package_archives() {
+  local pkgname="$1"
+  local keep="${2:-}"
+  local archive archive_pkgname
+  local -a archives=()
+
+  shopt -s nullglob
+  archives=("${PACKAGES}"/*.pkg.tar.*)
+  shopt -u nullglob
+
+  for archive in "${archives[@]}"; do
+    [[ -n "${keep}" && "${archive}" == "${keep}" ]] && continue
+    archive_pkgname="$(archive_package_name "${archive}")"
+    if [[ "${archive_pkgname}" == "${pkgname}" ]]; then
+      echo "Removing stale package archive: $(basename "${archive}")"
+      rm -f "${archive}"
+    fi
+  done
+}
 doinstall=""
 doclean=""
 requested_package=""
@@ -93,12 +125,12 @@ if [[ -n "${doclean}" ]]; then
       continue
     fi
 
-    pkgfile=$("${ROOT}/parse_pspbuild.sh" "${pspbuild}" pkgoutput)
-    pkgbase=$(bash -c 'source "$1"; printf "%s\n" "${pkgbase:-${pkgname[0]}}"' _ "${pspbuild}")
+    pkgbase=$(bash -c 'source "$1"; printf "%s\\n" "${pkgbase:-${pkgname[0]}}"' _ "${pspbuild}")
+    pkgname=$("${ROOT}/parse_pspbuild.sh" "${pspbuild}" pkgname)
 
     echo "Cleaning ${pkg} ..."
     rm -rf "${BUILD_ROOT}/${pkgbase}"
-    rm -f "${PACKAGES}/${pkgfile}"
+    prune_package_archives "${pkgname}"
   done
   exit 0
 fi
@@ -124,12 +156,27 @@ create_local_source_snapshot() {
   local source_name="$2"
   local source_cache="$3"
   local source_index="$4"
-  local archive
+  local component_sha="$5"
+  local archive actual_sha dirty
 
   mkdir -p "${source_cache}"
-  archive="${source_cache}/psp-source-${source_index}.tar"
+  archive="${source_cache}/psp-source-${source_index}-${component_sha}.tar"
+
+  actual_sha=$(git -C "${component}" rev-parse HEAD)
+  if [[ "${actual_sha}" != "${component_sha}" ]]; then
+    echo "ERROR: Source component HEAD does not match selected gitlink: ${component}" >&2
+    return 2
+  fi
+
+  dirty=$(git -C "${component}" status --porcelain --untracked-files=all)
+  if [[ -n "${dirty}" ]]; then
+    echo "ERROR: Source component contains local changes: ${component}" >&2
+    git -C "${component}" status --short >&2
+    return 2
+  fi
 
   if [[ ! -f "${archive}" ]]; then
+    rm -f "${source_cache}/psp-source-${source_index}-"*.tar
     (
       cd "${component}"
       tar --exclude='./.git' --exclude='*/.git' \
@@ -145,7 +192,7 @@ configure_local_git_sources() {
   local pspbuild="$1"
   local local_pspbuild="$2"
   local source_cache="$3"
-  local record source_index src entry remote source_name component mapped archive
+  local record source_index src entry remote source_name component mapped component_sha archive
   local -a git_sources=()
 
   mapfile -t git_sources < <(
@@ -221,8 +268,14 @@ configure_local_git_sources() {
       return 2
     fi
 
+    component_sha=$(git -C "${ROOT}" ls-files --stage -- "${mapped}" | awk '$1 == "160000" { print $2; exit }')
+    if [[ -z "${component_sha}" ]]; then
+      echo "ERROR: Source component is not a gitlink: ${mapped}" >&2
+      return 2
+    fi
+
     archive=$(create_local_source_snapshot \
-      "${component}" "${source_name}" "${source_cache}" "${source_index}")
+      "${component}" "${source_name}" "${source_cache}" "${source_index}" "${component_sha}") || return $?
 
     {
       echo
@@ -246,17 +299,33 @@ for pkg in ${PKG_LIST}; do
   done
 
   pkgfile=$("${ROOT}/parse_pspbuild.sh" "${pspbuild}" pkgoutput)
-  pkgbase=$(bash -c 'source "$1"; printf "%s\n" "${pkgbase:-${pkgname[0]}}"' _ "${pspbuild}")
+  pkgbase=$(bash -c 'source "$1"; printf "%s\\n" "${pkgbase:-${pkgname[0]}}"' _ "${pspbuild}")
+  pkgname=$("${ROOT}/parse_pspbuild.sh" "${pspbuild}" pkgname)
   package_path="${PACKAGES}/${pkgfile}"
   workdir="${BUILD_ROOT}/${pkgbase}"
   source_cache="${workdir}/sources"
+  input_stamp="${workdir}/${PACKAGE_INPUT_STAMP}"
+
+  prune_package_archives "${pkgname}" "${package_path}"
+
+  input_fingerprint=$(python3 "${ROOT}/scripts/package-input-fingerprint.py" \
+    "${pkg}" "${pspbuild}" "${recipe_dir}" "${PACKAGES}")
+  stored_fingerprint=""
+  [[ -f "${input_stamp}" ]] && stored_fingerprint=$(<"${input_stamp}")
+
+  if [[ "${stored_fingerprint}" != "${input_fingerprint}" ]]; then
+    if [[ -f "${package_path}" || -d "${workdir}" ]]; then
+      echo "Package inputs changed for ${pkg}; invalidating cached build state."
+    fi
+    rm -f "${package_path}"
+    rm -rf "${workdir}"
+  fi
 
   if [[ ! -f "${package_path}" ]]; then
     echo "Building ${pkg} ..."
 
-    # Keep the existing source/build tree for incremental rebuilds.
-    # Use ./build.sh --clean <package> when a fresh source tree is required.
     mkdir -p "${source_cache}"
+    printf '%s\n' "${input_fingerprint}" > "${input_stamp}"
 
     cleanup_local_buildfile
     CURRENT_LOCAL_BUILD_FILE=$(mktemp "${recipe_dir}/.PSPBUILD.local.XXXXXX")
@@ -276,7 +345,6 @@ for pkg in ${PKG_LIST}; do
     set -e
 
     if (( source_status == 1 )); then
-      # No Git-backed sources: use the tracked PSPBUILD directly.
       rm -f "${CURRENT_LOCAL_BUILD_FILE}"
       CURRENT_LOCAL_BUILD_FILE=""
     elif (( source_status != 0 )); then

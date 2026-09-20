@@ -1,6 +1,6 @@
 pkgname=argtable2
 pkgver=2.14
-pkgrel=3
+pkgrel=4
 pkgdesc="Argtable is an ANSI C library for parsing GNU style command line options with a minimum of fuss"
 arch=(any)
 url="https://github.com/StochasticEagle/psp-argtable2"
@@ -16,7 +16,7 @@ build() {
     cd "${pkgname}-${pkgver}"
     cmake -S . -B build \
         -DCMAKE_TOOLCHAIN_FILE="$PSPDEV/psp/share/pspdev.cmake" \
-        -DCMAKE_INSTALL_PREFIX="${pkgdir}/psp" \
+        -DCMAKE_INSTALL_PREFIX=/psp \
         -DCMAKE_BUILD_TYPE=Release \
         "${XTRA_OPTS[@]}" || { exit 1; }
     cmake --build build --parallel || { exit 1; }
@@ -24,7 +24,7 @@ build() {
 
 package() {
     cd "${pkgname}-${pkgver}"
-    cmake --install build || { exit 1; }
+    DESTDIR="$pkgdir" cmake --install build || { exit 1; }
 
     mkdir -m 755 -p "$pkgdir/psp/share/licenses/$pkgname"
     install -m 644 LICENSE.md "$pkgdir/psp/share/licenses/$pkgname"

@@ -1,106 +1,139 @@
 #!/usr/bin/env python3
+"""Compute PSP package build order from evaluated recipe dependencies."""
+
+from __future__ import annotations
+
 import json
-import os
+import pathlib
 import re
+import subprocess
 import sys
-from dataclasses import dataclass, field
+from dataclasses import dataclass
+
+ROOT = pathlib.Path(__file__).resolve().parent
+RECIPES = ROOT / "pspbuild"
 
 
-@dataclass
+@dataclass(frozen=True)
 class Package:
     name: str
-    path: str
-    dependencies_as_strings: list[str]
-    dependencies: list['Package'] = field(default_factory=list)
-
-    def get_build_order(self) -> str:
-        build_order = self.get_recursive_dependencies()
-        build_order.append(self.get_directory_name())
-
-        already_seen = []
-        to_remove = []
-        for i, dependency in enumerate(build_order):
-            if dependency in already_seen:
-                to_remove.append(i)
-            already_seen.append(dependency)
-        for i in reversed(to_remove):
-            build_order.pop(i)
-
-        return " ".join(build_order)
-
-    def get_recursive_dependencies(self) -> list[str]:
-        return_value = [self.get_directory_name()]
-        for dependency in self.dependencies:
-            return_value = dependency.get_recursive_dependencies() + return_value
-        return return_value
-
-    def get_directory_name(self) -> str:
-        return os.path.basename(os.path.dirname(self.path))
+    directory: str
+    path: pathlib.Path
+    dependency_names: tuple[str, ...]
 
 
-def parse_dependencies_string(value: str) -> list[str]:
-    initial_package_names_found = re.findall(r"[\w\t \-]{2,}", value)
-    return_value = []
-    for package in initial_package_names_found:
-        if ":" in package:
-            package = package.split(":")[0]
-        return_value.append(package)
-    return return_value
+def normalize_dependency(value: str) -> str:
+    value = value.split(":", 1)[0]
+    return re.split(r"[<>=]", value, maxsplit=1)[0].strip()
 
 
-def parse_pkgbuild(path: str):
-    in_function = False
-    current_entry = ""
-    current_value = ""
+def read_package(path: pathlib.Path) -> Package:
+    probe = subprocess.run(
+        [
+            "bash",
+            "-c",
+            r"""
+source "$1"
+printf 'name\t%s\n' "${pkgname[0]}"
+for dep in "${depends[@]}" "${makedepends[@]}"; do
+    [[ -n "$dep" ]] && printf 'dep\t%s\n' "$dep"
+done
+""",
+            "_",
+            str(path),
+        ],
+        text=True,
+        capture_output=True,
+    )
+    if probe.returncode != 0:
+        detail = probe.stderr.strip() or f"exit status {probe.returncode}"
+        raise RuntimeError(f"{path.relative_to(ROOT)}: cannot evaluate recipe: {detail}")
+
     name = ""
-    dependencies_string = ""
-    with open(path, "r") as pkgbuild:
-        for line in pkgbuild.readlines():
-            if not line or line in [" ", "\n", " \n"]:
-                continue
-            if not in_function:
-                if re.match(r"^[a-z]+ *=.*", line):
-                    current_entry, current_value = line.replace("\n", "").split("=", 1)
-                elif re.match(r" *[a-z]+ *\( *\) *\{.*", line):
-                    in_function = True
-                if not in_function and current_entry:
-                    if current_entry == "pkgname":
-                        name = current_value
-                    if current_entry in ["depends", "makedepends", "optdepends"]:
-                        dependencies_string += current_value
-            elif re.match(r"(.*;)? *}", line):
-                in_function = False
+    dependencies: list[str] = []
+    for line in probe.stdout.splitlines():
+        kind, value = line.split("\t", 1)
+        if kind == "name":
+            name = value
+        elif kind == "dep":
+            dep = normalize_dependency(value)
+            if dep:
+                dependencies.append(dep)
+
+    if not name:
+        raise RuntimeError(f"{path.relative_to(ROOT)}: missing pkgname")
 
     return Package(
         name=name,
+        directory=path.parent.name,
         path=path,
-        dependencies_as_strings=parse_dependencies_string(dependencies_string),
+        dependency_names=tuple(dict.fromkeys(dependencies)),
     )
 
 
-def resolve_package_dependencies(current_package: Package, packages: list[Package]) -> None:
-    for package in packages:
-        if package.name in current_package.dependencies_as_strings:
-            current_package.dependencies.append(package)
-
-
-def main() -> None:
-    build_script_name = "PSPBUILD"
-    if len(sys.argv) == 2:
-        build_script_name = sys.argv[1]
-
-    recipes_root = "pspbuild"
-    packages = []
-    for directory in sorted(os.listdir(recipes_root)):
-        pspbuild = os.path.join(recipes_root, directory, build_script_name)
-        if os.path.isdir(os.path.join(recipes_root, directory)) and os.path.exists(pspbuild):
-            packages.append(parse_pkgbuild(pspbuild))
+def load_packages() -> tuple[list[Package], dict[str, Package]]:
+    packages = [read_package(path) for path in sorted(RECIPES.glob("*/PSPBUILD"))]
+    by_name: dict[str, Package] = {}
 
     for package in packages:
-        resolve_package_dependencies(package, packages)
+        if package.name in by_name:
+            raise RuntimeError(
+                f"duplicate pkgname {package.name!r}: "
+                f"{by_name[package.name].path.relative_to(ROOT)} and "
+                f"{package.path.relative_to(ROOT)}"
+            )
+        by_name[package.name] = package
 
-    print(json.dumps([package.get_build_order() for package in packages]))
+    for package in packages:
+        for dependency in package.dependency_names:
+            if dependency not in by_name:
+                raise RuntimeError(
+                    f"{package.path.relative_to(ROOT)}: "
+                    f"unknown required PSP package dependency {dependency!r}"
+                )
+
+    return packages, by_name
 
 
-if __name__ == '__main__':
-    main()
+def build_order_for(package: Package, by_name: dict[str, Package]) -> list[str]:
+    ordered: list[str] = []
+    permanent: set[str] = set()
+    visiting: list[str] = []
+
+    def visit(current: Package) -> None:
+        if current.name in permanent:
+            return
+        if current.name in visiting:
+            start = visiting.index(current.name)
+            cycle = visiting[start:] + [current.name]
+            raise RuntimeError("dependency cycle: " + " -> ".join(cycle))
+
+        visiting.append(current.name)
+        for dep_name in current.dependency_names:
+            visit(by_name[dep_name])
+        visiting.pop()
+
+        permanent.add(current.name)
+        ordered.append(current.directory)
+
+    visit(package)
+    return ordered
+
+
+def main() -> int:
+    try:
+        packages, by_name = load_packages()
+        result = [
+            " ".join(build_order_for(package, by_name))
+            for package in packages
+        ]
+    except RuntimeError as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 1
+
+    print(json.dumps(result))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -1,6 +1,6 @@
 pkgname=unarr
 pkgver=1.1.1
-pkgrel=7
+pkgrel=8
 pkgdesc="A decompression library for rar, tar, zip and 7z archives"
 arch=(any)
 url="https://github.com/selmf/unarr/"
@@ -34,7 +34,7 @@ build() {
     cmake -S . -B build \
         -Wno-author \
         -DCMAKE_TOOLCHAIN_FILE="${PSPDEV}/psp/share/pspdev.cmake" \
-        -DCMAKE_INSTALL_PREFIX="${pkgdir}/psp" \
+        -DCMAKE_INSTALL_PREFIX=/psp \
         -DCMAKE_BUILD_TYPE=Release \
         -DBUILD_SHARED_LIBS=OFF \
         -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
@@ -44,7 +44,7 @@ build() {
 
 package() {
     cd "${pkgname}-${pkgver}"
-    cmake --install build || { exit 1; }
+    DESTDIR="$pkgdir" cmake --install build || { exit 1; }
 
     mkdir -m 755 -p "${pkgdir}/psp/share/licenses/${pkgname}"
     install -m 644 COPYING "${pkgdir}/psp/share/licenses/${pkgname}"

@@ -1,0 +1,3 @@
+# package	URL	reason
+sdl2-mixer	https://pspdev.github.io/resources/test.ogg	SDK sample asset; not package source code
+sdl2-ttf	https://pspdev.github.io/resources/Pacifico.ttf	OFL-licensed SDK sample font; not package source code

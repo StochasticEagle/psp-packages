@@ -1,6 +1,6 @@
 pkgname=physfs
 pkgver=3.2.0
-pkgrel=12
+pkgrel=13
 pkgdesc="PhysicsFS; a portable, flexible file i/o abstraction."
 arch=(any)
 url="https://icculus.org/physfs/"
@@ -34,7 +34,7 @@ build() {
     rm -rf pspbuild
     cmake --toolchain "${PSPDEV}/psp/share/pspdev.cmake" -S . -B pspbuild -Wno-author \
         -DCMAKE_BUILD_TYPE=Release \
-        -DCMAKE_INSTALL_PREFIX=${pkgdir}/psp \
+        -DCMAKE_INSTALL_PREFIX=/psp \
         -DPHYSFS_BUILD_TEST=Off \
         -DPHYSFS_ARCHIVE_SLB=Off \
         -DPHYSFS_BUILD_SHARED=Off \
@@ -46,7 +46,7 @@ build() {
 
 package() {
     cd ${pkgname}-release-${pkgver}
-    cmake --install pspbuild || { exit 1; }
+    DESTDIR="$pkgdir" cmake --install pspbuild || { exit 1; }
     mkdir -m 755 -p "$pkgdir/psp/share/licenses/$pkgname"
     install -m 644 LICENSE.txt "$pkgdir/psp/share/licenses/$pkgname"
 }

@@ -1,6 +1,6 @@
 pkgname=libmikmod
 pkgver=3.3.14
-pkgrel=1
+pkgrel=2
 pkgdesc="A portable sound library capable of playing samples as well as module files"
 arch=(any)
 url="http://mikmod.sourceforge.net/"
@@ -24,14 +24,14 @@ build() {
     cd mikmod/$pkgname
     mkdir -p build
     cd build
-    cmake -Wno-dev -DCMAKE_TOOLCHAIN_FILE=$PSPDEV/psp/share/pspdev.cmake -DCMAKE_INSTALL_PREFIX=${pkgdir}/psp -DENABLE_SHARED=0 \
+    cmake -Wno-dev -DCMAKE_TOOLCHAIN_FILE=$PSPDEV/psp/share/pspdev.cmake -DCMAKE_INSTALL_PREFIX=/psp -DENABLE_SHARED=0 \
         -DCMAKE_BUILD_TYPE=Release -DCMAKE_POLICY_VERSION_MINIMUM=3.5 "${XTRA_OPTS[@]}" .. || { exit 1; }
     make --quiet $MAKEFLAGS || { exit 1; }
 }
 
 package () {
     cd "mikmod/$pkgname/build"
-    make --quiet $MAKEFLAGS install
+    make --quiet $MAKEFLAGS DESTDIR="$pkgdir" install
     cd ..
 
     mkdir -m 755 -p "$pkgdir/psp/share/licenses/$pkgname/"

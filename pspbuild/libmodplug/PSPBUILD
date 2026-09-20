@@ -1,6 +1,6 @@
 pkgname=libmodplug
 pkgver=0.8.9.0
-pkgrel=1
+pkgrel=2
 pkgdesc="libmodplug - the library which was part of the Modplug-xmms project"
 arch=(any)
 url="https://github.com/Konstanty/libmodplug"
@@ -25,7 +25,7 @@ build() {
     cd libmodplug
     mkdir pspbuild
     cd pspbuild
-    cmake --toolchain "${PSPDEV}/psp/share/pspdev.cmake" .. -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -DCMAKE_INSTALL_PREFIX=${pkgdir}/psp -DCMAKE_BUILD_TYPE=Release
+    cmake --toolchain "${PSPDEV}/psp/share/pspdev.cmake" .. -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -DCMAKE_INSTALL_PREFIX=/psp -DCMAKE_BUILD_TYPE=Release
     make
 }
 

@@ -1,6 +1,6 @@
 pkgname=faudio
 pkgver=26.06
-pkgrel=1
+pkgrel=2
 pkgdesc="Accuracy-focused XAudio reimplementation for open platforms."
 arch=(any)
 license=('BSD')
@@ -23,7 +23,7 @@ build() {
   cd "FAudio-${pkgver}"
   cmake -S . -B build \
         -DCMAKE_TOOLCHAIN_FILE="$PSPDEV/psp/share/pspdev.cmake" \
-        -DCMAKE_INSTALL_PREFIX="${pkgdir}/psp" \
+        -DCMAKE_INSTALL_PREFIX=/psp \
         -DBUILD_SHARED_LIBS=OFF \
         -DCMAKE_BUILD_TYPE=Release \
         -DBUILD_SDL3=OFF \
@@ -34,7 +34,7 @@ build() {
 
 package () {
   cd "FAudio-${pkgver}"
-  cmake --install build || { exit 1; }
+  DESTDIR="$pkgdir" cmake --install build || { exit 1; }
 
   mkdir -m 755 -p "$pkgdir/psp/share/licenses/$pkgname"
   install -m 644 LICENSE "$pkgdir/psp/share/licenses/$pkgname"

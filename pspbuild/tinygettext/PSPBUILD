@@ -1,6 +1,6 @@
 pkgname=tinygettext
 pkgver=20240715
-pkgrel=7
+pkgrel=8
 pkgdesc="A simple gettext replacement that works directly on .po files"
 arch=(any)
 license=('Zlib')
@@ -22,15 +22,15 @@ build() {
   cd $pkgname
   mkdir -p build
   cd build
-  cmake -DCMAKE_TOOLCHAIN_FILE=$PSPDEV/psp/share/pspdev.cmake -DCMAKE_INSTALL_PREFIX=${pkgdir}/psp -DBUILD_SHARED_LIBS=OFF \
-        -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=OFF -DTINYGETTEXT_WITH_SDL=ON -DCMAKE_INSTALL_LIBDIR=${pkgdir}/psp/lib \
+  cmake -DCMAKE_TOOLCHAIN_FILE=$PSPDEV/psp/share/pspdev.cmake -DCMAKE_INSTALL_PREFIX=/psp -DBUILD_SHARED_LIBS=OFF \
+        -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=OFF -DTINYGETTEXT_WITH_SDL=ON -DCMAKE_INSTALL_LIBDIR=lib \
         -DCMAKE_POLICY_VERSION_MINIMUM=3.5 "${XTRA_OPTS[@]}" .. || { exit 1; }
   make --quiet $MAKEFLAGS || { exit 1; }
 }
 
 package () {
   cd "$pkgname/build"
-  make --quiet $MAKEFLAGS install
+  make --quiet $MAKEFLAGS DESTDIR="$pkgdir" install
   cd ..
 
   mkdir -m 755 -p "$pkgdir/psp/share/licenses/$pkgname"

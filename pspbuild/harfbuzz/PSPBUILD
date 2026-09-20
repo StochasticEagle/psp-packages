@@ -1,6 +1,6 @@
 pkgname=harfbuzz
 pkgver=14.4.0
-pkgrel=4
+pkgrel=5
 pkgdesc="OpenType text shaping engine"
 arch=(any)
 url="https://harfbuzz.github.io/"
@@ -33,7 +33,7 @@ build() {
     cd "harfbuzz-${pkgver}"
     cmake -S . -B build -Wno-author \
         -DCMAKE_TOOLCHAIN_FILE="$PSPDEV/psp/share/pspdev.cmake" \
-        -DCMAKE_INSTALL_PREFIX="${pkgdir}/psp" \
+        -DCMAKE_INSTALL_PREFIX=/psp \
         -DBUILD_SHARED_LIBS=OFF \
         -DCMAKE_BUILD_TYPE=Release \
         -DHB_HAVE_FREETYPE=ON \
@@ -48,7 +48,7 @@ build() {
 
 package() {
     cd "harfbuzz-${pkgver}"
-    cmake --install build || { exit 1; }
+    DESTDIR="$pkgdir" cmake --install build || { exit 1; }
 
     mkdir -m 755 -p "$pkgdir/psp/share/licenses/$pkgname"
     install -m 644 COPYING "$pkgdir/psp/share/licenses/$pkgname"

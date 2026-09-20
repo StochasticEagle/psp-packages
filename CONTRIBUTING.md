@@ -52,9 +52,10 @@ For new contributions to be merged, PSPBUILDs should meet the following criteria
   - Change either `pkgver` or `pkgrel` when the package contents change.
 - For all PSPBUILDs:
   - For CMake projects, prefer `cmake -S/-B`, `cmake --build`, and `cmake --install` instead of manually creating and entering a build directory and invoking `make` directly.
+  - Configure CMake with the target install prefix `/psp` and stage package installation with `DESTDIR="$pkgdir"`; never configure `CMAKE_INSTALL_PREFIX` or install directories under `$pkgdir`.
   - Libraries go in `$pkgdir/psp/lib/`.
   - Include files go in `$pkgdir/psp/include/`.
-  - Pkg-config files go in `$pkgdir/psp/lib/pkgconfig/`.
+  - Pkg-config files go in `$pkgdir/psp/lib/pkgconfig/` and must contain target paths such as `/psp`, never build-host paths such as `$pkgdir` or `$PSPDEV`.
   - License files go in `$pkgdir/psp/share/licenses/$pkgname/`.
   - User-facing scripts go in `$pkgdir/bin/`.
   - Other scripts go in `$pkgdir/psp/bin/` or `$pspdir/share/$pkgname/bin/`.

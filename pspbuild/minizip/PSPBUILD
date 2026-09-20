@@ -1,6 +1,6 @@
 pkgname=minizip
 pkgver=4.2.2
-pkgrel=1
+pkgrel=2
 pkgdesc="Fork of the popular zip manipulation library found in the zlib distribution"
 arch=(any)
 url="https://github.com/zlib-ng/minizip-ng"
@@ -15,7 +15,7 @@ sha256sums=('SKIP')
 prepare() {
   cd minizip-ng-$pkgver
   sed -i '/POSITION_INDEPENDENT_CODE/d' CMakeLists.txt
-  sed -i 's#@CMAKE_INSTALL_PREFIX@#${PSPDEV}/psp#g' minizip.pc.cmakein
+  sed -i 's#@CMAKE_INSTALL_PREFIX@#/psp#g' minizip.pc.cmakein
   sed -i 's#@CMAKE_INSTALL_FULL_LIBDIR@#${prefix}/lib#g' minizip.pc.cmakein
   sed -i 's#@CMAKE_INSTALL_FULL_INCLUDEDIR@#${prefix}/include#' minizip.pc.cmakein
 }
