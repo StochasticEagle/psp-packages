@@ -1,6 +1,6 @@
 pkgname=giflib
 pkgver=5.2.2
-pkgrel=3
+pkgrel=4
 pkgdesc="giflib is a library for reading and writing gif images. It is API and ABI compatible with libungif which was in wide use while the LZW compression algorithm was patented"
 arch=(any)
 url="https://giflib.sourceforge.net/"
@@ -14,9 +14,9 @@ sha256sums=('SKIP')
 
 build() {
     cd code
-    psp-gcc -std=gnu99 -G0 -g -Os -Wall -Wno-format-truncate -iquote include -c dgif_lib.c egif_lib.c gifalloc.c gif_err.c gif_font.c gif_hash.c openbsd-reallocarray.c
+    psp-gcc -std=gnu99 -G0 -g -Os -Wall -iquote include -c dgif_lib.c egif_lib.c gifalloc.c gif_err.c gif_font.c gif_hash.c openbsd-reallocarray.c
     psp-ar rcs libgif.a dgif_lib.o egif_lib.o gifalloc.o gif_err.o gif_font.o gif_hash.o openbsd-reallocarray.o
-    psp-gcc -std=gnu99 -G0 -g -Os -Wall -Wno-format-truncate -iquote include -c qprintf.c quantize.c getarg.c
+    psp-gcc -std=gnu99 -G0 -g -Os -Wall -iquote include -c qprintf.c quantize.c getarg.c
     psp-ar rcs libutil.a qprintf.o quantize.o getarg.o
 }
 

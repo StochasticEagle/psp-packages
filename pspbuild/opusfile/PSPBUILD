@@ -1,6 +1,6 @@
 pkgname=opusfile
 pkgver=0.12
-pkgrel=3
+pkgrel=4
 pkgdesc="The opusfile library provides seeking, decode, and playback of Opus streams in the Ogg container."
 arch=(any)
 url="https://opus-codec.org/"
@@ -16,21 +16,17 @@ depends=('libogg' 'opus')
 prepare() {
     cd "${pkgname}-${pkgver}"
     ./autogen.sh
-    sed -i 's#@prefix@#/psp#' opusfile.pc.in opusurl.pc.in
-    sed -i 's#@exec_prefix@#${prefix}#' opusfile.pc.in opusurl.pc.in
-    sed -i 's#@libdir@#${prefix}/lib#' opusfile.pc.in opusurl.pc.in
-    sed -i 's#@includedir@#${prefix}/include#' opusfile.pc.in opusurl.pc.in
 }
 
 build() {
     cd "${pkgname}-${pkgver}"
-    ./configure --host=psp --prefix=${pkgdir}/psp --disable-doc --disable-examples --disable-http --disable-shared --enable-static --enable-fixed-point
+    ./configure --host=psp --prefix=/psp --disable-doc --disable-examples --disable-http --disable-shared --enable-static --enable-fixed-point
     make --quiet $MAKEFLAGS || { exit 1; }
 }
 
 package() {
     cd "${pkgname}-${pkgver}"
-    make --quiet $MAKEFLAGS install
+    make --quiet $MAKEFLAGS DESTDIR="$pkgdir" install
 
     mkdir -m 755 -p "$pkgdir/psp/share/licenses/$pkgname"
     install -m 644 COPYING "$pkgdir/psp/share/licenses/$pkgname"

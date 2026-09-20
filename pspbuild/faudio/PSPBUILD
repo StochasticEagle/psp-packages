@@ -1,6 +1,6 @@
 pkgname=faudio
 pkgver=26.06
-pkgrel=2
+pkgrel=3
 pkgdesc="Accuracy-focused XAudio reimplementation for open platforms."
 arch=(any)
 license=('BSD')
@@ -27,7 +27,6 @@ build() {
         -DBUILD_SHARED_LIBS=OFF \
         -DCMAKE_BUILD_TYPE=Release \
         -DBUILD_SDL3=OFF \
-        -DCMAKE_C_FLAGS="-Wno-incompatible-pointer-types" \
         "${XTRA_OPTS[@]}" || { exit 1; }
   cmake --build build --parallel || { exit 1; }
 }

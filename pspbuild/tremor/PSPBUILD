@@ -1,6 +1,6 @@
 pkgname=tremor
 pkgver=1.2.1git20250403
-pkgrel=1
+pkgrel=2
 pkgdesc="Integer-only, fully Ogg Vorbis compliant software decoder library"
 arch=(any)
 url="https://wiki.xiph.org/Tremor"
@@ -33,7 +33,7 @@ build() {
     # its normal GCC flags, and --enable-low-accuracy supplies _LOW_ACCURACY_.
     LDFLAGS="-L$(psp-config --pspsdk-path)/lib" \
     LIBS="-lc -lpspuser" \
-    CFLAGS="-G0 -DLITTLE_ENDIAN=1 -DBYTE_ORDER=LITTLE_ENDIAN -Wno-error=incompatible-pointer-types" \
+    CFLAGS="-G0 -DLITTLE_ENDIAN=1 -DBYTE_ORDER=LITTLE_ENDIAN" \
     ./configure --host=psp --prefix=/psp --enable-low-accuracy
 
     make

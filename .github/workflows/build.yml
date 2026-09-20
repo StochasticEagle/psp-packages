@@ -45,11 +45,23 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            autoconf automake bison build-essential cmake fakeroot flex gawk gettext \
+            autoconf automake autopoint bison build-essential cmake fakeroot flex gawk gettext \
             git libarchive-dev libarchive-tools libcurl4-openssl-dev libgmp-dev \
             libgpgme-dev libgsl-dev libmpc-dev libmpfr-dev libreadline-dev \
-            libssl-dev libtool libusb-dev meson ninja-build patch pkg-config \
+            libssl-dev libtool libtool-bin libusb-dev meson ninja-build patch pkg-config \
             python3 python3-jinja2 python3-jsonschema texinfo wget xz-utils zlib1g-dev
+
+      - name: Verify host build tools
+        run: |
+          for tool in \
+            autoconf autoheader automake aclocal autoreconf autopoint \
+            libtool libtoolize gettext pkg-config \
+            cmake meson ninja patch make python3; do
+            command -v "$tool" >/dev/null || {
+              echo "ERROR: required host build tool is unavailable: $tool"
+              exit 1
+            }
+          done
 
       - name: Build forked PSP toolchain
         run: |

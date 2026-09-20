@@ -1,6 +1,6 @@
 pkgname=googletest
 pkgver=1.18.0
-pkgrel=7
+pkgrel=8
 pkgdesc="GoogleTest - Google Testing and Mocking Framework"
 arch=(any)
 url="https://github.com/google/googletest"
@@ -30,7 +30,7 @@ prepare() {
     # directly to the gtest/gmock target COMPILE_FLAGS. Inject the PSP
     # portability definitions there; CMAKE_CXX_FLAGS is not used for these
     # library targets.
-    sed -i 's#set(cxx_base_flags "${cxx_base_flags} ${GTEST_HAS_PTHREAD_MACRO}")#set(cxx_base_flags "${cxx_base_flags} ${GTEST_HAS_PTHREAD_MACRO} -DGTEST_HAS_POSIX_RE=0 -DGTEST_HAS_STREAM_REDIRECTION=0 -DGTEST_HAS_FILE_SYSTEM=0 -Wno-undef")#' googletest/cmake/internal_utils.cmake
+    sed -i 's#set(cxx_base_flags "${cxx_base_flags} ${GTEST_HAS_PTHREAD_MACRO}")#set(cxx_base_flags "${cxx_base_flags} ${GTEST_HAS_PTHREAD_MACRO} -DGTEST_HAS_POSIX_RE=0 -DGTEST_HAS_STREAM_REDIRECTION=0 -DGTEST_HAS_FILE_SYSTEM=0")#' googletest/cmake/internal_utils.cmake
 
     sed -i 's#@CMAKE_INSTALL_FULL_LIBDIR@#${prefix}/lib#' googlemock/cmake/gmock_main.pc.in
     sed -i 's#@CMAKE_INSTALL_FULL_INCLUDEDIR@#${prefix}/include#' googlemock/cmake/gmock_main.pc.in

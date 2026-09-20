@@ -17,13 +17,27 @@ TOOLS = {
     "ninja": "ninja-build",
     "autoreconf": "autoconf",
     "autoconf": "autoconf",
+    "autoheader": "autoconf",
     "automake": "automake",
-    "libtool": "libtool",
+    "aclocal": "automake",
+    "autopoint": "autopoint",
+    "gettext": "gettext",
+    "libtool": "libtool-bin",
     "libtoolize": "libtool",
     "patch": "patch",
     "pkg-config": "pkg-config",
     "python3": "python3",
     "make": "build-essential",
+}
+
+AUTOGEN_PACKAGES = {
+    "autoconf",
+    "automake",
+    "autopoint",
+    "gettext",
+    "libtool",
+    "libtool-bin",
+    "pkg-config",
 }
 
 def main() -> int:
@@ -37,6 +51,10 @@ def main() -> int:
         )
         for tool, package in TOOLS.items():
             if re.search(rf"(?<![A-Za-z0-9_-]){re.escape(tool)}(?![A-Za-z0-9_-])", text):
+                required.setdefault(package, set()).add(recipe.parent.name)
+
+        if re.search(r"(?:^|[\\s/])autogen\\.sh(?:\\s|$)", text):
+            for package in AUTOGEN_PACKAGES:
                 required.setdefault(package, set()).add(recipe.parent.name)
 
         if "import jinja2" in text:
