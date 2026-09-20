@@ -1,6 +1,6 @@
 pkgname=sdl2-net
 pkgver=2.2.0
-pkgrel=10
+pkgrel=11
 pkgdesc="A wrapper over TCP/IP sockets"
 arch=(any)
 url="https://wiki.libsdl.org/SDL2_net/FrontPage"
@@ -19,10 +19,31 @@ sha256sums=(
     "SKIP"
 )
 
+psp_apply_patch() {
+    local patch_file="$1"
+    shift
+    local output
+    if output="$(patch --dry-run --batch --forward --fuzz=0 "$@" < "$patch_file" 2>&1)"; then
+        printf '%s\n' "$output"
+        if grep -Eq 'with fuzz|offset -?[0-9]+ lines?' <<< "$output"; then
+            echo "WARNING: patch drift detected: $patch_file" >&2
+        fi
+        patch --batch --forward --fuzz=0 "$@" < "$patch_file"
+        return
+    fi
+    if patch --dry-run --batch --reverse --fuzz=0 "$@" < "$patch_file" >/dev/null 2>&1; then
+        echo "Patch already applied: $patch_file"
+        return 0
+    fi
+    printf '%s\n' "$output" >&2
+    echo "ERROR: patch is incompatible with the current source: $patch_file" >&2
+    return 1
+}
+
 prepare() {
     cd "${srcdir}/SDL2_net-${pkgver}"
     sed -i '/^prefix=/s/=.*$/=\/psp/' SDL2_net.pc.in
-    patch --batch --forward --fuzz=0 -p1 < ../${pkgname}-${pkgver}-PSP.patch || { exit 1; }
+    psp_apply_patch "../${pkgname}-${pkgver}-PSP.patch" -p1 || { exit 1; }
 }
 
 build() {

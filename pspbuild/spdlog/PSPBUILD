@@ -1,6 +1,6 @@
 pkgname=spdlog
 pkgver=1.17.0
-pkgrel=3
+pkgrel=4
 pkgdesc="Very fast, header only, C++ logging library"
 arch=(any)
 url="https://github.com/gabime/spdlog"
@@ -15,9 +15,30 @@ source=("$pkgname-$pkgver::git+https://github.com/gabime/spdlog.git#commit=79524
 sha256sums=('SKIP'
             '19c3ca85f22d845e96a6b97e653ef17426ab55dd2d73fabbd3396a597689cacb')
 
+psp_apply_patch() {
+    local patch_file="$1"
+    shift
+    local output
+    if output="$(patch --dry-run --batch --forward --fuzz=0 "$@" < "$patch_file" 2>&1)"; then
+        printf '%s\n' "$output"
+        if grep -Eq 'with fuzz|offset -?[0-9]+ lines?' <<< "$output"; then
+            echo "WARNING: patch drift detected: $patch_file" >&2
+        fi
+        patch --batch --forward --fuzz=0 "$@" < "$patch_file"
+        return
+    fi
+    if patch --dry-run --batch --reverse --fuzz=0 "$@" < "$patch_file" >/dev/null 2>&1; then
+        echo "Patch already applied: $patch_file"
+        return 0
+    fi
+    printf '%s\n' "$output" >&2
+    echo "ERROR: patch is incompatible with the current source: $patch_file" >&2
+    return 1
+}
+
 prepare() {
   cd "$pkgname-$pkgver"
-  patch --batch --forward --fuzz=0 -p1 < ../spdlog-psp.patch
+  psp_apply_patch ../spdlog-psp.patch -p1
 
   # patch spdlog.pc.in
   sed -i 's/@CMAKE_INSTALL_PREFIX@/\/psp/' ./cmake/spdlog.pc.in
