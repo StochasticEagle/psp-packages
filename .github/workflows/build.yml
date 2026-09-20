@@ -113,15 +113,8 @@ jobs:
 
           exit "$build_status"
 
-      - name: Verify package output
-        run: |
-          shopt -s nullglob
-          packages=(packages/*.pkg.tar.*)
-          if (( ${#packages[@]} == 0 )); then
-            echo "ERROR: no package archives were produced"
-            exit 1
-          fi
-          printf 'Built %s package archives.\n' "${#packages[@]}"
+      - name: Verify complete package output
+        run: python3 scripts/verify-package-output.py
 
       - uses: actions/upload-artifact@v7
         with:
@@ -130,8 +123,8 @@ jobs:
           if-no-files-found: error
 
       - name: Create pacman repository
-        if: github.event_name == 'push' && github.ref == 'refs/heads/dev/fork'
         run: |
+          rm -rf repo
           mkdir -p repo
           cp packages/*.pkg.tar.* repo/
           ./make-repo-html.sh
