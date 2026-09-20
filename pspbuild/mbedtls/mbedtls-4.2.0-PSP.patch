@@ -1,7 +1,7 @@
 diff --git a/library/net_sockets.c b/library/net_sockets.c
 --- a/library/net_sockets.c
 +++ b/library/net_sockets.c
-@@ -9,6 +9,6 @@
+@@ -9,7 +9,7 @@
  
  #if defined(MBEDTLS_NET_C)
  
@@ -9,113 +9,9 @@ diff --git a/library/net_sockets.c b/library/net_sockets.c
 +#if !defined(MBEDTLS_PLATFORM_IS_UNIXLIKE) && !defined(_WIN32) && !defined(PSP)
  #error "This module only works on Unix and Windows, see MBEDTLS_NET_C in mbedtls_config.h"
  #endif
-@@ -76,3 +76,6 @@
- #include <stdio.h>
-+#if defined(PSP)
-+#include <stdlib.h>
-+#endif
  
- #if defined(MBEDTLS_HAVE_TIME)
-@@ -138,7 +141,98 @@
- void mbedtls_net_init(mbedtls_net_context *ctx)
- {
-     ctx->fd = -1;
- }
-+
-+#if defined(PSP)
-+/*
-+ * PSPSDK provides the BSD socket API and gethostbyname(), but not
-+ * getaddrinfo()/freeaddrinfo(). Supply the IPv4 subset used by this module.
-+ */
-+#ifndef AI_PASSIVE
-+#define AI_PASSIVE 0x0001
-+#endif
-+
-+struct addrinfo {
-+    int ai_flags;
-+    int ai_family;
-+    int ai_socktype;
-+    int ai_protocol;
-+    socklen_t ai_addrlen;
-+    struct sockaddr *ai_addr;
-+    char *ai_canonname;
-+    struct addrinfo *ai_next;
-+};
-+
-+static int psp_getaddrinfo(const char *node, const char *service,
-+                           const struct addrinfo *hints,
-+                           struct addrinfo **result)
-+{
-+    char *end;
-+    unsigned long port;
-+    struct hostent *host_entry;
-+    struct addrinfo *info;
-+    struct sockaddr_in *addr;
-+
-+    if (service == NULL || *service == '\0' || result == NULL) {
-+        return -1;
-+    }
-+
-+    port = strtoul(service, &end, 10);
-+    if (end == service || *end != '\0' || port > 65535UL) {
-+        return -1;
-+    }
-+
-+    info = (struct addrinfo *) calloc(1, sizeof(*info));
-+    addr = (struct sockaddr_in *) calloc(1, sizeof(*addr));
-+    if (info == NULL || addr == NULL) {
-+        free(addr);
-+        free(info);
-+        return -1;
-+    }
-+
-+    addr->sin_len = (uint8_t) sizeof(*addr);
-+    addr->sin_family = AF_INET;
-+    addr->sin_port = htons((uint16_t) port);
-+
-+    if (node == NULL) {
-+        addr->sin_addr.s_addr = htonl((hints != NULL &&
-+                                       (hints->ai_flags & AI_PASSIVE) != 0) ?
-+                                      INADDR_ANY : INADDR_LOOPBACK);
-+    } else {
-+        host_entry = gethostbyname(node);
-+        if (host_entry == NULL || host_entry->h_addr == NULL ||
-+            host_entry->h_addrtype != AF_INET ||
-+            host_entry->h_length != (int) sizeof(addr->sin_addr)) {
-+            free(addr);
-+            free(info);
-+            return -1;
-+        }
-+
-+        memcpy(&addr->sin_addr, host_entry->h_addr, sizeof(addr->sin_addr));
-+    }
-+
-+    info->ai_flags = hints != NULL ? hints->ai_flags : 0;
-+    info->ai_family = AF_INET;
-+    info->ai_socktype = hints != NULL ? hints->ai_socktype : 0;
-+    info->ai_protocol = hints != NULL ? hints->ai_protocol : 0;
-+    info->ai_addrlen = (socklen_t) sizeof(*addr);
-+    info->ai_addr = (struct sockaddr *) addr;
-+    *result = info;
-+
-+    return 0;
-+}
-+
-+static void psp_freeaddrinfo(struct addrinfo *info)
-+{
-+    if (info != NULL) {
-+        free(info->ai_addr);
-+        free(info);
-+    }
-+}
-+
-+#define getaddrinfo  psp_getaddrinfo
-+#define freeaddrinfo psp_freeaddrinfo
-+#endif /* PSP */
+@@ -313,7 +313,8 @@
  
- /*
-  * Initiate a TCP connection with host:port and the given protocol
-@@ -314,6 +408,7 @@
  #if defined(__socklen_t_defined) || defined(_SOCKLEN_T) ||  \
      defined(_SOCKLEN_T_DECLARED) || defined(__DEFINED_socklen_t) || \
 -    defined(socklen_t) || (defined(_POSIX_VERSION) && _POSIX_VERSION >= 200112L)
@@ -124,7 +20,7 @@ diff --git a/library/net_sockets.c b/library/net_sockets.c
      socklen_t n = (socklen_t) sizeof(client_addr);
      socklen_t type_len = (socklen_t) sizeof(type);
  #else
-@@ -394,6 +489,7 @@
+@@ -394,6 +395,7 @@
              }
  
              memcpy(client_ip, &addr4->sin_addr.s_addr, *cip_len);
@@ -132,17 +28,18 @@ diff --git a/library/net_sockets.c b/library/net_sockets.c
          } else {
              struct sockaddr_in6 *addr6 = (struct sockaddr_in6 *) &client_addr;
              *cip_len = sizeof(addr6->sin6_addr.s6_addr);
-@@ -403,5 +499,6 @@
+@@ -403,6 +405,7 @@
              }
  
              memcpy(client_ip, &addr6->sin6_addr.s6_addr, *cip_len);
 +#endif /* !PSP */
          }
      }
+ 
 diff --git a/tf-psa-crypto/platform/platform_util.c b/tf-psa-crypto/platform/platform_util.c
 --- a/tf-psa-crypto/platform/platform_util.c
 +++ b/tf-psa-crypto/platform/platform_util.c
-@@ -202,8 +202,17 @@
+@@ -202,10 +202,18 @@
  #if defined(MBEDTLS_PLATFORM_IS_UNIXLIKE)
  #include <unistd.h>
  #endif
@@ -152,16 +49,18 @@ diff --git a/tf-psa-crypto/platform/platform_util.c b/tf-psa-crypto/platform/pla
  
 -#if (defined(_POSIX_VERSION) && _POSIX_VERSION >= 199309L) || defined(__HAIKU__)
 +#if defined(PSP)
-+mbedtls_ms_time_t mbedtls_ms_time(void)
-+{
-+    /* sceKernelGetSystemTimeWide() is a monotonic microsecond counter. */
+ mbedtls_ms_time_t mbedtls_ms_time(void)
+ {
 +    return (mbedtls_ms_time_t) (sceKernelGetSystemTimeWide() / 1000);
 +}
 +#elif (defined(_POSIX_VERSION) && _POSIX_VERSION >= 199309L) || defined(__HAIKU__)
- mbedtls_ms_time_t mbedtls_ms_time(void)
- {
++mbedtls_ms_time_t mbedtls_ms_time(void)
++{
      int ret;
-@@ -246,6 +255,7 @@
+     struct timespec tv;
+     mbedtls_ms_time_t current_ms;
+@@ -245,7 +253,8 @@
+ 
  #if !defined(MBEDTLS_PLATFORM_IS_UNIXLIKE) && \
      !defined(__MVS__) /* z/OS */ &&           \
 -    !defined(_WIN32)
@@ -170,7 +69,7 @@ diff --git a/tf-psa-crypto/platform/platform_util.c b/tf-psa-crypto/platform/pla
  #error \
      "The built-in entropy sources only work on Unix and Windows. " \
      "Please enable MBEDTLS_PSA_DRIVER_GET_ENTROPY instead of " \
-@@ -255,6 +265,10 @@
+@@ -255,6 +264,10 @@
  
  #include "mbedtls/private/entropy.h"
  
@@ -181,14 +80,14 @@ diff --git a/tf-psa-crypto/platform/platform_util.c b/tf-psa-crypto/platform/pla
  #if defined(_WIN32) && !defined(EFIX64) && !defined(EFI32)
  
  #include <windows.h>
-@@ -381,6 +395,26 @@
+@@ -381,6 +394,26 @@
          return PSA_ERROR_NOT_SUPPORTED;
      }
  
 +#if defined(PSP)
 +    /*
-+     * Preserve the entropy source used by the existing PSP Mbed TLS port.
-+     * Keep calls within the POSIX getentropy() 256-byte request limit.
++     * PSP newlib exposes getentropy(). Keep each request within the
++     * POSIX 256-byte limit.
 +     */
 +    size_t offset = 0;
 +    while (offset < output_size) {
@@ -208,33 +107,3 @@ diff --git a/tf-psa-crypto/platform/platform_util.c b/tf-psa-crypto/platform/pla
  #if defined(HAVE_GETRANDOM)
      ret = getrandom_wrapper(output, output_size, 0);
      if (ret >= 0) {
-diff --git a/tf-psa-crypto/scripts/generate_driver_wrappers.py b/tf-psa-crypto/scripts/generate_driver_wrappers.py
---- a/tf-psa-crypto/scripts/generate_driver_wrappers.py
-+++ b/tf-psa-crypto/scripts/generate_driver_wrappers.py
-@@ -15,7 +15,10 @@
- from typing import NewType, Dict, Any
- from traceback import format_tb
- import argparse
--import jsonschema
-+try:
-+    import jsonschema
-+except ImportError:
-+    jsonschema = None
- import jinja2
- 
- import framework_scripts_path # pylint: disable=unused-import
-@@ -71,8 +74,14 @@
- def validate_json(driverjson_data: Driver, driverschema_list: dict) -> None:
-     """
-     Validate the Driver JSON against an appropriate schema
-     the schema passed could be that matching an opaque/ transparent driver.
-     """
-+    # jsonschema is a development-time validation dependency. For a packaged
-+    # build from the pinned upstream release data, rendering does not require
-+    # schema validation.
-+    if jsonschema is None:
-+        return
-+
-     driver_type = driverjson_data["type"]
-     driver_prefix = driverjson_data["prefix"]
-     try:

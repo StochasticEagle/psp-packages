@@ -30,7 +30,7 @@ sha256sums=(
 prepare() {
     cd "${srcdir}/SDL2_ttf-${pkgver}"
     sed -i '/^prefix=/s/=.*$/=\/psp/' SDL2_ttf.pc.in
-    patch --batch --forward -Np1 -i "${srcdir}/614.patch"
+    patch --batch --forward --fuzz=0 -Np1 -i "${srcdir}/614.patch"
 }
 
 build() {

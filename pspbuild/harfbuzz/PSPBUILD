@@ -26,7 +26,7 @@ prepare() {
     sed -i 's#%includedir%#${prefix}/include#' harfbuzz*.pc.in
 
     cd ..
-    patch --batch --forward -p1 < ../fix-cmake.patch
+    patch --batch --forward --fuzz=0 -p1 < ../fix-cmake.patch
 }
 
 build() {

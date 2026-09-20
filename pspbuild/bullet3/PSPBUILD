@@ -14,7 +14,7 @@ sha256sums=("SKIP" "SKIP")
 
 prepare() {
     cd $pkgname
-    patch --batch --forward -Np1 -i ../psp.patch
+    patch --batch --forward --fuzz=0 -Np1 -i ../psp.patch
     sed -i 's#@PREFIX@#/psp#' bullet.pc.cmake
 }
 

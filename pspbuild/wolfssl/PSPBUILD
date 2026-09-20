@@ -21,7 +21,7 @@ prepare() {
 
     # PSP does not provide IPv6. Guard wolfSSL's IPv6 alternate-name helper
     # with WOLFSSL_IPV6 so disabling IPv6 also excludes these code paths.
-    patch --batch --forward -Np1 <<'PATCH'
+    patch --batch --forward --fuzz=0 -Np1 <<'PATCH'
 --- a/src/internal.c
 +++ b/src/internal.c
 @@ -14382,7 +14382,8 @@

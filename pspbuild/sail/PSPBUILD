@@ -18,7 +18,7 @@ sha256sums=('SKIP' 'SKIP')
 
 prepare() {
     cd "$srcdir/$pkgname"
-    patch --batch --forward -Np1 -i "$srcdir/psp.patch"
+    patch --batch --forward --fuzz=0 -Np1 -i "$srcdir/psp.patch"
     sed -i 's#@CMAKE_INSTALL_PREFIX@#/psp#' src/*/pkgconfig/*.pc.in src/bindings/sail-c++/pkgconfig/sail-c++.pc.in
 }
 

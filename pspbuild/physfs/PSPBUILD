@@ -21,7 +21,7 @@ sha256sums=(
 
 prepare() {
     cd ${pkgname}-release-${pkgver}
-    patch --batch --forward -p1 < ../psp.patch
+    patch --batch --forward --fuzz=0 -p1 < ../psp.patch
 
     sed -e 's#@CMAKE_INSTALL_PREFIX@#/psp#' \
         -e 's#@CMAKE_INSTALL_FULL_LIBDIR@#${prefix}/lib#' \

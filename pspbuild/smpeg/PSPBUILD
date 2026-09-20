@@ -20,7 +20,7 @@ sha256sums=(
 
 prepare() {
     cd smpeg-psp
-    patch --batch --forward -p1 < ../${pkgname}-psp.patch
+    patch --batch --forward --fuzz=0 -p1 < ../${pkgname}-psp.patch
 }
 
 build() {

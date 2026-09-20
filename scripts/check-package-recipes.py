@@ -167,6 +167,14 @@ def main() -> int:
                 errors.append(
                     f"{rel}:{lineno}: pkg-config metadata must use /psp, not PSPDEV"
                 )
+            if (
+                not line.lstrip().startswith("#")
+                and re.search(r"(^|\\s)patch\\s", line)
+                and "--fuzz=0" not in line
+            ):
+                errors.append(
+                    f"{rel}:{lineno}: patch commands must use --fuzz=0"
+                )
 
         body = package_function(text)
         for line in body.splitlines():

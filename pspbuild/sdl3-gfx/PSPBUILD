@@ -29,8 +29,8 @@ prepare() {
 
         rm -f SDL3_gfxConfig.cmake.in
 
-        patch --batch --forward -Np1 -i "$srcdir/cmake-module.patch"
-        patch --batch --forward -Np1 -i "$srcdir/psp.patch"
+        patch --batch --forward --fuzz=0 -Np1 -i "$srcdir/cmake-module.patch"
+        patch --batch --forward --fuzz=0 -Np1 -i "$srcdir/psp.patch"
 
         sed -i 's/@CMAKE_INSTALL_PREFIX@/\/psp/g' ./sdl3-gfx.pc.in
         sed -i 's/@CMAKE_INSTALL_FULL_LIBDIR@/\/psp\/lib/g' ./sdl3-gfx.pc.in

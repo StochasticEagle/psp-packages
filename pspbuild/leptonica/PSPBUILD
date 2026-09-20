@@ -21,7 +21,7 @@ sha256sums=(
 prepare() {
     cd "$pkgname-${pkgver}"
 
-    patch --batch --forward -p1 < ../${pkgname}-${pkgver}-PSP.patch
+    patch --batch --forward --fuzz=0 -p1 < ../${pkgname}-${pkgver}-PSP.patch
 
     sed -i 's#@prefix@#/psp#' lept.pc.in
     sed -i 's#@exec_prefix@#${prefix}#' lept.pc.in
