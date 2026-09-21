@@ -1,6 +1,6 @@
 pkgname=sdl3-gfx
 pkgver=r21.0bbee98
-pkgrel=6
+pkgrel=7
 pkgdesc="Graphics drawing primitives and other support functions wrapped up in an add-on, C-based library for the Simple Direct Media (SDL) cross-platform API layer"
 arch=('any')
 url="https://github.com/sabdul-khabir/SDL3_gfx"
@@ -20,7 +20,7 @@ source=(
         "psp.patch")
 noextract=()
 sha256sums=('SKIP'
-            'e0d3a84262a4892554277184429205b91e8e1f2f2d0fe31150504f9c5a427fc8'
+            '4290bdb2811236bfda96eb0d6ee4ac9f7e84e492d4a775c324e8416c0ebfdd88'
             'a53b5251727170ae04de51bd5098c7b4d36507e1a71a2952ab5cd78a04cef0d3')
 validpgpkeys=()
 
