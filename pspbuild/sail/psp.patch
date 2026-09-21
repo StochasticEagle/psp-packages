@@ -1,80 +1,194 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -68,7 +68,9 @@
+@@ -66,14 +66,16 @@
+ sail_check_include(sys/stat.h)
+ sail_check_include(sys/types.h)
  sail_check_include(wchar.h)
  
 -if (UNIX)
-+if (UNIX OR PSP)
-     sail_check_include(dirent.h)
+-    sail_check_include(dirent.h)
 -    sail_check_include(dlfcn.h)
+-    sail_check_include(sys/time.h)
+-    sail_check_include(unistd.h)
+-endif()
++if (UNIX OR PSP)
++    sail_check_include(dirent.h)
 +    if (NOT PSP)
 +        sail_check_include(dlfcn.h)
 +    endif()
-     sail_check_include(sys/time.h)
-     sail_check_include(unistd.h)
-@@ -155,5 +157,7 @@
++    sail_check_include(sys/time.h)
++    sail_check_include(unistd.h)
++endif()
+ 
+ if (WIN32)
+     sail_check_include(io.h)
+     sail_check_include(share.h)
+@@ -151,11 +151,13 @@
+ #
+ add_library(sail-common-flags INTERFACE)
+ sail_enable_warnings(INTERFACE_LIB sail-common-flags)
  sail_enable_asan(INTERFACE_LIB sail-common-flags)
- sail_enable_tsan(INTERFACE_LIB sail-common-flags)
+-sail_enable_tsan(INTERFACE_LIB sail-common-flags)
 -sail_enable_pic(INTERFACE_LIB sail-common-flags)
+-sail_enable_no_undefined(INTERFACE_LIB sail-common-flags)
++sail_enable_tsan(INTERFACE_LIB sail-common-flags)
 +if (NOT PSP)
 +    sail_enable_pic(INTERFACE_LIB sail-common-flags)
 +endif()
- sail_enable_no_undefined(INTERFACE_LIB sail-common-flags)
++sail_enable_no_undefined(INTERFACE_LIB sail-common-flags)
  sail_windows_enable_exception_handling(INTERFACE_LIB sail-common-flags)
+ 
+ # Enable C11
+ #
 diff --git a/src/sail/codec.c b/src/sail/codec.c
 --- a/src/sail/codec.c
 +++ b/src/sail/codec.c
-@@ -30,5 +30,5 @@
- #ifdef SAIL_WIN32
- #include <windows.h>
+@@ -27,13 +27,13 @@
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <string.h>
+ 
+-#ifdef SAIL_WIN32
+-#include <windows.h>
 -#else
+-#include <dlfcn.h>
+-#endif
++#ifdef SAIL_WIN32
++#include <windows.h>
 +#elif defined(SAIL_HAVE_DLFCN_H)
- #include <dlfcn.h>
- #endif
-@@ -81,4 +81,5 @@
- }
- #endif
- 
-+#if defined(SAIL_WIN32) || defined(SAIL_HAVE_DLFCN_H)
- static sail_status_t load_codec_from_file(const struct sail_codec_info* codec_info, struct sail_codec* codec)
-@@ -166,5 +167,6 @@
- 
-     return SAIL_OK;
- }
++#include <dlfcn.h>
 +#endif
  
+ #include <sail/sail.h>
+ 
  /*
-@@ -227,12 +229,24 @@
+@@ -77,14 +77,15 @@
      }
-     else
-     {
+ 
+     SAIL_LOG_ERROR("Failed to find combined %s codec", codec_info->name);
+     SAIL_LOG_AND_RETURN(SAIL_ERROR_CODEC_NOT_FOUND);
+ }
+-#endif
+-
+-static sail_status_t load_codec_from_file(const struct sail_codec_info* codec_info, struct sail_codec* codec)
+-{
++#endif
++
 +#if defined(SAIL_WIN32) || defined(SAIL_HAVE_DLFCN_H)
-         SAIL_TRY_OR_CLEANUP(load_codec_from_file(codec_info, codec_local),
-                             /* cleanup */ destroy_codec(codec_local));
++static sail_status_t load_codec_from_file(const struct sail_codec_info* codec_info, struct sail_codec* codec)
++{
+ 
+ #ifdef SAIL_WIN32
+     HMODULE handle = LoadLibraryEx(
+         codec_info->path, NULL,
+         LOAD_LIBRARY_SEARCH_APPLICATION_DIR
+@@ -159,19 +159,20 @@
+     SAIL_RESOLVE(codec->v8->save_seek_next_frame, handle, sail_codec_save_seek_next_frame_v8, codec_info->name);
+     SAIL_RESOLVE(codec->v8->save_frame, handle, sail_codec_save_frame_v8, codec_info->name);
+     SAIL_RESOLVE(codec->v8->save_finish, handle, sail_codec_save_finish_v8, codec_info->name);
+ 
+ #if defined(__GNUC__) || defined(__clang__)
+-#pragma GCC diagnostic pop
+-#endif
+-
+-    return SAIL_OK;
+-}
+-
+-/*
+- * Public functions.
+- */
++#pragma GCC diagnostic pop
++#endif
++
++    return SAIL_OK;
++}
++#endif
++
++/*
++ * Public functions.
++ */
+ 
+ sail_status_t alloc_and_load_codec(const struct sail_codec_info* codec_info, struct sail_codec** codec)
+ {
+     SAIL_CHECK_PTR(codec_info);
+     SAIL_CHECK_PTR(codec);
+@@ -216,25 +216,37 @@
+     void* ptr;
+     SAIL_TRY_OR_CLEANUP(sail_malloc(sizeof(struct sail_codec_layout_v8), &ptr),
+                         /* cleanup */ destroy_codec(codec_local));
+     codec_local->v8 = ptr;
+ 
+-#ifdef SAIL_COMBINE_CODECS
+-    if (fetch_combined_codec)
+-    {
+-        SAIL_TRY_OR_CLEANUP(load_combined_codec(codec_info, codec_local),
+-                            /* cleanup */ destroy_codec(codec_local));
+-    }
+-    else
+-    {
+-        SAIL_TRY_OR_CLEANUP(load_codec_from_file(codec_info, codec_local),
+-                            /* cleanup */ destroy_codec(codec_local));
+-    }
+-#else
+-    SAIL_TRY_OR_CLEANUP(load_codec_from_file(codec_info, codec_local),
+-                        /* cleanup */ destroy_codec(codec_local));
+-#endif
++#ifdef SAIL_COMBINE_CODECS
++    if (fetch_combined_codec)
++    {
++        SAIL_TRY_OR_CLEANUP(load_combined_codec(codec_info, codec_local),
++                            /* cleanup */ destroy_codec(codec_local));
++    }
++    else
++    {
++#if defined(SAIL_WIN32) || defined(SAIL_HAVE_DLFCN_H)
++        SAIL_TRY_OR_CLEANUP(load_codec_from_file(codec_info, codec_local),
++                            /* cleanup */ destroy_codec(codec_local));
 +#else
 +        SAIL_LOG_ERROR("Dynamic codec loading is not available on this platform");
 +        destroy_codec(codec_local);
 +        SAIL_LOG_AND_RETURN(SAIL_ERROR_CODEC_LOAD);
 +#endif
-     }
- #else
++    }
++#else
 +#if defined(SAIL_WIN32) || defined(SAIL_HAVE_DLFCN_H)
-     SAIL_TRY_OR_CLEANUP(load_codec_from_file(codec_info, codec_local),
-                         /* cleanup */ destroy_codec(codec_local));
++    SAIL_TRY_OR_CLEANUP(load_codec_from_file(codec_info, codec_local),
++                        /* cleanup */ destroy_codec(codec_local));
 +#else
 +    SAIL_LOG_ERROR("Dynamic codec loading is not available on this platform");
 +    destroy_codec(codec_local);
 +    SAIL_LOG_AND_RETURN(SAIL_ERROR_CODEC_LOAD);
 +#endif
- #endif
++#endif
  
      *codec = codec_local;
-@@ -257,5 +271,5 @@
+ 
+     return SAIL_OK;
+ }
+@@ -244,17 +244,17 @@
+     if (codec == NULL)
      {
- #ifdef SAIL_WIN32
-         FreeLibrary((HMODULE)codec->handle);
+         return;
+     }
+ 
+-    if (codec->handle != NULL)
+-    {
+-#ifdef SAIL_WIN32
+-        FreeLibrary((HMODULE)codec->handle);
 -#else
+-        dlclose(codec->handle);
+-#endif
+-    }
++    if (codec->handle != NULL)
++    {
++#ifdef SAIL_WIN32
++        FreeLibrary((HMODULE)codec->handle);
 +#elif defined(SAIL_HAVE_DLFCN_H)
-         dlclose(codec->handle);
- #endif
++        dlclose(codec->handle);
++#endif
++    }
+ 
+     sail_free(codec->v8);
+     sail_free(codec);
+ }
