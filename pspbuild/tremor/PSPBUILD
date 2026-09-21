@@ -1,6 +1,6 @@
 pkgname=tremor
 pkgver=1.2.1git20250403
-pkgrel=3
+pkgrel=4
 pkgdesc="Integer-only, fully Ogg Vorbis compliant software decoder library"
 arch=(any)
 url="https://wiki.xiph.org/Tremor"
@@ -11,35 +11,29 @@ makedepends=()
 optdepends=()
 source=(
     "git+https://gitlab.xiph.org/xiph/tremor.git#commit=820fb3237ea81af44c9cc468c8b4e20128e3e5ad"
-    "psp-fixed-width.patch"
 )
-sha256sums=('SKIP' 'SKIP')
-
-psp_apply_patch() {
-    local patch_file="$1"
-    shift
-    local output
-    if output="$(patch --dry-run --batch --forward --fuzz=0 "$@" < "$patch_file" 2>&1)"; then
-        printf '%s\n' "$output"
-        if grep -Eq 'with fuzz|offset -?[0-9]+ lines?' <<< "$output"; then
-            echo "WARNING: patch drift detected: $patch_file" >&2
-        fi
-        patch --batch --forward --fuzz=0 "$@" < "$patch_file"
-        return
-    fi
-    if patch --dry-run --batch --reverse --fuzz=0 "$@" < "$patch_file" >/dev/null 2>&1; then
-        echo "Patch already applied: $patch_file"
-        return 0
-    fi
-    printf '%s\n' "$output" >&2
-    echo "ERROR: patch is incompatible with the current source: $patch_file" >&2
-    return 1
-}
+sha256sums=('SKIP')
 
 prepare() {
     cd "${pkgname}"
 
-    psp_apply_patch "$srcdir/psp-fixed-width.patch" -Np1
+    # VFLOAT_MULTI() and VFLOAT_ADD() write through ogg_int32_t pointers.
+    # Upstream still declares these temporaries as int, which is not
+    # pointer-compatible with ogg_int32_t on the PSP toolchain.
+    sed -i -E 's/^([[:space:]]*)int point=0;/\1ogg_int32_t point=0;/' sharedbook.c
+    sed -i -E 's/^([[:space:]]*)int val=VFLOAT_MULTI/\1ogg_int32_t val=VFLOAT_MULTI/' sharedbook.c
+
+    local point_count val_count
+    point_count=$(grep -Ec '^[[:space:]]*ogg_int32_t point=0;' sharedbook.c)
+    val_count=$(grep -Ec '^[[:space:]]*ogg_int32_t val=VFLOAT_MULTI' sharedbook.c)
+    if [[ "${point_count}" -ne 2 || "${val_count}" -ne 2 ]]; then
+        echo "ERROR: Tremor fixed-width declarations were not applied exactly twice." >&2
+        return 1
+    fi
+    if grep -Eq '^[[:space:]]*int point=0;|^[[:space:]]*int val=VFLOAT_MULTI' sharedbook.c; then
+        echo "ERROR: Tremor still contains incompatible int declarations in sharedbook.c." >&2
+        return 1
+    fi
 
     sed -i 's#@prefix@#/psp#' vorbisidec.pc.in
     sed -i 's#@exec_prefix@#${prefix}#' vorbisidec.pc.in
