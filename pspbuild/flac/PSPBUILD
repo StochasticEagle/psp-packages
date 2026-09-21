@@ -1,6 +1,6 @@
 pkgname=flac
 pkgver=1.5.0
-pkgrel=5
+pkgrel=6
 pkgdesc="Free Lossless Audio Codec"
 arch=(any)
 url="https://xiph.org/flac/"
@@ -12,8 +12,30 @@ optdepends=()
 source=("${pkgname}-${pkgver}::git+https://github.com/xiph/flac.git#commit=e94ff9f68b8e7dbd3e9f8b1ac18a8eca1914f181")
 sha256sums=('SKIP')
 
+psp_apply_patch() {
+    local patch_file="$1"
+    shift
+    local output
+    if output="$(patch --dry-run --batch --forward --fuzz=0 "$@" < "$patch_file" 2>&1)"; then
+        printf '%s\n' "$output"
+        if grep -Eq 'with fuzz|offset -?[0-9]+ lines?' <<< "$output"; then
+            echo "WARNING: patch drift detected: $patch_file" >&2
+        fi
+        patch --batch --forward --fuzz=0 "$@" < "$patch_file"
+        return
+    fi
+    if patch --dry-run --batch --reverse --fuzz=0 "$@" < "$patch_file" >/dev/null 2>&1; then
+        echo "Patch already applied: $patch_file"
+        return 0
+    fi
+    printf '%s\n' "$output" >&2
+    echo "ERROR: patch is incompatible with the current source: $patch_file" >&2
+    return 1
+}
+
 prepare() {
     cd "${pkgname}-${pkgver}"
+    psp_apply_patch "$startdir/flac-$pkgver-PSP.patch" -p1 || { exit 1; }
     ./autogen.sh
 
 }
