@@ -1,8 +1,7 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -65,9 +65,11 @@
- sail_check_include(sys/types.h)
+@@ -65,7 +65,9 @@ sail_check_include(sys/types.h)
  sail_check_include(wchar.h)
  
 -if (UNIX)
@@ -15,8 +14,7 @@ diff --git a/CMakeLists.txt b/CMakeLists.txt
      sail_check_include(sys/time.h)
      sail_check_include(unistd.h)
  endif()
-@@ -153,7 +155,9 @@
- add_library(sail-common-flags INTERFACE)
+@@ -153,7 +155,9 @@ add_library(sail-common-flags INTERFACE)
  sail_enable_warnings(INTERFACE_LIB sail-common-flags)
  sail_enable_asan(INTERFACE_LIB sail-common-flags)
  sail_enable_tsan(INTERFACE_LIB sail-common-flags)
@@ -39,14 +37,15 @@ diff --git a/src/sail/codec.c b/src/sail/codec.c
  #include <dlfcn.h>
  #endif
  
-@@ -70,5 +70,6 @@
+@@ -70,6 +70,7 @@ static sail_status_t load_combined_codec(const struct sail_codec_info* codec_info, struct sail_codec* codec)
  }
  #endif
  
 +#if defined(SAIL_WIN32) || defined(SAIL_HAVE_DLFCN_H)
  static sail_status_t load_codec_from_file(const struct sail_codec_info* codec_info, struct sail_codec* codec)
  {
-@@ -173,6 +174,7 @@
+ 
+@@ -173,6 +174,7 @@ static sail_status_t load_codec_from_file(const struct sail_codec_info* codec_info, struct sail_codec* codec)
  
      return SAIL_OK;
  }
@@ -54,7 +53,7 @@ diff --git a/src/sail/codec.c b/src/sail/codec.c
  
  /*
   * Public functions.
-@@ -239,8 +241,14 @@
+@@ -239,8 +241,14 @@ sail_status_t alloc_and_load_codec(const struct sail_codec_info* codec_info, struct sail_codec** codec)
      }
      else
      {
@@ -68,8 +67,18 @@ diff --git a/src/sail/codec.c b/src/sail/codec.c
 +#endif
      }
  #else
++#if defined(SAIL_WIN32) || defined(SAIL_HAVE_DLFCN_H)
      SAIL_TRY_OR_CLEANUP(load_codec_from_file(codec_info, codec_local),
-@@ -264,7 +272,7 @@
+                         /* cleanup */ destroy_codec(codec_local));
++#else
++    SAIL_LOG_ERROR("Dynamic codec loading is not available on this platform");
++    destroy_codec(codec_local);
++    SAIL_LOG_AND_RETURN(SAIL_ERROR_CODEC_LOAD);
++#endif
+ #endif
+ 
+     *codec = codec_local;
+@@ -264,7 +272,7 @@ void destroy_codec(struct sail_codec* codec)
      {
  #ifdef SAIL_WIN32
          FreeLibrary((HMODULE)codec->handle);
