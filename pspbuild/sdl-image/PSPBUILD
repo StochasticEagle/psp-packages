@@ -1,6 +1,6 @@
 pkgname=sdl-image
 pkgver=1.2.13
-pkgrel=11
+pkgrel=12
 pkgdesc="A simple library to load images of various formats as SDL2 surfaces"
 arch=(any)
 url="https://www.libsdl.org/projects/old/SDL_image/release-1.2.html"
@@ -26,8 +26,10 @@ prepare() {
 build() {
     cd "${srcdir}/SDL_image"
     ./autogen.sh
+    LIBPNG_CFLAGS="$(pkg-config --cflags libpng)" \
+    LIBPNG_LIBS="$(pkg-config --static --libs libpng)" \
     LDFLAGS="-L$(psp-config --pspsdk-path)/lib" LIBS="-lc -lpspuser" \
-    ./configure --host psp --prefix=/psp --with-sdl-prefix=$(psp-config --psp-prefix)
+    ./configure --host psp --prefix=/psp --with-sdl-prefix=$(psp-config --psp-prefix) --disable-png-shared
     make
 }
 
