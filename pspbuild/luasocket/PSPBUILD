@@ -1,6 +1,6 @@
 pkgname=luasocket
 pkgver=3.1.0
-pkgrel=7
+pkgrel=8
 pkgdesc="Network support for the Lua language"
 arch=(any)
 url="https://lunarmodules.github.io/luasocket/"
@@ -10,7 +10,7 @@ depends=('lua55')
 makedepends=()
 optdepends=()
 source=(
-    "${pkgname}-${pkgver}::git+https://github.com/StochasticEagle/psp-luasocket.git#commit=7acc95c71294d7100aba7d5b12c1b1d29191c8dc"
+    "${pkgname}-${pkgver}::git+https://github.com/StochasticEagle/psp-luasocket.git#commit=9eb66e033d5e92e89fb807647774bd1fc4f2b12a"
 )
 sha256sums=(
     'SKIP'
@@ -18,6 +18,17 @@ sha256sums=(
 
 build() {
     cd "${pkgname}-${pkgver}"
+
+    netdb_header="${PSPDEV}/psp/include/netdb.h"
+    if [[ ! -f "${netdb_header}" ]] ||
+       ! grep -q 'struct addrinfo' "${netdb_header}" ||
+       ! grep -q 'NI_MAXHOST' "${netdb_header}" ||
+       ! grep -q 'EAI_AGAIN' "${netdb_header}" ||
+       ! grep -q 'gai_strerror' "${netdb_header}"; then
+        echo "ERROR: Installed PSP netdb.h lacks the resolver API required by LuaSocket." >&2
+        exit 1
+    fi
+
     make PLAT=psp LUAV=5.5
 }
 
