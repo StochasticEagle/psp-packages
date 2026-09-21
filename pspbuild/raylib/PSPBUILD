@@ -1,6 +1,6 @@
 pkgname=raylib
 pkgver=5.6dev
-pkgrel=4
+pkgrel=5
 pkgdesc="A simple and easy-to-use library to enjoy videogames programming"
 arch=(any)
 url="https://www.raylib.com/"
@@ -14,7 +14,7 @@ source=(
 sha256sums=(
     'SKIP'
     '9e74f51605c8de527099f41e0209117fa07baca69b2bba2521790916176a162d'
-    '692958c2e9deddecc73a9751880a8ea929d8ae3fc1e45e6024d43bff67731688'
+    '2f8d04138e4d21149c21ccdedd2107e56ea0e13608301a05dd68765cd520bb8c'
 )
 depends=('pspgl')
 
