@@ -85,7 +85,7 @@ def main() -> int:
     recipe_dir = pathlib.Path(recipe_dir_arg).resolve()
     packages = pathlib.Path(packages_arg).resolve()
     digest = hashlib.sha256()
-    digest.update(b"psp-package-input-v2\0")
+    digest.update(b"psp-package-input-v3\0")
     digest.update(package.encode() + b"\0")
 
     for path in sorted(recipe_dir.iterdir()):
@@ -115,6 +115,24 @@ def main() -> int:
             raise RuntimeError(f"required PSP dependency archive is missing: {archive}")
         digest.update(f"dependency\0{dependency}\0".encode())
         digest.update(hashlib.sha256(archive.read_bytes()).digest())
+
+    pspdev = pathlib.Path(os.environ.get("PSPDEV", "")).resolve()
+    if not str(pspdev):
+        raise RuntimeError("PSPDEV is not set")
+
+    build_info = pspdev / "build.txt"
+    if not build_info.is_file():
+        raise RuntimeError(f"PSPDEV build metadata is missing: {build_info}")
+    digest.update(b"PSPDEV_BUILD_INFO\0")
+    digest.update(build_info.read_bytes())
+    digest.update(b"\0")
+
+    toolchain_file = pspdev / "psp" / "share" / "pspdev.cmake"
+    if not toolchain_file.is_file():
+        raise RuntimeError(f"PSPSDK CMake toolchain file is missing: {toolchain_file}")
+    digest.update(b"PSPSDK_TOOLCHAIN\0")
+    digest.update(toolchain_file.read_bytes())
+    digest.update(b"\0")
 
     digest.update(b"XTRA_OPTS\0")
     digest.update(os.environ.get("XTRA_OPTS", "").encode())
