@@ -1,10 +1,7 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -139,7 +139,12 @@
-   find_package(Threads)
-   if (CMAKE_USE_PTHREADS_INIT)
-     add_compile_definitions(HAVE_PTHREAD)
+@@ -146,2 +146,7 @@
 -    list(APPEND THIRD_PARTY_LIBS Threads::Threads)
 -    list(APPEND PC_LIBS_PRIV -pthread)
 +    if (PSP)
@@ -14,11 +11,6 @@ diff --git a/CMakeLists.txt b/CMakeLists.txt
 +      list(APPEND THIRD_PARTY_LIBS Threads::Threads)
 +      list(APPEND PC_LIBS_PRIV -pthread)
 +    endif ()
-   endif ()
- endif ()
-@@ -746,4 +751,4 @@
+@@ -746,1 +751,1 @@
 -if (UNIX OR MINGW OR VITA)
 +if (UNIX OR MINGW OR VITA OR PSP)
-   # Make symbols link locally
-   include (CheckCXXCompilerFlag)
-   CHECK_CXX_COMPILER_FLAG(-Bsymbolic-functions CXX_SUPPORTS_FLAG_BSYMB_FUNCS)
