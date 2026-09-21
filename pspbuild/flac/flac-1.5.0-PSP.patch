@@ -31,3 +31,9 @@ diff --git a/src/libFLAC/stream_decoder.c b/src/libFLAC/stream_decoder.c
 @@ -3302,1 +3302,1 @@
 -	int i;
 +	FLAC__int32 i;
+diff --git a/src/libFLAC/deduplication/bitreader_read_rice_signed_block.c b/src/libFLAC/deduplication/bitreader_read_rice_signed_block.c
+--- a/src/libFLAC/deduplication/bitreader_read_rice_signed_block.c
++++ b/src/libFLAC/deduplication/bitreader_read_rice_signed_block.c
+@@ -8,1 +8,1 @@
+-	int *val, *end;
++	FLAC__int32 *val, *end;
