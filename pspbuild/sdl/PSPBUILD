@@ -1,6 +1,6 @@
 pkgname=sdl
 pkgver=1.2.15
-pkgrel=10
+pkgrel=11
 pkgdesc="A library designed to provide low level access to audio, input, and graphics hardware"
 arch=(any)
 url="https://www.libsdl.org/download-1.2.php"
@@ -9,11 +9,15 @@ groups=('psp-libraries')
 depends=('pspirkeyb')
 makedepends=()
 optdepends=()
-source=("git+https://github.com/pspdev/SDL.git#commit=42ee00502244fc60e76ae395fcee29d82f64c369")
-sha256sums=('SKIP')
+source=(
+    "git+https://github.com/pspdev/SDL.git#commit=42ee00502244fc60e76ae395fcee29d82f64c369"
+    "psp-iconv.patch"
+)
+sha256sums=('SKIP' 'SKIP')
 
 prepare() {
     cd "SDL"
+    patch --batch --forward --fuzz=0 -Np1 < "$srcdir/psp-iconv.patch" || { exit 1; }
     sed -i 's#@prefix@#${PSPDEV}/psp#' sdl-config.in
     sed -i 's#@prefix@#/psp#' sdl.pc.in
     sed -i 's#@exec_prefix@#${prefix}#' sdl-config.in sdl.pc.in
