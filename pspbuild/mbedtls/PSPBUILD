@@ -1,6 +1,6 @@
 pkgname=mbedtls
 pkgver=4.2.0
-pkgrel=6
+pkgrel=7
 pkgdesc="Secure Socket Layer library"
 arch=(any)
 url="https://www.trustedfirmware.org/projects/mbed-tls/"
@@ -50,6 +50,7 @@ build() {
         -DCMAKE_TOOLCHAIN_FILE="$PSPDEV/psp/share/pspdev.cmake" \
         -DCMAKE_INSTALL_PREFIX=/psp \
         -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_C_FLAGS="-DPSP -D__PSP__" \
         -DENABLE_TESTING=OFF \
         -DENABLE_PROGRAMS=OFF \
         -DUSE_STATIC_MBEDTLS_LIBRARY=ON \
