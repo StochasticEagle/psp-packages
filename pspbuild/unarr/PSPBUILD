@@ -1,6 +1,6 @@
 pkgname=unarr
-pkgver=1.1.1
-pkgrel=8
+pkgver=1.2.0
+pkgrel=1
 pkgdesc="A decompression library for rar, tar, zip and 7z archives"
 arch=(any)
 url="https://github.com/selmf/unarr/"
@@ -18,6 +18,15 @@ sha256sums=(
 
 prepare() {
     cd "${pkgname}-${pkgver}"
+
+    # Disable upstream target-level IPO/LTO. PSP consumers link this as a
+    # conventional static archive, and the LTO-only objects require GCC's LTO
+    # plugin at every consumer link.
+    if ! grep -qF 'set_target_properties(unarr PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)' CMakeLists.txt; then
+        echo "ERROR: Expected unarr IPO setting not found." >&2
+        return 1
+    fi
+    sed -i 's/set_target_properties(unarr PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)/set_target_properties(unarr PROPERTIES INTERPROCEDURAL_OPTIMIZATION FALSE)/' CMakeLists.txt
 
     # The currently installed PSP GCC can provide its own stdint.h before
     # newlib's header, leaving newlib's internal __int64_t_defined marker unset.
