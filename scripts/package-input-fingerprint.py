@@ -116,9 +116,10 @@ def main() -> int:
         digest.update(f"dependency\0{dependency}\0".encode())
         digest.update(hashlib.sha256(archive.read_bytes()).digest())
 
-    pspdev = pathlib.Path(os.environ.get("PSPDEV", "")).resolve()
-    if not str(pspdev):
+    pspdev_env = os.environ.get("PSPDEV", "")
+    if not pspdev_env:
         raise RuntimeError("PSPDEV is not set")
+    pspdev = pathlib.Path(pspdev_env).resolve()
 
     build_info = pspdev / "build.txt"
     if not build_info.is_file():
