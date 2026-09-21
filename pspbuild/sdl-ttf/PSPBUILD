@@ -1,6 +1,6 @@
 pkgname=sdl-ttf
 pkgver=2.0.11
-pkgrel=12
+pkgrel=13
 pkgdesc="A companion library to SDL for working with TrueType (tm) fonts"
 arch=(any)
 url="https://www.libsdl.org/projects/old/SDL_ttf/release-1.2.html"
@@ -29,12 +29,12 @@ build() {
     LIBS="$("${PKG_CONFIG:-pkg-config}" --static --libs freetype2 libpng zlib) -lpspvfpu -lc -lpspuser" \
     ./configure --host psp --prefix=/psp --with-sdl-prefix=$(psp-config --psp-prefix) \
     --with-freetype-prefix=$(psp-config --psp-prefix) --without-x
-    make
+    make libSDL_ttf.la
 }
 
 package() {
     cd "SDL_ttf-$pkgver-psp"
-    make DESTDIR="$pkgdir/" install
+    make DESTDIR="$pkgdir/" install-libLTLIBRARIES install-libSDL_ttfincludeHEADERS install-pkgconfigDATA
 
     rm "${pkgdir}/psp/lib/libSDL_ttf.la"
 

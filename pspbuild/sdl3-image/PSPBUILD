@@ -1,6 +1,6 @@
 pkgname=sdl3-image
 pkgver=3.4.6
-pkgrel=1
+pkgrel=2
 pkgdesc="A simple library to load images of various formats as SDL surfaces"
 arch=(any)
 url="https://wiki.libsdl.org/SDL3_image/FrontPage"
@@ -27,6 +27,10 @@ build() {
     cmake -Wno-author -S . -B build \
         -DCMAKE_TOOLCHAIN_FILE="${PSPDEV}/psp/share/pspdev.cmake" \
         -DCMAKE_INSTALL_PREFIX=/psp \
+        -DBUILD_SHARED_LIBS=OFF \
+        -DSDLIMAGE_DEPS_SHARED=OFF \
+        -DSDLIMAGE_SAMPLES=OFF \
+        -DSDLIMAGE_TESTS=OFF \
         -DSDLIMAGE_VENDORED=OFF \
         -DSDLIMAGE_STRICT=ON \
         -DSDLIMAGE_AVIF=OFF \

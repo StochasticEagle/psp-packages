@@ -1,6 +1,6 @@
 pkgname=sdl-mixer
 pkgver=1.2.14
-pkgrel=13
+pkgrel=14
 pkgdesc="An audio mixer library based on the SDL library"
 arch=(any)
 url="https://www.libsdl.org/projects/old/SDL_mixer/release-1.2.html"
@@ -37,12 +37,12 @@ build() {
     ./configure --host psp --with-sdl-prefix=$(psp-config --psp-prefix) \
     --disable-music-mp3 --prefix=/psp \
     --enable-music-mod --disable-music-cmd
-    make
+    make build/libSDL_mixer.la
 }
 
 package() {
     cd "${srcdir}/SDL_mixer"
-    make DESTDIR="$pkgdir/" install
+    make DESTDIR="$pkgdir/" install-hdrs install-lib
 
     rm "${pkgdir}/psp/lib/libSDL_mixer.la"
 
