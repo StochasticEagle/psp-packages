@@ -1,6 +1,6 @@
 pkgname=mbedtls
 pkgver=4.2.0
-pkgrel=7
+pkgrel=8
 pkgdesc="Secure Socket Layer library"
 arch=(any)
 url="https://www.trustedfirmware.org/projects/mbed-tls/"
@@ -36,6 +36,16 @@ psp_apply_patch() {
 prepare() {
     if ! python3 -c 'import jinja2, jsonschema' >/dev/null 2>&1; then
         echo "ERROR: mbedtls requires the host Python modules jinja2 and jsonschema." >&2
+        exit 1
+    fi
+
+    netdb_header="${PSPDEV}/psp/include/netdb.h"
+    if [[ ! -f "${netdb_header}" ]] ||
+       ! grep -q 'struct addrinfo' "${netdb_header}" ||
+       ! grep -q 'getaddrinfo' "${netdb_header}" ||
+       ! grep -q 'AI_PASSIVE' "${netdb_header}"; then
+        echo "ERROR: Installed PSP sysroot has a stale or incomplete netdb.h." >&2
+        echo "Rebuild/install the current PSP toolchain/newlib before building mbedtls." >&2
         exit 1
     fi
 
