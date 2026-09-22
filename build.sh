@@ -206,22 +206,31 @@ if [[ -n "${doclean}" && -n "${doinstall}" ]]; then
 fi
 
 if [[ -z "${requested_package}" ]]; then
-  PKG_LIST=$(find "${RECIPES}" -mindepth 2 -maxdepth 2 -type f -name PSPBUILD \
+  DIRECT_PKG_LIST=$(find "${RECIPES}" -mindepth 2 -maxdepth 2 -type f -name PSPBUILD \
     -exec sh -c 'basename "$(dirname "$1")"' _ {} \; | LC_ALL=C sort)
-  if [[ -z "${doclean}" && -z "${progress_mode}" ]]; then
-      printf 'Will build packages:'
-    while IFS= read -r pkg; do
-      [[ -n "${pkg}" ]] && printf ' %s' "${pkg}"
-    done <<< "${PKG_LIST}"
-    printf '\n'
-  fi
 else
-  PKG_LIST="${requested_package}"
+  DIRECT_PKG_LIST="${requested_package}"
 fi
 
-PROGRESS_TOTAL=$(printf '%s\n' "${PKG_LIST}" | sed '/^$/d' | wc -l)
-PROGRESS_CURRENT=0
+declare -A PLAN_REQUIRED=()
+declare -A PLAN_DEPS=()
 
+if [[ -n "${doclean}" ]]; then
+  PKG_LIST="${DIRECT_PKG_LIST}"
+else
+  if [[ -n "${requested_package}" ]]; then
+    plan_output=$(python3 "${ROOT}/scripts/package-dependency-plan.py" "${requested_package}")
+  else
+    plan_output=$(python3 "${ROOT}/scripts/package-dependency-plan.py")
+  fi
+
+  PKG_LIST=""
+  while IFS='|' read -r pkg required deps; do
+    [[ -n "${pkg}" ]] || continue
+    PLAN_REQUIRED["${pkg}"]="${required}"
+    PLAN_DEPS["${pkg}"]="${deps}"
+    if [[ -n "${PKG_LIST}" ]]; then
+      PKG_LIST+=
 if [[ -n "${progress_mode}" ]]; then
   mkdir -p "${BUILD_ROOT}/_logs"
   progress_log="${BUILD_ROOT}/_logs/build-$(date +%Y%m%d-%H%M%S).log"
@@ -248,8 +257,8 @@ if [[ -n "${doclean}" ]]; then
 fi
 
 # Fail before source acquisition if a recipe, source map, submodule URL, or
-# gitlink has drifted out of sync. Recursive dependency builds inherit the
-# validation result.
+# gitlink has drifted out of sync. Dependency planning is performed once by
+# this top-level invocation; package builds do not recursively invoke build.sh.
 if [[ -z "${PSP_PACKAGES_INVARIANTS_VALIDATED:-}" ]]; then
   python3 "${ROOT}/scripts/check-source-components.py"
   export PSP_PACKAGES_INVARIANTS_VALIDATED=1
@@ -397,7 +406,119 @@ configure_local_git_sources() {
   done
 }
 
+install_package_batch() {
+  local label="$1"
+  shift
+  local -a archives=("$@")
+
+  (( ${#archives[@]} > 0 )) || return 0
+  echo "Installing ${#archives[@]} ${label} in one transaction."
+  pspdev_run_install psp-pacman -U --noconfirm --overwrite '*' "${archives[@]}"
+}
+
+declare -A PLAN_STALE=()
+declare -A PLAN_PACKAGE_PATH=()
+declare -A INSTALLED_PACKAGES=()
+declare -A PENDING_INSTALL_SET=()
+declare -a PENDING_INSTALL_NAMES=()
+declare -a PENDING_INSTALL_ARCHIVES=()
+
+# Determine the complete stale set before installing anything. If a dependency
+# is stale, every package above it in the selected DAG is conservatively stale
+# until its dependency has been rebuilt and its final archive hash is known.
 for pkg in ${PKG_LIST}; do
+  recipe_dir="${RECIPES}/${pkg}"
+  pspbuild="${recipe_dir}/PSPBUILD"
+
+  pkgfile=$("${ROOT}/parse_pspbuild.sh" "${pspbuild}" pkgoutput)
+  pkgbase=$(bash -c 'source "$1"; printf "%s\\n" "${pkgbase:-${pkgname[0]}}"' _ "${pspbuild}")
+  pkgname=$("${ROOT}/parse_pspbuild.sh" "${pspbuild}" pkgname)
+  package_path="${PACKAGES}/${pkgfile}"
+  workdir="${BUILD_ROOT}/${pkgbase}"
+  input_stamp="${workdir}/${PACKAGE_INPUT_STAMP}"
+
+  prune_package_archives "${pkgname}" "${package_path}"
+  PLAN_PACKAGE_PATH["${pkg}"]="${package_path}"
+
+  stale=0
+  for pkgdep in ${PLAN_DEPS[${pkg}]-}; do
+    if [[ "${PLAN_STALE[${pkgdep}]:-0}" == "1" ]]; then
+      stale=1
+      break
+    fi
+  done
+
+  if (( stale == 0 )); then
+    if [[ ! -f "${package_path}" || ! -f "${input_stamp}" ]]; then
+      stale=1
+    else
+      input_fingerprint=$(python3 "${ROOT}/scripts/package-input-fingerprint.py" \
+        "${pkg}" "${pspbuild}" "${recipe_dir}" "${PACKAGES}")
+      stored_fingerprint=$(<"${input_stamp}")
+      [[ "${stored_fingerprint}" == "${input_fingerprint}" ]] || stale=1
+    fi
+  fi
+
+  PLAN_STALE["${pkg}"]="${stale}"
+done
+
+# Current prerequisite archives can be installed in one transaction before any
+# builds start. Stale packages are deliberately excluded because their archive
+# may change and must not be installed twice.
+initial_install_archives=()
+initial_install_names=()
+for pkg in ${PKG_LIST}; do
+  if [[ "${PLAN_STALE[${pkg}]}" == "0" ]] &&
+     { [[ -n "${doinstall}" ]] || [[ "${PLAN_REQUIRED[${pkg}]}" == "1" ]]; }; then
+    initial_install_names+=("${pkg}")
+    initial_install_archives+=("${PLAN_PACKAGE_PATH[${pkg}]}")
+  fi
+done
+
+if (( ${#initial_install_archives[@]} > 0 )); then
+  install_package_batch "current package prerequisites" "${initial_install_archives[@]}"
+  for pkg in "${initial_install_names[@]}"; do
+    INSTALLED_PACKAGES["${pkg}"]=1
+  done
+fi
+
+flush_pending_installs() {
+  local pkg
+
+  (( ${#PENDING_INSTALL_ARCHIVES[@]} > 0 )) || return 0
+  install_package_batch "new package prerequisites" "${PENDING_INSTALL_ARCHIVES[@]}"
+  for pkg in "${PENDING_INSTALL_NAMES[@]}"; do
+    INSTALLED_PACKAGES["${pkg}"]=1
+    unset "PENDING_INSTALL_SET[${pkg}]"
+  done
+  PENDING_INSTALL_NAMES=()
+  PENDING_INSTALL_ARCHIVES=()
+}
+
+queue_package_install() {
+  local pkg="$1"
+  local archive="$2"
+
+  [[ "${INSTALLED_PACKAGES[${pkg}]:-0}" == "1" ]] && return 0
+  [[ "${PENDING_INSTALL_SET[${pkg}]:-0}" == "1" ]] && return 0
+  PENDING_INSTALL_SET["${pkg}"]=1
+  PENDING_INSTALL_NAMES+=("${pkg}")
+  PENDING_INSTALL_ARCHIVES+=("${archive}")
+}
+
+for pkg in ${PKG_LIST}; do
+  # A dependency built earlier in this invocation must be installed before the
+  # first package that consumes it. Flush the entire pending set at once so
+  # independent newly-built prerequisites share a single pacman transaction.
+  need_install_flush=0
+  for pkgdep in ${PLAN_DEPS[${pkg}]-}; do
+    if [[ "${PENDING_INSTALL_SET[${pkgdep}]:-0}" == "1" ]]; then
+      need_install_flush=1
+      break
+    fi
+  done
+  (( need_install_flush == 0 )) || flush_pending_installs
+
   PROGRESS_CURRENT=$(( PROGRESS_CURRENT + 1 ))
   if [[ -n "${progress_mode}" ]]; then
     progress_record "${PROGRESS_CURRENT}" "${PROGRESS_TOTAL}" "${pkg}" "start"
@@ -405,108 +526,102 @@ for pkg in ${PKG_LIST}; do
 
   recipe_dir="${RECIPES}/${pkg}"
   pspbuild="${recipe_dir}/PSPBUILD"
-
-  if [[ ! -f "${pspbuild}" ]]; then
-    echo "Package ${pkg} does not exist!"
-    continue
-  fi
-
-  for pkgdep in $("${ROOT}/parse_pspbuild.sh" "${pspbuild}" depends); do
-    "${ROOT}/build.sh" --install "${pkgdep}"
-  done
-
   pkgfile=$("${ROOT}/parse_pspbuild.sh" "${pspbuild}" pkgoutput)
-  pkgbase=$(bash -c 'source "$1"; printf "%s\n" "${pkgbase:-${pkgname[0]}}"' _ "${pspbuild}")
+  pkgbase=$(bash -c 'source "$1"; printf "%s\\n" "${pkgbase:-${pkgname[0]}}"' _ "${pspbuild}")
   pkgname=$("${ROOT}/parse_pspbuild.sh" "${pspbuild}" pkgname)
   package_path="${PACKAGES}/${pkgfile}"
   workdir="${BUILD_ROOT}/${pkgbase}"
   source_cache="${workdir}/sources"
   input_stamp="${workdir}/${PACKAGE_INPUT_STAMP}"
 
-  prune_package_archives "${pkgname}" "${package_path}"
+  if [[ "${PLAN_STALE[${pkg}]}" == "1" ]]; then
+    prune_package_archives "${pkgname}" "${package_path}"
 
-  input_fingerprint=$(python3 "${ROOT}/scripts/package-input-fingerprint.py" \
-    "${pkg}" "${pspbuild}" "${recipe_dir}" "${PACKAGES}")
-  stored_fingerprint=""
-  [[ -f "${input_stamp}" ]] && stored_fingerprint=$(<"${input_stamp}")
+    input_fingerprint=$(python3 "${ROOT}/scripts/package-input-fingerprint.py" \
+      "${pkg}" "${pspbuild}" "${recipe_dir}" "${PACKAGES}")
+    stored_fingerprint=""
+    [[ -f "${input_stamp}" ]] && stored_fingerprint=$(<"${input_stamp}")
 
-  if [[ "${stored_fingerprint}" != "${input_fingerprint}" ]]; then
-    if [[ -f "${package_path}" || -d "${workdir}" ]]; then
-      echo "Package inputs changed for ${pkg}; invalidating cached build state."
-    fi
-    rm -f "${package_path}"
-    rm -rf "${workdir}"
-  fi
-
-  if [[ ! -f "${package_path}" ]]; then
-    echo "Building ${pkg} ..."
-
-    mkdir -p "${source_cache}"
-
-    cleanup_local_buildfile
-    CURRENT_LOCAL_BUILD_FILE=$(mktemp "${recipe_dir}/.PSPBUILD.local.XXXXXX")
-
-    makepkg_args=()
-    if [[ -d "${workdir}/src" ]] &&
-       find "${workdir}/src" -mindepth 1 -print -quit | grep -q .; then
-      echo "Reusing existing source/build tree for ${pkg}."
-      echo "Run ./build.sh --clean ${pkg} for a fresh build."
-      makepkg_args+=(--noextract)
-    fi
-
-    set +e
-    configure_local_git_sources \
-      "${pspbuild}" "${CURRENT_LOCAL_BUILD_FILE}" "${source_cache}"
-    source_status=$?
-    set -e
-
-    if (( source_status == 1 )); then
-      rm -f "${CURRENT_LOCAL_BUILD_FILE}"
-      CURRENT_LOCAL_BUILD_FILE=""
-    elif (( source_status != 0 )); then
-      cleanup_local_buildfile
-      exit "${source_status}"
-    else
-      makepkg_args+=(-p "$(basename "${CURRENT_LOCAL_BUILD_FILE}")")
-    fi
-
-    if (cd "${recipe_dir}" && \
-      psp-makepkg "${makepkg_args[@]}" \
-        "BUILDDIR=${BUILD_ROOT}" \
-        "SRCDEST=${source_cache}" \
-        "PKGDEST=${PACKAGES}"); then
-      :
-    else
-      status=$?
-      cleanup_local_buildfile
-      echo "ERROR: Build failed for ${pkg}. Build tree preserved at:"
-      echo "  ${workdir}"
-      if [[ -n "${progress_mode}" ]]; then
-        progress_record "${PROGRESS_CURRENT}" "${PROGRESS_TOTAL}" "${pkg}" "failed"
+    if [[ "${stored_fingerprint}" != "${input_fingerprint}" ]]; then
+      if [[ -f "${package_path}" || -d "${workdir}" ]]; then
+        echo "Package inputs changed for ${pkg}; invalidating cached build state."
       fi
-      exit "${status}"
+      rm -f "${package_path}"
+      rm -rf "${workdir}"
     fi
-
-    cleanup_local_buildfile
 
     if [[ ! -f "${package_path}" ]]; then
-      echo "ERROR: Expected package was not produced:"
-      echo "  ${package_path}"
-      exit 1
-    fi
+      echo "Building ${pkg} ..."
 
-    # Mark the source/build tree reusable only after a complete package archive
-    # exists. Failed prepare/build trees remain available for inspection, but
-    # the next invocation will invalidate them and rerun prepare().
-    printf '%s\n' "${input_fingerprint}" > "${input_stamp}"
+      mkdir -p "${source_cache}"
+
+      cleanup_local_buildfile
+      CURRENT_LOCAL_BUILD_FILE=$(mktemp "${recipe_dir}/.PSPBUILD.local.XXXXXX")
+
+      makepkg_args=()
+      if [[ -d "${workdir}/src" ]] &&
+         find "${workdir}/src" -mindepth 1 -print -quit | grep -q .; then
+        echo "Reusing existing source/build tree for ${pkg}."
+        echo "Run ./build.sh --clean ${pkg} for a fresh build."
+        makepkg_args+=(--noextract)
+      fi
+
+      set +e
+      configure_local_git_sources \
+        "${pspbuild}" "${CURRENT_LOCAL_BUILD_FILE}" "${source_cache}"
+      source_status=$?
+      set -e
+
+      if (( source_status == 1 )); then
+        rm -f "${CURRENT_LOCAL_BUILD_FILE}"
+        CURRENT_LOCAL_BUILD_FILE=""
+      elif (( source_status != 0 )); then
+        cleanup_local_buildfile
+        exit "${source_status}"
+      else
+        makepkg_args+=(-p "$(basename "${CURRENT_LOCAL_BUILD_FILE}")")
+      fi
+
+      if (cd "${recipe_dir}" && \
+        psp-makepkg "${makepkg_args[@]}" \
+          "BUILDDIR=${BUILD_ROOT}" \
+          "SRCDEST=${source_cache}" \
+          "PKGDEST=${PACKAGES}"); then
+        :
+      else
+        status=$?
+        cleanup_local_buildfile
+        echo "ERROR: Build failed for ${pkg}. Build tree preserved at:"
+        echo "  ${workdir}"
+        if [[ -n "${progress_mode}" ]]; then
+          progress_record "${PROGRESS_CURRENT}" "${PROGRESS_TOTAL}" "${pkg}" "failed"
+        fi
+        exit "${status}"
+      fi
+
+      cleanup_local_buildfile
+
+      if [[ ! -f "${package_path}" ]]; then
+        echo "ERROR: Expected package was not produced:"
+        echo "  ${package_path}"
+        exit 1
+      fi
+
+      # Mark the source/build tree reusable only after a complete package archive
+      # exists. Failed prepare/build trees remain available for inspection, but
+      # the next invocation will invalidate them and rerun prepare().
+      printf '%s\n' "${input_fingerprint}" > "${input_stamp}"
+    fi
   fi
 
-  if [[ -n "${doinstall}" ]]; then
-    echo "Installing ${pkg}"
-    pspdev_run_install psp-pacman -U --noconfirm "${package_path}" --overwrite '*'
+  if [[ -n "${doinstall}" || "${PLAN_REQUIRED[${pkg}]}" == "1" ]]; then
+    queue_package_install "${pkg}" "${package_path}"
   fi
 
   if [[ -n "${progress_mode}" ]]; then
     progress_record "${PROGRESS_CURRENT}" "${PROGRESS_TOTAL}" "${pkg}" "done"
   fi
 done
+
+flush_pending_installs
+
