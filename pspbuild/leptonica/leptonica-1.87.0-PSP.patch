@@ -1,7 +1,7 @@
 diff --git a/src/utils1.c b/src/utils1.c
 --- a/src/utils1.c
 +++ b/src/utils1.c
-@@ -1105,7 +1105,7 @@
+@@ -1104,7 +1104,7 @@
  /*---------------------------------------------------------------------*
   *                           Timing procs                              *
   *---------------------------------------------------------------------*/
@@ -10,7 +10,7 @@ diff --git a/src/utils1.c b/src/utils1.c
  
  #include <sys/time.h>
  #include <sys/resource.h>
-@@ -1199,7 +1199,7 @@
+@@ -1198,7 +1198,7 @@
      if (usec) *usec = (l_int32)tv.tv_usec;
  }
  
