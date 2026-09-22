@@ -1,6 +1,6 @@
 pkgname=harfbuzz
-pkgver=14.4.0
-pkgrel=6
+pkgver=14.5.0
+pkgrel=1
 pkgdesc="OpenType text shaping engine"
 arch=(any)
 url="https://harfbuzz.github.io/"
@@ -10,7 +10,7 @@ groups=('psp-libraries')
 makedepends=()
 optdepends=()
 source=(
-  "harfbuzz-${pkgver}::git+https://github.com/harfbuzz/harfbuzz.git#commit=36cb489cb02ce4b92099669ba9f9bea348eff93f"
+  "harfbuzz-${pkgver}::git+https://github.com/harfbuzz/harfbuzz.git#commit=863d3f7787c6df18d20e4535c5906bf3eb803bd5"
   "fix-cmake.patch"
 )
 sha256sums=(

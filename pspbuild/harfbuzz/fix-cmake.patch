@@ -11,6 +11,6 @@ diff --git a/CMakeLists.txt b/CMakeLists.txt
 +      list(APPEND THIRD_PARTY_LIBS Threads::Threads)
 +      list(APPEND PC_LIBS_PRIV -pthread)
 +    endif ()
-@@ -746,1 +751,1 @@
+@@ -759,1 +764,1 @@
 -if (UNIX OR MINGW OR VITA)
 +if (UNIX OR MINGW OR VITA OR PSP)

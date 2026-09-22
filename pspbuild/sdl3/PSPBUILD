@@ -1,5 +1,5 @@
 pkgname=sdl3
-pkgver=3.4.14
+pkgver=3.4.16
 pkgrel=1
 pkgdesc="A library designed to provide low level access to audio, input, and graphics hardware"
 arch=(any)
@@ -10,7 +10,7 @@ depends=('libpspvram' 'pspgl')
 makedepends=()
 optdepends=()
 provides=()
-source=("SDL3-${pkgver}::git+https://github.com/libsdl-org/SDL.git#commit=147a8ee32dbf9ac02f3794964490687b6bbda1bc")
+source=("SDL3-${pkgver}::git+https://github.com/libsdl-org/SDL.git#commit=fa2c02bb6e21974a89ea9824bc53c9932abe5f9c")
 sha256sums=("SKIP")
 
 prepare() {

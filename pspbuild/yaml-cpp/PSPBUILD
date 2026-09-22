@@ -1,6 +1,6 @@
 pkgname=yaml-cpp
-pkgver=0.8.0git
-pkgrel=6
+pkgver=0.9.0
+pkgrel=1
 pkgdesc="A YAML parser and emitter in C++"
 arch=(any)
 url="https://github.com/jbeder/yaml-cpp"
@@ -10,7 +10,7 @@ depends=()
 makedepends=()
 optdepends=()
 provides=()
-source=('git+https://github.com/jbeder/yaml-cpp.git#commit=76dc6715734295ff1866bfc32872ff2278258fc8')
+source=('git+https://github.com/jbeder/yaml-cpp.git#commit=56e3bb550c91fd7005566f19c079cb7a503223cf')
 sha256sums=('SKIP')
 
 prepare() {

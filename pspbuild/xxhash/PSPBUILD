@@ -1,6 +1,6 @@
 pkgname=xxhash
-pkgver=0.8.2
-pkgrel=6
+pkgver=0.8.4
+pkgrel=1
 pkgdesc="Extremely fast non-cryptographic hash algorithm"
 arch=(any)
 url="https://xxhash.com/"
@@ -9,7 +9,7 @@ groups=('psp-libraries')
 depends=()
 makedepends=()
 optdepends=()
-source=("xxHash-${pkgver}::git+https://github.com/Cyan4973/xxHash.git#commit=c0b5ea995d66691734b1a79ad89e73a0d2fd5a53")
+source=("xxHash-${pkgver}::git+https://github.com/Cyan4973/xxHash.git#commit=c87183a77d67f7d37e3d2d1b7eaac5e7c695e4f0")
 sha256sums=('SKIP')
 
 build() {
