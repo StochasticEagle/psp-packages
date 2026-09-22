@@ -1,6 +1,6 @@
 pkgname=opentri
 pkgver=r7.95b040d
-pkgrel=9
+pkgrel=10
 pkgdesc="openTRI is a game engine for the PSP"
 arch=(any)
 url="https://github.com/fjtrujy/openTRI"
@@ -11,6 +11,14 @@ makedepends=()
 optdepends=()
 source=("git+https://github.com/fjtrujy/openTRI.git#commit=660f0c86f97c80fdf085e6e083d35a53828467cc")
 sha256sums=('SKIP')
+
+prepare() {
+    cd openTRI
+
+    # psp-makepkg configures the host pkg-config instance for the PSP sysroot.
+    # Upstream still references the removed psp-pkgconf compatibility wrapper.
+    sed -i 's/psp-pkgconf/pkg-config/g' Makefile
+}
 
 build() {
     cd openTRI
