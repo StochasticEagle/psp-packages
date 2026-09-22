@@ -13,6 +13,83 @@ PACKAGES="${ROOT}/packages"
 SOURCE_COMPONENTS="${ROOT}/source-components.tsv"
 CURRENT_LOCAL_BUILD_FILE=""
 PACKAGE_INPUT_STAMP=".psp-package-input.sha256"
+progress_mode=""
+progress_parent="${PSP_PROGRESS_PARENT:-0}"
+
+progress_record() {
+  local current="$1"
+  local total="$2"
+  local package="$3"
+  local state="$4"
+  printf 'PSP_PROGRESS\t%s\t%s\t%s\t%s\n' "${current}" "${total}" "${package}" "${state}"
+}
+
+render_progress() {
+  local current="$1"
+  local total="$2"
+  local package="$3"
+  local state="$4"
+  local last="$5"
+  local width=30
+  local filled=0
+  local empty
+  local done_bar
+  local left_bar
+
+  if (( total > 0 )); then
+    filled=$(( current * width / total ))
+  fi
+  empty=$(( width - filled ))
+  printf -v done_bar '%*s' "${filled}" ''
+  printf -v left_bar '%*s' "${empty}" ''
+  done_bar="${done_bar// /#}"
+  left_bar="${left_bar// /-}"
+
+  printf '\033[2A\r\033[2K[%s%s] %d/%d %s (%s)\n\r\033[2K%s\n' "${done_bar}" "${left_bar}" "${current}" "${total}" "${package}" "${state}" "${last}"
+}
+
+progress_filter() {
+  local log="$1"
+  local parent="$2"
+  local line
+  local current=0
+  local total=0
+  local package="Preparing"
+  local state="start"
+  local last="Starting PSP package build"
+
+  if [[ "${parent}" == "1" ]]; then
+    while IFS= read -r line; do
+      printf '%s\n' "${line}" >> "${log}"
+      if [[ "${line}" == PSP_PROGRESS* || "${line}" == ERROR:* || "${line}" == WARNING:* ]]; then
+        printf '%s\n' "${line}"
+      fi
+    done
+    return
+  fi
+
+  if [[ -t 1 ]]; then
+    printf '\n\n'
+    render_progress "${current}" "${total}" "${package}" "${state}" "${last}"
+    while IFS= read -r line; do
+      printf '%s\n' "${line}" >> "${log}"
+      if [[ "${line}" == PSP_PROGRESS* ]]; then
+        IFS="$(printf '\t')" read -r _ current total package state <<< "${line}"
+        last="${state} ${package}"
+        render_progress "${current}" "${total}" "${package}" "${state}" "${last}"
+      elif [[ "${line}" =~ ^(Building|Installing|Cleaning|Configuring|Reusing|Package[[:space:]]inputs[[:space:]]changed|ERROR:|WARNING:|==\>[[:space:]](Making[[:space:]]package|Starting|Finished|Creating[[:space:]]package|Installing[[:space:]]package)) ]]; then
+        last="${line}"
+        render_progress "${current}" "${total}" "${package}" "${state}" "${last}"
+      fi
+    done
+    printf '\nLog: %s\n' "${log}"
+  else
+    while IFS= read -r line; do
+      printf '%s\n' "${line}" >> "${log}"
+    done
+    printf 'Log: %s\n' "${log}"
+  fi
+}
 
 cleanup_local_buildfile() {
   if [[ -n "${CURRENT_LOCAL_BUILD_FILE}" ]]; then
@@ -74,6 +151,9 @@ requested_package=""
 
 while (( $# > 0 )); do
   case "$1" in
+    p)
+      progress_mode="true"
+      ;;
     --install)
       doinstall="true"
       ;;
@@ -103,7 +183,7 @@ fi
 if [[ -z "${requested_package}" ]]; then
   PKG_LIST=$(find "${RECIPES}" -mindepth 2 -maxdepth 2 -type f -name PSPBUILD \
     -exec sh -c 'basename "$(dirname "$1")"' _ {} \; | LC_ALL=C sort)
-  if [[ -z "${doclean}" ]]; then
+  if [[ -z "${doclean}" && -z "${progress_mode}" ]]; then
       printf 'Will build packages:'
     while IFS= read -r pkg; do
       [[ -n "${pkg}" ]] && printf ' %s' "${pkg}"
@@ -112,6 +192,15 @@ if [[ -z "${requested_package}" ]]; then
   fi
 else
   PKG_LIST="${requested_package}"
+fi
+
+PROGRESS_TOTAL=$(printf '%s\n' "${PKG_LIST}" | sed '/^$/d' | wc -l)
+PROGRESS_CURRENT=0
+
+if [[ -n "${progress_mode}" ]]; then
+  mkdir -p "${BUILD_ROOT}/logs"
+  progress_log="${BUILD_ROOT}/logs/build-$(date +%Y%m%d-%H%M%S).log"
+  exec > >(progress_filter "${progress_log}" "${progress_parent}") 2>&1
 fi
 
 if [[ -n "${doclean}" ]]; then
@@ -284,6 +373,11 @@ configure_local_git_sources() {
 }
 
 for pkg in ${PKG_LIST}; do
+  PROGRESS_CURRENT=$(( PROGRESS_CURRENT + 1 ))
+  if [[ -n "${progress_mode}" ]]; then
+    progress_record "${PROGRESS_CURRENT}" "${PROGRESS_TOTAL}" "${pkg}" "start"
+  fi
+
   recipe_dir="${RECIPES}/${pkg}"
   pspbuild="${recipe_dir}/PSPBUILD"
 
@@ -363,6 +457,9 @@ for pkg in ${PKG_LIST}; do
       cleanup_local_buildfile
       echo "ERROR: Build failed for ${pkg}. Build tree preserved at:"
       echo "  ${workdir}"
+      if [[ -n "${progress_mode}" ]]; then
+        progress_record "${PROGRESS_CURRENT}" "${PROGRESS_TOTAL}" "${pkg}" "failed"
+      fi
       exit "${status}"
     fi
 
@@ -378,5 +475,9 @@ for pkg in ${PKG_LIST}; do
   if [[ -n "${doinstall}" ]]; then
     echo "Installing ${pkg}"
     pspdev_run_install psp-pacman -U --noconfirm "${package_path}" --overwrite '*'
+  fi
+
+  if [[ -n "${progress_mode}" ]]; then
+    progress_record "${PROGRESS_CURRENT}" "${PROGRESS_TOTAL}" "${pkg}" "done"
   fi
 done
