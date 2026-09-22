@@ -30,11 +30,26 @@ render_progress() {
   local package="$3"
   local state="$4"
   local last="$5"
+  local columns=80
   local width=30
   local filled=0
   local empty
   local done_bar
   local left_bar
+  local suffix
+  local max_width
+  local max_status
+
+  if [[ -t 1 ]]; then
+    columns="$(tput cols 2>/dev/null || printf '80')"
+  fi
+  [[ "${columns}" =~ ^[0-9]+$ ]] || columns=80
+  (( columns < 40 )) && columns=40
+
+  suffix="${current}/${total} ${package} (${state})"
+  max_width=$(( columns - ${#suffix} - 4 ))
+  (( max_width < width )) && width="${max_width}"
+  (( width < 10 )) && width=10
 
   if (( total > 0 )); then
     filled=$(( current * width / total ))
@@ -45,7 +60,17 @@ render_progress() {
   done_bar="${done_bar// /#}"
   left_bar="${left_bar// /-}"
 
-  printf '\033[2A\r\033[2K[%s%s] %d/%d %s (%s)\n\r\033[2K%s\n' "${done_bar}" "${left_bar}" "${current}" "${total}" "${package}" "${state}" "${last}"
+  last="${last//$'\r'/ }"
+  max_status=$(( columns - 1 ))
+  if (( ${#last} > max_status )); then
+    if (( max_status > 3 )); then
+      last="${last:0:max_status-3}..."
+    else
+      last="${last:0:max_status}"
+    fi
+  fi
+
+  printf '\033[2A\r\033[2K[%s%s] %s\n\r\033[2K%s\n' "${done_bar}" "${left_bar}" "${suffix}" "${last}"
 }
 
 progress_filter() {
@@ -198,8 +223,8 @@ PROGRESS_TOTAL=$(printf '%s\n' "${PKG_LIST}" | sed '/^$/d' | wc -l)
 PROGRESS_CURRENT=0
 
 if [[ -n "${progress_mode}" ]]; then
-  mkdir -p "${BUILD_ROOT}/logs"
-  progress_log="${BUILD_ROOT}/logs/build-$(date +%Y%m%d-%H%M%S).log"
+  mkdir -p "${BUILD_ROOT}/_logs"
+  progress_log="${BUILD_ROOT}/_logs/build-$(date +%Y%m%d-%H%M%S).log"
   exec > >(progress_filter "${progress_log}" "${progress_parent}") 2>&1
 fi
 
