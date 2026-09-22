@@ -1,6 +1,6 @@
 pkgname=mbedtls
 pkgver=4.2.0
-pkgrel=10
+pkgrel=11
 pkgdesc="Secure Socket Layer library"
 arch=(any)
 url="https://www.trustedfirmware.org/projects/mbed-tls/"
@@ -66,6 +66,12 @@ prepare() {
 
     cd "$srcdir/$pkgname-$pkgver"
     psp_apply_patch "$startdir/mbedtls-$pkgver-PSP.patch" -p1 || { exit 1; }
+
+    if ! grep -q 'sceKernelGetSystemTimeWide() / 1000' tf-psa-crypto/platform/platform_util.c ||
+       ! grep -q 'getentropy(output + offset, chunk)' tf-psa-crypto/platform/platform_util.c; then
+        echo "ERROR: PSP platform support was not applied to Mbed TLS." >&2
+        exit 1
+    fi
 }
 
 build() {

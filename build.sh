@@ -417,7 +417,6 @@ for pkg in ${PKG_LIST}; do
     echo "Building ${pkg} ..."
 
     mkdir -p "${source_cache}"
-    printf '%s\n' "${input_fingerprint}" > "${input_stamp}"
 
     cleanup_local_buildfile
     CURRENT_LOCAL_BUILD_FILE=$(mktemp "${recipe_dir}/.PSPBUILD.local.XXXXXX")
@@ -470,6 +469,11 @@ for pkg in ${PKG_LIST}; do
       echo "  ${package_path}"
       exit 1
     fi
+
+    # Mark the source/build tree reusable only after a complete package archive
+    # exists. Failed prepare/build trees remain available for inspection, but
+    # the next invocation will invalidate them and rerun prepare().
+    printf '%s\n' "${input_fingerprint}" > "${input_stamp}"
   fi
 
   if [[ -n "${doinstall}" ]]; then
