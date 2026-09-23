@@ -1,0 +1,77 @@
+name: Tremor
+
+on:
+  push:
+    branches:
+      - dev/fork
+    paths:
+      - ".github/workflows/tremor.yml"
+      - "build.sh"
+      - "scripts/package-dependency-plan.py"
+      - "pspbuild/libogg/**"
+      - "pspbuild/tremor/**"
+      - "components/libogg"
+      - "components/tremor"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tremor-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+          submodules: false
+
+      - name: Install host dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            autoconf automake autopoint bison build-essential cmake fakeroot flex gawk gettext \
+            git libarchive-dev libarchive-tools libcurl4-openssl-dev libgmp-dev \
+            libgpgme-dev libgsl-dev libmpc-dev libmpfr-dev libreadline-dev \
+            libssl-dev libtool libtool-bin libusb-dev meson ninja-build patch pkg-config \
+            python3 python3-jinja2 python3-jsonschema texinfo wget xz-utils zlib1g-dev
+
+      - name: Build PSP toolchain
+        run: |
+          export PSPDEV="$RUNNER_TEMP/pspdev"
+          export PATH="$PSPDEV/bin:$PATH"
+          echo "PSPDEV=$PSPDEV" >> "$GITHUB_ENV"
+          echo "$PSPDEV/bin" >> "$GITHUB_PATH"
+
+          git clone --depth 1 --branch dev/fork \
+            --recurse-submodules --shallow-submodules \
+            https://github.com/StochasticEagle/psp-toolchain.git \
+            "$RUNNER_TEMP/psp-toolchain"
+
+          "$RUNNER_TEMP/psp-toolchain/toolchain.sh"
+
+      - name: Build PSPSDK
+        run: |
+          export PATH="$PSPDEV/bin:$PATH"
+
+          git clone --depth 1 --branch dev/fork \
+            --recurse-submodules --shallow-submodules \
+            https://github.com/StochasticEagle/pspsdk.git \
+            "$RUNNER_TEMP/pspsdk"
+
+          "$RUNNER_TEMP/pspsdk/build-and-install.sh"
+
+      - name: Build Tremor
+        run: |
+          export PATH="$PSPDEV/bin:$PATH"
+          ./build.sh tremor
+
+      - name: Verify Tremor package
+        run: |
+          test -f "$PSPDEV/psp/share/aclocal/ogg.m4"
+          compgen -G "packages/tremor-*.pkg.tar.*" >/dev/null
