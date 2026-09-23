@@ -63,7 +63,7 @@ jobs:
             }
           done
 
-      - name: Build forked PSP toolchain
+      - name: Build PSP toolchain
         run: |
           export PSPDEV="$RUNNER_TEMP/pspdev"
           export PATH="$PSPDEV/bin:$PATH"
@@ -77,7 +77,7 @@ jobs:
 
           "$RUNNER_TEMP/psp-toolchain/toolchain.sh"
 
-      - name: Build forked PSPSDK
+      - name: Build PSPSDK
         run: |
           export PATH="$PSPDEV/bin:$PATH"
 

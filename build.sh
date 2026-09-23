@@ -212,8 +212,13 @@ else
   DIRECT_PKG_LIST="${requested_package}"
 fi
 
+declare -A PLAN_REQUESTED=()
 declare -A PLAN_REQUIRED=()
 declare -A PLAN_DEPS=()
+
+for pkg in ${DIRECT_PKG_LIST}; do
+  PLAN_REQUESTED["${pkg}"]=1
+done
 
 if [[ -n "${doclean}" ]]; then
   PKG_LIST="${DIRECT_PKG_LIST}"
@@ -229,8 +234,21 @@ else
     [[ -n "${pkg}" ]] || continue
     PLAN_REQUIRED["${pkg}"]="${required}"
     PLAN_DEPS["${pkg}"]="${deps}"
-    if [[ -n "${PKG_LIST}" ]]; then
-      PKG_LIST+=
+    PKG_LIST+="${PKG_LIST:+ }${pkg}"
+  done <<< "${plan_output}"
+
+  if [[ -z "${progress_mode}" ]]; then
+    printf 'Will build packages:'
+    for pkg in ${PKG_LIST}; do
+      printf ' %s' "${pkg}"
+    done
+    printf '\n'
+  fi
+fi
+
+PROGRESS_TOTAL=$(wc -w <<< "${PKG_LIST}")
+PROGRESS_CURRENT=0
+
 if [[ -n "${progress_mode}" ]]; then
   mkdir -p "${BUILD_ROOT}/_logs"
   progress_log="${BUILD_ROOT}/_logs/build-$(date +%Y%m%d-%H%M%S).log"
@@ -469,7 +487,7 @@ initial_install_archives=()
 initial_install_names=()
 for pkg in ${PKG_LIST}; do
   if [[ "${PLAN_STALE[${pkg}]}" == "0" ]] &&
-     { [[ -n "${doinstall}" ]] || [[ "${PLAN_REQUIRED[${pkg}]}" == "1" ]]; }; then
+     { [[ -n "${doinstall}" ]] || [[ "${PLAN_REQUIRED[${pkg}]:-0}" == "1" ]] || [[ "${PLAN_REQUESTED[${pkg}]:-0}" == "1" ]]; }; then
     initial_install_names+=("${pkg}")
     initial_install_archives+=("${PLAN_PACKAGE_PATH[${pkg}]}")
   fi
@@ -614,7 +632,7 @@ for pkg in ${PKG_LIST}; do
     fi
   fi
 
-  if [[ -n "${doinstall}" || "${PLAN_REQUIRED[${pkg}]}" == "1" ]]; then
+  if [[ -n "${doinstall}" || "${PLAN_REQUIRED[${pkg}]:-0}" == "1" || "${PLAN_REQUESTED[${pkg}]:-0}" == "1" ]]; then
     queue_package_install "${pkg}" "${package_path}"
   fi
 
