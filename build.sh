@@ -15,6 +15,7 @@ CURRENT_LOCAL_BUILD_FILE=""
 PACKAGE_INPUT_STAMP=".psp-package-input.sha256"
 progress_mode=""
 progress_parent="${PSP_PROGRESS_PARENT:-0}"
+export ACLOCAL_PATH="${PSPDEV}/psp/share/aclocal${ACLOCAL_PATH:+:${ACLOCAL_PATH}}"
 
 progress_record() {
   local current="$1"

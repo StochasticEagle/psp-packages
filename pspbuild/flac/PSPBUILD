@@ -1,6 +1,6 @@
 pkgname=flac
 pkgver=1.5.0
-pkgrel=6
+pkgrel=7
 pkgdesc="Free Lossless Audio Codec"
 arch=(any)
 url="https://xiph.org/flac/"
@@ -54,7 +54,6 @@ package() {
 
     rm -rf "${pkgdir}/psp/share/doc"
     rm -rf "${pkgdir}/psp/share/man"
-    rm -rf "${pkgdir}/psp/share/aclocal"
     rm -rf "${pkgdir}"/psp/lib/lib{FLAC,FLAC++}.la
 
     mkdir -m 755 -p "${pkgdir}/psp/share/licenses/${pkgname}"

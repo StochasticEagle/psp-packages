@@ -1,6 +1,6 @@
 pkgname=opus
 pkgver=1.6.1
-pkgrel=4
+pkgrel=5
 pkgdesc="Opus is a totally open, royalty-free, highly versatile audio codec."
 arch=(any)
 url="https://opus-codec.org/"
@@ -27,6 +27,8 @@ build() {
 package() {
     cd "${pkgname}-${pkgver}"
     DESTDIR="$pkgdir" cmake --install build
+
+    install -Dm644 opus.m4 "$pkgdir/psp/share/aclocal/opus.m4"
 
     mkdir -m 755 -p "$pkgdir/psp/share/licenses/$pkgname"
     install -m 644 COPYING "$pkgdir/psp/share/licenses/$pkgname"
