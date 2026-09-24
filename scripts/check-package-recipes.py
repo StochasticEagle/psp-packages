@@ -43,6 +43,8 @@ printf 'url\t%s\n' "${url-}"
 for value in "${arch[@]}"; do printf 'arch\t%s\n' "$value"; done
 for value in "${license[@]}"; do printf 'license\t%s\n' "$value"; done
 for value in "${groups[@]}"; do printf 'group\t%s\n' "$value"; done
+for value in "${provides[@]}"; do printf 'provides\t%s\n' "$value"; done
+for value in "${conflicts[@]}"; do printf 'conflicts\t%s\n' "$value"; done
 for value in "${source[@]}"; do printf 'source\t%s\n' "$value"; done
 for value in "${sha256sums[@]}"; do printf 'sha256\t%s\n' "$value"; done
 """,
@@ -173,8 +175,21 @@ def main() -> int:
             errors.append(f"{rel}: arch must be exactly (any)")
         if not values.get("license"):
             errors.append(f"{rel}: license must not be empty")
-        if "psp-libraries" not in values.get("group", []):
-            errors.append(f"{rel}: groups must include psp-libraries")
+        groups = values.get("group", [])
+        provides = {
+            re.split(r"[<>=]", value, maxsplit=1)[0]
+            for value in values.get("provides", [])
+        }
+        conflicts = {
+            re.split(r"[<>=]", value, maxsplit=1)[0]
+            for value in values.get("conflicts", [])
+        }
+        alternative_provider = bool(provides and provides & conflicts)
+        if "psp-libraries" not in groups and not alternative_provider:
+            errors.append(
+                f"{rel}: groups must include psp-libraries unless the package "
+                "is an explicit conflicting alternative provider"
+            )
 
         sources = values.get("source", [])
         sums = values.get("sha256", [])
