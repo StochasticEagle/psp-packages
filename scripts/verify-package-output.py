@@ -17,23 +17,9 @@ PACKAGES = ROOT / "packages"
 
 
 def recipe_metadata(path: pathlib.Path) -> tuple[str, str]:
-    probe = subprocess.run(
-        [
-            "bash",
-            "-c",
-            r"""
-source "$1"
-printf '%s\\t%s-%s-%s-%s.pkg.tar.gz\\n' \\
-    "${pkgname[0]}" "${pkgname[0]}" "$pkgver" "$pkgrel" "${arch[0]}"
-""",
-            "_",
-            str(path),
-        ],
-        text=True,
-        capture_output=True,
-        check=True,
-    )
-    pkgname, archive = probe.stdout.rstrip("\\n").split("\\t", 1)
+    parser = ROOT / "parse_pspbuild.sh"
+    pkgname = subprocess.check_output([str(parser), str(path), "pkgname"], text=True).strip()
+    archive = subprocess.check_output([str(parser), str(path), "pkgoutput"], text=True).strip()
     return pkgname, archive
 
 
