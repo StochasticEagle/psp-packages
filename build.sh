@@ -22,6 +22,10 @@ for arg in "$@"; do
   fi
 done
 export ACLOCAL_PATH="${PSPDEV}/psp/share/aclocal${ACLOCAL_PATH:+:${ACLOCAL_PATH}}"
+PSP_PATHMAP_FLAGS="-ffile-prefix-map=${ROOT}=. -fdebug-prefix-map=${ROOT}=. -fmacro-prefix-map=${ROOT}=."
+export CPPFLAGS="${CPPFLAGS:+${CPPFLAGS} }${PSP_PATHMAP_FLAGS}"
+export CFLAGS="${CFLAGS:+${CFLAGS} }${PSP_PATHMAP_FLAGS}"
+export CXXFLAGS="${CXXFLAGS:+${CXXFLAGS} }${PSP_PATHMAP_FLAGS}"
 
 progress_record() {
   local current="$1"
