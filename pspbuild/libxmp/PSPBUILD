@@ -1,6 +1,6 @@
 pkgname=libxmp
 pkgver=4.7.2
-pkgrel=1
+pkgrel=2
 pkgdesc="Libxmp is a library that renders module files to PCM data"
 arch=(any)
 url="https://github.com/libxmp/libxmp"
@@ -9,7 +9,6 @@ groups=('psp-libraries')
 depends=()
 makedepends=()
 optdepends=()
-conflicts=('libxmp-lite')
 source=("${pkgname}-${pkgver}::git+https://github.com/libxmp/libxmp.git#commit=a13276d27feabcf9ee4f982913f718ee05a65cb7")
 sha256sums=('SKIP')
 

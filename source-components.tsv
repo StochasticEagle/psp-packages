@@ -11,7 +11,7 @@ https://github.com/curl/curl.git	components/curl
 https://github.com/Cyan4973/xxHash.git	components/xxhash
 https://github.com/DanBloomberg/leptonica.git	components/leptonica
 https://github.com/DaveGamble/cJSON.git	components/cjson
-https://github.com/dogo/oslib.git	components/oslib
+https://github.com/StochasticEagle/psp-oslib.git	components/oslib
 https://github.com/erincatto/box2d.git	components/box2d
 https://github.com/fjtrujy/openTRI.git	components/openTRI
 https://github.com/fmtlib/fmt.git	components/fmt

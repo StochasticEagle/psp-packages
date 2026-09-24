@@ -40,7 +40,8 @@
 	shallow = true
 [submodule "components/oslib"]
 	path = components/oslib
-	url = https://github.com/dogo/oslib.git
+	url = https://github.com/StochasticEagle/psp-oslib.git
+	branch = dev/fork
 	shallow = true
 [submodule "components/bzip2"]
 	path = components/bzip2
