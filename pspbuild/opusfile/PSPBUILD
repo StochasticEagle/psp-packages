@@ -1,6 +1,6 @@
 pkgname=opusfile
 pkgver=0.12
-pkgrel=4
+pkgrel=5
 pkgdesc="The opusfile library provides seeking, decode, and playback of Opus streams in the Ogg container."
 arch=(any)
 url="https://opus-codec.org/"
@@ -26,6 +26,7 @@ build() {
 package() {
     cd "${pkgname}-${pkgver}"
     make --quiet $MAKEFLAGS DESTDIR="$pkgdir" install
+    sed -i "s#${PSPDEV}##g" "$pkgdir/psp/lib/libopusfile.la" "$pkgdir/psp/lib/libopusurl.la"
 
     mkdir -m 755 -p "$pkgdir/psp/share/licenses/$pkgname"
     install -m 644 COPYING "$pkgdir/psp/share/licenses/$pkgname"

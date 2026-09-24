@@ -1,6 +1,6 @@
 pkgname=sail
 pkgver=1.2.0
-pkgrel=9
+pkgrel=10
 pkgdesc="SAIL cross-platform image decoding library"
 arch=(any)
 url='https://github.com/HappySeaFox/sail'
@@ -53,6 +53,7 @@ build() {
 package() {
     cd "$srcdir/$pkgname"
     make --quiet $MAKEFLAGS DESTDIR="$pkgdir" install
+    find "$pkgdir/psp/lib/cmake" -type f -name '*.cmake' -exec sed -i "s#${PSPDEV}##g" {} +
 
     install -d -m 755 -p "${pkgdir}/psp/share/licenses/${pkgname}"
     install -m 644 LICENSE.txt "${pkgdir}/psp/share/licenses/${pkgname}"

@@ -1,6 +1,6 @@
 pkgname=leptonica
 pkgver=1.87.0
-pkgrel=2
+pkgrel=3
 pkgdesc="An open source C library for efficient image processing and image analysis operations"
 arch=(any)
 url="https://www.leptonica.org/"
@@ -63,6 +63,7 @@ build() {
 package() {
     cd "$pkgname-${pkgver}"
     make --quiet DESTDIR="$pkgdir" $MAKEFLAGS install
+    sed -i "s#${PSPDEV}##g" "$pkgdir/psp/lib/pkgconfig/lept.pc"
 
     rm "${pkgdir}/psp/lib/libleptonica.la"
 

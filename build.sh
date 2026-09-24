@@ -15,6 +15,12 @@ CURRENT_LOCAL_BUILD_FILE=""
 PACKAGE_INPUT_STAMP=".psp-package-input.sha256"
 progress_mode=""
 progress_parent="${PSP_PROGRESS_PARENT:-0}"
+for arg in "$@"; do
+  if [[ "${arg}" == "p" ]]; then
+    progress_mode="true"
+    break
+  fi
+done
 export ACLOCAL_PATH="${PSPDEV}/psp/share/aclocal${ACLOCAL_PATH:+:${ACLOCAL_PATH}}"
 
 progress_record() {
@@ -117,6 +123,21 @@ progress_filter() {
   fi
 }
 
+prune_build_logs() {
+  local -a logs=()
+
+  shopt -s nullglob
+  logs=("${BUILD_ROOT}/_logs"/build-*.log)
+  shopt -u nullglob
+
+  if (( ${#logs[@]} <= 4 )); then
+    return
+  fi
+
+  mapfile -t logs < <(printf '%s\n' "${logs[@]}" | LC_ALL=C sort -r)
+  rm -f -- "${logs[@]:4}"
+}
+
 cleanup_local_buildfile() {
   if [[ -n "${CURRENT_LOCAL_BUILD_FILE}" ]]; then
     rm -f "${CURRENT_LOCAL_BUILD_FILE}"
@@ -125,7 +146,16 @@ cleanup_local_buildfile() {
 }
 trap cleanup_local_buildfile EXIT
 
-mkdir -p "${BUILD_ROOT}" "${PACKAGES}"
+mkdir -p "${BUILD_ROOT}" "${PACKAGES}" "${BUILD_ROOT}/_logs"
+progress_log="${BUILD_ROOT}/_logs/build-$(date +%Y%m%d-%H%M%S).log"
+: > "${progress_log}"
+prune_build_logs
+if [[ -n "${progress_mode}" ]]; then
+  exec > >(progress_filter "${progress_log}" "${progress_parent}") 2>&1
+else
+  exec > >(tee "${progress_log}") 2>&1
+fi
+echo "Log: ${progress_log}"
 
 # Recipes used to live at <repo>/<package>. They now live at
 # <repo>/pspbuild/<package>, so a recipe must not escape through startdir/..
@@ -249,12 +279,6 @@ fi
 
 PROGRESS_TOTAL=$(wc -w <<< "${PKG_LIST}")
 PROGRESS_CURRENT=0
-
-if [[ -n "${progress_mode}" ]]; then
-  mkdir -p "${BUILD_ROOT}/_logs"
-  progress_log="${BUILD_ROOT}/_logs/build-$(date +%Y%m%d-%H%M%S).log"
-  exec > >(progress_filter "${progress_log}" "${progress_parent}") 2>&1
-fi
 
 if [[ -n "${doclean}" ]]; then
   for pkg in ${PKG_LIST}; do

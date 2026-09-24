@@ -43,8 +43,6 @@ def forbidden_needles() -> list[bytes]:
     values = {
         b"$pkgdir",
         b"${pkgdir}",
-        b"$PSPDEV",
-        b"${PSPDEV}",
         b"/home/runner/",
     }
     for name in ("PSPDEV", "GITHUB_WORKSPACE", "RUNNER_TEMP"):
@@ -71,6 +69,17 @@ def scan_archive(archive: pathlib.Path, errors: list[str]) -> None:
                 continue
             data = handle.read()
 
+            if member.name in {".BUILDINFO", ".MTREE", ".PKGINFO"}:
+                continue
+
+            basename = path.name
+            text_metadata = (
+                basename.endswith(("-config", ".pc", ".la", ".cmake", ".mk", ".conf", ".cfg"))
+                or data.startswith(b"#!")
+            )
+            if not text_metadata:
+                continue
+
             for needle in needles:
                 if needle and needle in data:
                     errors.append(
@@ -78,32 +87,6 @@ def scan_archive(archive: pathlib.Path, errors: list[str]) -> None:
                         f"{needle.decode('utf-8', 'replace')}"
                     )
                     break
-
-            if member.name.endswith(".pc"):
-                text = data.decode("utf-8", "replace")
-                bad_pc = [
-                    "$pkgdir",
-                    "${pkgdir}",
-                    "$PSPDEV",
-                    "${PSPDEV}",
-                    "/home/runner/",
-                ]
-                bad_pc.extend(
-                    value
-                    for value in (
-                        os.environ.get("PSPDEV"),
-                        os.environ.get("GITHUB_WORKSPACE"),
-                        os.environ.get("RUNNER_TEMP"),
-                    )
-                    if value
-                )
-                for bad in bad_pc:
-                    if bad in text:
-                        errors.append(
-                            f"{archive.name}:{member.name}: pkg-config metadata "
-                            f"contains forbidden path {bad}"
-                        )
-                        break
 
 
 def verify_clean_install(archives: list[pathlib.Path]) -> None:

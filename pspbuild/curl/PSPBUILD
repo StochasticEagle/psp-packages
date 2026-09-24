@@ -1,6 +1,6 @@
 pkgname=curl
 pkgver=8.22.0
-pkgrel=2
+pkgrel=3
 pkgdesc="A library for transferring data with URL syntax"
 arch=(any)
 url="https://curl.se/"
@@ -36,4 +36,5 @@ build() {
 package() {
     cd "$pkgname-$pkgver"
     DESTDIR="$pkgdir" cmake --install build
+    sed -i "s#${PSPDEV}##g" "$pkgdir/psp/bin/curl-config" "$pkgdir"/psp/lib/cmake/CURL/*.cmake
 }
