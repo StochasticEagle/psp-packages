@@ -58,16 +58,21 @@ jobs:
           echo "$PSPDEV/bin" >> "$GITHUB_PATH"
           test "$(psp-gcc -dumpmachine)" = "psp"
 
-      - name: Build PSPSDK
+      - name: Install prebuilt PSPSDK
         run: |
+          export PSPDEV=/opt/pspdev
+          archive="$RUNNER_TEMP/pspsdk-ubuntu-x86_64.tar.gz"
+
+          wget -q \
+            https://github.com/StochasticEagle/pspsdk/releases/latest/download/pspsdk-ubuntu-x86_64.tar.gz \
+            -O "$archive"
+          sudo tar -xzf "$archive" -C /opt
+          sudo chown -R "$(id -u):$(id -g)" "$PSPDEV"
+
           export PATH="$PSPDEV/bin:$PATH"
-
-          git clone --depth 1 --branch dev/fork \
-            --recurse-submodules --shallow-submodules \
-            https://github.com/StochasticEagle/pspsdk.git \
-            "$RUNNER_TEMP/pspsdk"
-
-          "$RUNNER_TEMP/pspsdk/build-and-install.sh"
+          test "$(psp-config --pspsdk-path)" = "$PSPDEV/psp/sdk"
+          test -f "$PSPDEV/psp/sdk/lib/libpspsdk.a"
+          test -f "$PSPDEV/psp/sdk/lib/build.mak"
 
       - name: Build Tremor
         run: |
