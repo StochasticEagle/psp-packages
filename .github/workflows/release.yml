@@ -2,11 +2,6 @@ name: Publish packages
 
 on:
   workflow_dispatch:
-    inputs:
-      run_id:
-        description: "Successful Packages workflow run ID (leave blank for latest successful run on this branch)"
-        required: false
-        type: string
 
 permissions:
   actions: read
@@ -47,30 +42,17 @@ jobs:
         id: ci
         env:
           GH_TOKEN: ${{ github.token }}
-          REQUESTED_RUN_ID: ${{ inputs.run_id }}
         run: |
-          if [[ -n "$REQUESTED_RUN_ID" ]]; then
-            run_json="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${REQUESTED_RUN_ID}")"
-            run_id="$REQUESTED_RUN_ID"
-          else
-            run_id="$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/build.yml/runs?branch=${GITHUB_REF_NAME}&status=success&per_page=100" --jq '.workflow_runs[] | select(.name == "Packages" and .conclusion == "success") | .id' | head -n 1)"
-            if [[ -z "$run_id" ]]; then
-              echo "::error::No successful Packages workflow run exists for branch ${GITHUB_REF_NAME}."
-              exit 1
-            fi
-            run_json="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}")"
+          run_id="$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/build.yml/runs?branch=${GITHUB_REF_NAME}&status=success&per_page=100" --jq '.workflow_runs[] | select(.name == "Packages" and .conclusion == "success") | .id' | head -n 1)"
+          if [[ -z "$run_id" ]]; then
+            echo "::error::No successful Packages workflow run exists for branch ${GITHUB_REF_NAME}."
+            exit 1
           fi
 
-          run_name="$(jq -r '.name' <<<"$run_json")"
-          conclusion="$(jq -r '.conclusion // ""' <<<"$run_json")"
+          run_json="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}")"
           head_branch="$(jq -r '.head_branch // ""' <<<"$run_json")"
           head_sha="$(jq -r '.head_sha // ""' <<<"$run_json")"
           run_number="$(jq -r '.run_number' <<<"$run_json")"
-
-          if [[ "$run_name" != "Packages" || "$conclusion" != "success" ]]; then
-            echo "::error::Workflow run ${run_id} is not a successful Packages run."
-            exit 1
-          fi
 
           artifact_id="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/artifacts?per_page=100" --jq '.artifacts[] | select(.name == "packages" and .expired == false) | .id' | head -n 1)"
           if [[ -z "$artifact_id" ]]; then
