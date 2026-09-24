@@ -1,6 +1,6 @@
 pkgname=unarr
 pkgver=1.2.0
-pkgrel=1
+pkgrel=2
 pkgdesc="A decompression library for rar, tar, zip and 7z archives"
 arch=(any)
 url="https://github.com/selmf/unarr/"
@@ -11,13 +11,34 @@ optdepends=('zlib' 'bzip2' 'liblzma')
 makedepends=()
 source=(
     "${pkgname}-${pkgver}::git+https://github.com/selmf/unarr.git#commit=3307cd3fdcffe3b98326872c601bbf7235386441"
+    "unarr-1.2.0-PSP.patch"
 )
 sha256sums=(
     "SKIP"
+    "SKIP"
 )
+
+psp_apply_patch() {
+    local patch_file="$1"
+    shift
+    local output
+    if output="$(patch --dry-run --batch --forward --fuzz=0 "$@" < "$patch_file" 2>&1)"; then
+        printf '%s\n' "$output"
+        patch --batch --forward --fuzz=0 "$@" < "$patch_file"
+        return
+    fi
+    if patch --dry-run --batch --reverse --fuzz=0 "$@" < "$patch_file" >/dev/null 2>&1; then
+        echo "Patch already applied: $patch_file"
+        return 0
+    fi
+    printf '%s\n' "$output" >&2
+    echo "ERROR: patch is incompatible with the current source: $patch_file" >&2
+    return 1
+}
 
 prepare() {
     cd "${pkgname}-${pkgver}"
+    psp_apply_patch "$startdir/unarr-1.2.0-PSP.patch" -p1 || { exit 1; }
 
     # Disable upstream target-level IPO/LTO. PSP consumers link this as a
     # conventional static archive, and the LTO-only objects require GCC's LTO

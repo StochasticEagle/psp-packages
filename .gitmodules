@@ -132,10 +132,6 @@
 	path = components/dbglogger
 	url = https://github.com/bucanero/dbglogger.git
 	shallow = true
-[submodule "components/libun7zip"]
-	path = components/libun7zip
-	url = https://github.com/bucanero/libun7zip
-	shallow = true
 [submodule "components/libpspftp"]
 	path = components/libpspftp
 	url = https://github.com/pspdev/libpspftp.git
