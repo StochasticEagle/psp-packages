@@ -87,6 +87,11 @@ jobs:
           fi
           echo "Downloaded $count package archives from CI run ${{ steps.ci.outputs.run_id }}."
 
+      - name: Install repository tooling
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libarchive-tools
+
       - name: Install prebuilt PSP toolchain
         run: |
           export PSPDEV=/opt/pspdev
