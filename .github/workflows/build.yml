@@ -63,19 +63,22 @@ jobs:
             }
           done
 
-      - name: Build PSP toolchain
+      - name: Install prebuilt PSP toolchain
         run: |
-          export PSPDEV="$RUNNER_TEMP/pspdev"
+          export PSPDEV=/opt/pspdev
+          archive="$RUNNER_TEMP/psp-toolchain-ubuntu-x86_64.tar.gz"
+
+          sudo rm -rf "$PSPDEV"
+          wget -q \
+            https://github.com/StochasticEagle/psp-toolchain/releases/latest/download/psp-toolchain-ubuntu-x86_64.tar.gz \
+            -O "$archive"
+          sudo tar -xzf "$archive" -C /opt
+          sudo chown -R "$(id -u):$(id -g)" "$PSPDEV"
+
           export PATH="$PSPDEV/bin:$PATH"
           echo "PSPDEV=$PSPDEV" >> "$GITHUB_ENV"
           echo "$PSPDEV/bin" >> "$GITHUB_PATH"
-
-          git clone --depth 1 --branch dev/fork \
-            --recurse-submodules --shallow-submodules \
-            https://github.com/StochasticEagle/psp-toolchain.git \
-            "$RUNNER_TEMP/psp-toolchain"
-
-          "$RUNNER_TEMP/psp-toolchain/toolchain.sh"
+          test "$(psp-gcc -dumpmachine)" = "psp"
 
       - name: Build PSPSDK
         run: |
