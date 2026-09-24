@@ -1,17 +1,18 @@
 pkgname=sdl-mixer
 pkgver=1.2.14
-pkgrel=14
+pkgrel=15
 pkgdesc="An audio mixer library based on the SDL library"
 arch=(any)
 url="https://www.libsdl.org/projects/old/SDL_mixer/release-1.2.html"
 license=('Zlib')
 groups=('psp-libraries')
-depends=('sdl' 'libmikmod' 'libogg' 'libvorbis')
+depends=('sdl' 'libxmp' 'libogg' 'libvorbis')
 makedepends=()
 optdepends=()
 source=(
     "SDL_mixer::git+https://github.com/libsdl-org/SDL_mixer.git#commit=78cde6dd63222f9345dda38e8b7dca836aa55803"
     "config.sub"
+    "sdl-mixer-1.2.14-libxmp.patch"
 )
 psp_source_components=(
     [0]="components/SDL_mixer12"
@@ -19,10 +20,30 @@ psp_source_components=(
 sha256sums=(
     "SKIP"
     "fe3a2f32fbaff57848732549f48d983fd6526024ec2f0f5a9dc75c2f4359a3a6"
+    "SKIP"
 )
+
+psp_apply_patch() {
+    local patch_file="$1"
+    shift
+    local output
+    if output="$(patch --dry-run --batch --forward --fuzz=0 "$@" < "$patch_file" 2>&1)"; then
+        printf '%s\n' "$output"
+        patch --batch --forward --fuzz=0 "$@" < "$patch_file"
+        return
+    fi
+    if patch --dry-run --batch --reverse --fuzz=0 "$@" < "$patch_file" >/dev/null 2>&1; then
+        echo "Patch already applied: $patch_file"
+        return 0
+    fi
+    printf '%s\n' "$output" >&2
+    echo "ERROR: patch is incompatible with the current source: $patch_file" >&2
+    return 1
+}
 
 prepare() {
     cd "${srcdir}/SDL_mixer"
+    psp_apply_patch "$startdir/sdl-mixer-1.2.14-libxmp.patch" -p1 || { exit 1; }
     cp "../config.sub" build-scripts/
     sed -i 's#@prefix@#/psp#' SDL_mixer.pc.in
     sed -i 's#@exec_prefix@#${prefix}#' SDL_mixer.pc.in

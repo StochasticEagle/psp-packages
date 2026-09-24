@@ -133,10 +133,6 @@
 	path = components/libpspftp
 	url = https://github.com/pspdev/libpspftp.git
 	shallow = true
-[submodule "components/mikmod"]
-	path = components/mikmod
-	url = https://git.code.sf.net/p/mikmod/mikmod
-	shallow = true
 [submodule "components/libpspvram"]
 	path = components/libpspvram
 	url = https://github.com/pspdev/libpspvram
