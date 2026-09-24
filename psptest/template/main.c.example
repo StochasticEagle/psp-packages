@@ -1,0 +1,26 @@
+#include <pspkernel.h>
+#include <psptest.h>
+
+/* Include the package's public header(s) here. */
+
+PSP_MODULE_INFO("PSPTEST PACKAGE", 0, 1, 0);
+PSP_MAIN_THREAD_ATTR(PSP_THREAD_ATTR_USER);
+
+/*
+ * Add one PSPTEST_COVERS(public_function); marker for every public function
+ * actually exercised by this module.
+ */
+
+PSPTEST_TEST(example_case) {
+    /*
+     * Replace this template with real behavioral assertions. Do not commit
+     * placeholder tests that pass without exercising the package.
+     */
+    psptest_skip(test, "replace template with package behavior");
+}
+
+static const PspTestCase cases[] = {
+    PSPTEST_CASE(example_case)
+};
+
+PSPTEST_MAIN("packages/PACKAGE", cases)

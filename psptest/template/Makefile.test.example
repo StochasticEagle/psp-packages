@@ -1,0 +1,13 @@
+TARGET = psptest-PACKAGE
+OBJS = main.o
+
+CFLAGS = -O2 -G0 -Wall -Wextra -Werror
+CXXFLAGS = $(CFLAGS) -fno-exceptions -fno-rtti
+ASFLAGS = $(CFLAGS)
+LIBS = -lPACKAGE -lpsptest
+
+EXTRA_TARGETS = EBOOT.PBP
+PSP_EBOOT_TITLE = PSPTEST: PACKAGE
+
+PSPSDK := $(shell psp-config --pspsdk-path)
+include $(PSPSDK)/lib/build.mak

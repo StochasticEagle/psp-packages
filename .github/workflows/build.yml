@@ -31,6 +31,9 @@ jobs:
       - name: Validate host build dependencies
         run: python3 scripts/check-host-dependencies.py
 
+      - name: Validate PSPTEST layout
+        run: python3 scripts/check-test-layout.py
+
   build:
     needs: validate
     runs-on: ubuntu-latest
