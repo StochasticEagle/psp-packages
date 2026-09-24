@@ -2,8 +2,14 @@ name: Publish packages
 
 on:
   workflow_dispatch:
+    inputs:
+      run_id:
+        description: "Successful Packages workflow run ID (leave blank for latest successful run on this branch)"
+        required: false
+        type: string
 
 permissions:
+  actions: read
   contents: read
   pages: write
   id-token: write
@@ -20,41 +26,84 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
+      - name: Verify GitHub Pages configuration
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          error_file="$RUNNER_TEMP/pages-error.txt"
+          if ! pages_json="$(gh api "repos/${GITHUB_REPOSITORY}/pages" 2>"$error_file")"; then
+            echo "::error::GitHub Pages is not enabled for ${GITHUB_REPOSITORY}. Enable Pages and select GitHub Actions as the build source before publishing."
+            cat "$error_file" >&2
+            exit 1
+          fi
+
+          build_type="$(jq -r '.build_type // ""' <<<"$pages_json")"
+          if [[ "$build_type" != "workflow" ]]; then
+            echo "::error::GitHub Pages is enabled but is not configured to build from GitHub Actions (build_type='$build_type')."
+            exit 1
+          fi
+
+      - name: Select successful Packages run
+        id: ci
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REQUESTED_RUN_ID: ${{ inputs.run_id }}
+        run: |
+          if [[ -n "$REQUESTED_RUN_ID" ]]; then
+            run_json="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${REQUESTED_RUN_ID}")"
+            run_id="$REQUESTED_RUN_ID"
+          else
+            run_id="$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/build.yml/runs?branch=${GITHUB_REF_NAME}&status=success&per_page=100" --jq '.workflow_runs[] | select(.name == "Packages" and .conclusion == "success") | .id' | head -n 1)"
+            if [[ -z "$run_id" ]]; then
+              echo "::error::No successful Packages workflow run exists for branch ${GITHUB_REF_NAME}."
+              exit 1
+            fi
+            run_json="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}")"
+          fi
+
+          run_name="$(jq -r '.name' <<<"$run_json")"
+          conclusion="$(jq -r '.conclusion // ""' <<<"$run_json")"
+          head_branch="$(jq -r '.head_branch // ""' <<<"$run_json")"
+          head_sha="$(jq -r '.head_sha // ""' <<<"$run_json")"
+          run_number="$(jq -r '.run_number' <<<"$run_json")"
+
+          if [[ "$run_name" != "Packages" || "$conclusion" != "success" ]]; then
+            echo "::error::Workflow run ${run_id} is not a successful Packages run."
+            exit 1
+          fi
+
+          artifact_id="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/artifacts?per_page=100" --jq '.artifacts[] | select(.name == "packages" and .expired == false) | .id' | head -n 1)"
+          if [[ -z "$artifact_id" ]]; then
+            echo "::error::Successful Packages run ${run_id} has no non-expired 'packages' artifact."
+            exit 1
+          fi
+
+          echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
+          echo "head_sha=$head_sha" >> "$GITHUB_OUTPUT"
+          echo "artifact_id=$artifact_id" >> "$GITHUB_OUTPUT"
+          echo "Using Packages #${run_number} from ${head_branch} at ${head_sha} (artifact ${artifact_id})."
+
       - uses: actions/checkout@v6
         with:
           fetch-depth: 1
           submodules: false
 
-      - name: Validate source-component invariants
-        run: python3 scripts/check-source-components.py
+      - name: Download package artifacts
+        uses: actions/download-artifact@v8
+        with:
+          name: packages
+          path: packages
+          github-token: ${{ github.token }}
+          run-id: ${{ steps.ci.outputs.run_id }}
 
-      - name: Audit package recipes
-        run: python3 scripts/check-package-recipes.py
-
-      - name: Validate host build dependencies
-        run: python3 scripts/check-host-dependencies.py
-
-      - name: Install host dependencies
+      - name: Verify downloaded package set
         run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            autoconf automake autopoint bison build-essential cmake fakeroot flex gawk gettext \
-            git libarchive-dev libarchive-tools libcurl4-openssl-dev libgmp-dev \
-            libgpgme-dev libgsl-dev libmpc-dev libmpfr-dev libreadline-dev \
-            libssl-dev libtool libtool-bin libusb-dev meson ninja-build patch pkg-config \
-            python3 python3-jinja2 python3-jsonschema texinfo wget xz-utils zlib1g-dev
-
-      - name: Verify host build tools
-        run: |
-          for tool in \
-            autoconf autoheader automake aclocal autoreconf autopoint \
-            libtool libtoolize gettext pkg-config \
-            cmake meson ninja patch make python3; do
-            command -v "$tool" >/dev/null || {
-              echo "ERROR: required host build tool is unavailable: $tool"
-              exit 1
-            }
-          done
+          count="$(find packages -maxdepth 1 -type f -name '*.pkg.tar.*' | wc -l)"
+          if [[ "$count" -eq 0 ]]; then
+            echo "::error::Downloaded Packages artifact contains no package archives."
+            exit 1
+          fi
+          echo "Downloaded $count package archives from CI run ${{ steps.ci.outputs.run_id }}."
 
       - name: Install prebuilt PSP toolchain
         run: |
@@ -68,51 +117,9 @@ jobs:
           sudo tar -xzf "$archive" -C /opt
           sudo chown -R "$(id -u):$(id -g)" "$PSPDEV"
 
-          export PATH="$PSPDEV/bin:$PATH"
           echo "PSPDEV=$PSPDEV" >> "$GITHUB_ENV"
           echo "$PSPDEV/bin" >> "$GITHUB_PATH"
-          test "$(psp-gcc -dumpmachine)" = "psp"
-
-      - name: Install prebuilt PSPSDK
-        run: |
-          export PSPDEV=/opt/pspdev
-          archive="$RUNNER_TEMP/pspsdk-ubuntu-x86_64.tar.gz"
-
-          wget -q \
-            https://github.com/StochasticEagle/pspsdk/releases/latest/download/pspsdk-ubuntu-x86_64.tar.gz \
-            -O "$archive"
-          sudo tar -xzf "$archive" -C /opt
-          sudo chown -R "$(id -u):$(id -g)" "$PSPDEV"
-
-          export PATH="$PSPDEV/bin:$PATH"
-          test "$(psp-config --pspsdk-path)" = "$PSPDEV/psp/sdk"
-          test -f "$PSPDEV/psp/sdk/lib/libpspsdk.a"
-          test -f "$PSPDEV/psp/sdk/lib/build.mak"
-
-      - name: Build packages
-        run: |
-          export PATH="$PSPDEV/bin:$PATH"
-
-          build_log="$RUNNER_TEMP/psp-packages-build.log"
-          set +e
-          set -o pipefail
-          ./build.sh 2>&1 | tee "$build_log"
-          build_status=${PIPESTATUS[0]}
-          set +o pipefail
-          set -e
-
-          drift="$(
-            grep -E 'with fuzz|offset -?[0-9]+ lines?' "$build_log" || true
-          )"
-          if [[ -n "$drift" ]]; then
-            echo "::warning::Patch drift detected during package builds; refresh affected patches."
-            printf '%s\n' "$drift"
-          fi
-
-          exit "$build_status"
-
-      - name: Verify complete package output
-        run: python3 scripts/verify-package-output.py
+          test -x "$PSPDEV/share/pacman/bin/repo-add"
 
       - name: Create Pacman repository
         run: |
@@ -134,7 +141,7 @@ jobs:
         uses: actions/configure-pages@v6
 
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v4
+        uses: actions/upload-pages-artifact@v5
         with:
           path: ./repo
 
