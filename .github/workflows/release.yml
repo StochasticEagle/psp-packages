@@ -1,20 +1,15 @@
-name: Release packages
+name: Publish packages
 
 on:
   workflow_dispatch:
-    inputs:
-      tag:
-        description: Release tag to create
-        required: true
-        type: string
 
 permissions:
-  contents: write
+  contents: read
   pages: write
   id-token: write
 
 concurrency:
-  group: psp-packages-release
+  group: psp-packages-publish
   cancel-in-progress: false
 
 jobs:
@@ -134,23 +129,6 @@ jobs:
           test -s pspdev.db
           test -s pspdev.files
           compgen -G '*.pkg.tar.*' >/dev/null
-
-      - name: Archive repository snapshot
-        run: tar -czf "$RUNNER_TEMP/psp-packages-repo.tar.gz" -C repo .
-
-      - name: Create GitHub release
-        uses: softprops/action-gh-release@v3
-        with:
-          tag_name: ${{ inputs.tag }}
-          target_commitish: ${{ github.sha }}
-          name: PSP packages ${{ inputs.tag }}
-          generate_release_notes: true
-          make_latest: true
-          files: |
-            repo/*.pkg.tar.*
-            repo/pspdev.db
-            repo/pspdev.files
-            ${{ runner.temp }}/psp-packages-repo.tar.gz
 
       - name: Setup Pages
         uses: actions/configure-pages@v6
