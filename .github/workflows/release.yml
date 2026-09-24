@@ -1,20 +1,28 @@
-name: Packages
+name: Release packages
 
 on:
-  push:
-  pull_request:
   workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to create
+        required: true
+        type: string
 
 permissions:
-  contents: read
+  contents: write
+  pages: write
+  id-token: write
 
 concurrency:
-  group: packages-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  group: psp-packages-release
+  cancel-in-progress: false
 
 jobs:
-  validate:
+  release:
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
       - uses: actions/checkout@v6
@@ -30,16 +38,6 @@ jobs:
 
       - name: Validate host build dependencies
         run: python3 scripts/check-host-dependencies.py
-
-  build:
-    needs: validate
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          fetch-depth: 1
-          submodules: false
 
       - name: Install host dependencies
         run: |
@@ -121,21 +119,47 @@ jobs:
       - name: Verify complete package output
         run: python3 scripts/verify-package-output.py
 
-      - uses: actions/upload-artifact@v7
-        with:
-          name: packages
-          path: packages/*.pkg.tar.*
-          if-no-files-found: error
-
-      - name: Create pacman repository
+      - name: Create Pacman repository
         run: |
           rm -rf repo
           mkdir -p repo
           cp packages/*.pkg.tar.* repo/
           ./make-repo-html.sh
+
           cd repo
           "$PSPDEV/share/pacman/bin/repo-add" pspdev.db.tar.gz *.pkg.tar.*
           mv pspdev.db.tar.gz pspdev.db
           mv pspdev.files.tar.gz pspdev.files
-          tar -cvf ../repo.tar ./*
 
+          test -s pspdev.db
+          test -s pspdev.files
+          compgen -G '*.pkg.tar.*' >/dev/null
+
+      - name: Archive repository snapshot
+        run: tar -czf "$RUNNER_TEMP/psp-packages-repo.tar.gz" -C repo .
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ inputs.tag }}
+          target_commitish: ${{ github.sha }}
+          name: PSP packages ${{ inputs.tag }}
+          generate_release_notes: true
+          make_latest: true
+          files: |
+            repo/*.pkg.tar.*
+            repo/pspdev.db
+            repo/pspdev.files
+            ${{ runner.temp }}/psp-packages-repo.tar.gz
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v6
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: ./repo
+
+      - name: Deploy Pacman repository
+        id: deployment
+        uses: actions/deploy-pages@v5
