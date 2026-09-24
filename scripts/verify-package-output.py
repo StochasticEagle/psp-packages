@@ -16,11 +16,13 @@ RECIPES = ROOT / "pspbuild"
 PACKAGES = ROOT / "packages"
 
 
-def recipe_metadata(path: pathlib.Path) -> tuple[str, str]:
+def recipe_metadata(path: pathlib.Path) -> tuple[str, str, set[str]]:
     parser = ROOT / "parse_pspbuild.sh"
     pkgname = subprocess.check_output([str(parser), str(path), "pkgname"], text=True).strip()
     archive = subprocess.check_output([str(parser), str(path), "pkgoutput"], text=True).strip()
-    return pkgname, archive
+    raw_conflicts = subprocess.check_output([str(parser), str(path), "conflicts"], text=True).split()
+    conflicts = {re.split(r"[<>=]", item, maxsplit=1)[0] for item in raw_conflicts}
+    return pkgname, archive, conflicts
 
 
 def archive_pkgname(archive: pathlib.Path) -> str:
@@ -89,7 +91,14 @@ def scan_archive(archive: pathlib.Path, errors: list[str]) -> None:
                     break
 
 
-def verify_clean_install(archives: list[pathlib.Path]) -> None:
+def packages_conflict(name_a: str, name_b: str, conflicts: dict[str, set[str]]) -> bool:
+    return name_b in conflicts.get(name_a, set()) or name_a in conflicts.get(name_b, set())
+
+
+def verify_clean_install(
+    archives_by_name: dict[str, pathlib.Path],
+    conflicts: dict[str, set[str]],
+) -> None:
     pspdev = os.environ.get("PSPDEV")
     if not pspdev:
         raise RuntimeError("PSPDEV is not set")
@@ -101,37 +110,55 @@ def verify_clean_install(archives: list[pathlib.Path]) -> None:
         if not required.exists():
             raise RuntimeError(f"clean-prefix install prerequisite missing: {required}")
 
-    with tempfile.TemporaryDirectory(prefix="psp-packages-install-") as tmp:
-        root = pathlib.Path(tmp) / "pspdev"
-        for directory in (
-            root / "var/lib/pacman",
-            root / "var/cache/pacman/pkg",
-            root / "etc/pacman.d/gnupg",
-            root / "var/log",
-            root / "share/libalpm/hooks",
-            root / "etc/pacman.d/hooks",
-        ):
-            directory.mkdir(parents=True, exist_ok=True)
+    selected: list[str] = []
+    alternatives: list[str] = []
+    for name in sorted(archives_by_name):
+        if any(packages_conflict(name, current, conflicts) for current in selected):
+            alternatives.append(name)
+        else:
+            selected.append(name)
 
-        arch = subprocess.check_output([str(get_arch)], text=True).strip()
-        subprocess.run(
-            [
-                str(pacman),
-                "--root", str(root),
-                "--dbpath", str(root / "var/lib/pacman"),
-                "--config", str(config),
-                "--cachedir", str(root / "var/cache/pacman/pkg"),
-                "--gpgdir", str(root / "etc/pacman.d/gnupg"),
-                "--logfile", str(root / "var/log/pacman.log"),
-                "--hookdir", str(root / "share/libalpm/hooks"),
-                "--hookdir", str(root / "etc/pacman.d/hooks"),
-                "--arch", arch,
-                "-U",
-                "--noconfirm",
-                *map(str, archives),
-            ],
-            check=True,
-        )
+    transactions = [selected]
+    for alternative in alternatives:
+        transaction = [
+            name for name in selected
+            if not packages_conflict(alternative, name, conflicts)
+        ]
+        transaction.append(alternative)
+        transactions.append(sorted(transaction))
+
+    arch = subprocess.check_output([str(get_arch)], text=True).strip()
+    for index, package_names in enumerate(transactions, start=1):
+        with tempfile.TemporaryDirectory(prefix=f"psp-packages-install-{index}-") as tmp:
+            root = pathlib.Path(tmp) / "pspdev"
+            for directory in (
+                root / "var/lib/pacman",
+                root / "var/cache/pacman/pkg",
+                root / "etc/pacman.d/gnupg",
+                root / "var/log",
+                root / "share/libalpm/hooks",
+                root / "etc/pacman.d/hooks",
+            ):
+                directory.mkdir(parents=True, exist_ok=True)
+
+            subprocess.run(
+                [
+                    str(pacman),
+                    "--root", str(root),
+                    "--dbpath", str(root / "var/lib/pacman"),
+                    "--config", str(config),
+                    "--cachedir", str(root / "var/cache/pacman/pkg"),
+                    "--gpgdir", str(root / "etc/pacman.d/gnupg"),
+                    "--logfile", str(root / "var/log/pacman.log"),
+                    "--hookdir", str(root / "share/libalpm/hooks"),
+                    "--hookdir", str(root / "etc/pacman.d/hooks"),
+                    "--arch", arch,
+                    "-U",
+                    "--noconfirm",
+                    *[str(archives_by_name[name]) for name in package_names],
+                ],
+                check=True,
+            )
 
 
 def verify_repo_add(archives: list[pathlib.Path]) -> None:
@@ -163,11 +190,13 @@ def verify_repo_add(archives: list[pathlib.Path]) -> None:
 def main() -> int:
     errors: list[str] = []
     expected_by_name: dict[str, str] = {}
+    conflicts_by_name: dict[str, set[str]] = {}
     for recipe in sorted(RECIPES.glob("*/PSPBUILD")):
-        pkgname, archive = recipe_metadata(recipe)
+        pkgname, archive, conflicts = recipe_metadata(recipe)
         if pkgname in expected_by_name:
             errors.append(f"duplicate recipe pkgname: {pkgname}")
         expected_by_name[pkgname] = archive
+        conflicts_by_name[pkgname] = conflicts
 
     archives = sorted(PACKAGES.glob("*.pkg.tar.*"))
     if not archives:
@@ -207,13 +236,14 @@ def main() -> int:
             print(f"  - {error}", file=sys.stderr)
         return 1
 
-    ordered_archives = [
-        PACKAGES / expected_by_name[pkgname]
+    archives_by_name = {
+        pkgname: PACKAGES / expected_by_name[pkgname]
         for pkgname in sorted(expected_by_name)
-    ]
+    }
+    ordered_archives = list(archives_by_name.values())
 
     try:
-        verify_clean_install(ordered_archives)
+        verify_clean_install(archives_by_name, conflicts_by_name)
         verify_repo_add(ordered_archives)
     except (OSError, RuntimeError, subprocess.CalledProcessError) as exc:
         print(f"Package transaction verification failed: {exc}", file=sys.stderr)

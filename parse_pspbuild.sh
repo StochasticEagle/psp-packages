@@ -10,6 +10,9 @@ case "${2}" in
 "provides")
     echo "${pkgname} ${provides[@]}"
     ;;
+"conflicts")
+    echo "${conflicts[@]}"
+    ;;
 "pkgname")
     echo "${pkgname}"
     ;;
