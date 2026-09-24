@@ -1,29 +1,62 @@
 pkgname=unrar
-pkgver=5.90.0
-pkgrel=3
+pkgver=7.3.1
+pkgrel=1
 pkgdesc="UnRAR is a library which provides file extraction from RAR archives."
 arch=(any)
+url="https://github.com/pmachapman/unrar"
 license=('custom')
 groups=('psp-libraries')
-url="https://github.com/bucanero/libunrar-ps3"
+depends=()
 makedepends=()
-source=("git+https://github.com/bucanero/lib${pkgname}-ps3#commit=43ded7b024b75ad08c5e3f56d41942fc950e0b95")
-sha256sums=('SKIP')
+optdepends=()
+source=(
+    "${pkgname}-${pkgver}::git+https://github.com/pmachapman/unrar.git#commit=160dcb5c9c1babbbdd3f0f1fc78cf48a7f8150cf"
+    "unrar-7.3.1-PSP.patch"
+)
+psp_source_components=([0]="components/libunrar")
+sha256sums=(
+    "SKIP"
+    "SKIP"
+)
 
-build() {
-  cd "lib${pkgname}-ps3"
-  make -f Makefile.psp
+psp_apply_patch() {
+    local patch_file="$1"
+    shift
+    local output
+    if output="$(patch --dry-run --batch --forward --fuzz=0 "$@" < "$patch_file" 2>&1)"; then
+        printf '%s\n' "$output"
+        patch --batch --forward --fuzz=0 "$@" < "$patch_file"
+        return
+    fi
+    if patch --dry-run --batch --reverse --fuzz=0 "$@" < "$patch_file" >/dev/null 2>&1; then
+        echo "Patch already applied: $patch_file"
+        return 0
+    fi
+    printf '%s\n' "$output" >&2
+    echo "ERROR: patch is incompatible with the current source: $patch_file" >&2
+    return 1
 }
 
-package () {
-  cd "lib${pkgname}-ps3"
-  mkdir -m 755 -p "$pkgdir/psp/lib" "$pkgdir/psp/include"
-  install -m 644 psp-libunrar.a "$pkgdir/psp/lib/libunrar.a"
-  install -m 644 include/dll.hpp "$pkgdir/psp/include/unrar.h"
+prepare() {
+    cd "${pkgname}-${pkgver}"
+    psp_apply_patch "$startdir/unrar-7.3.1-PSP.patch" -p1 || { exit 1; }
+}
 
-  mkdir -m 755 -p "$pkgdir/psp/share/licenses/$pkgname"
-  install -m 644 license.txt "$pkgdir/psp/share/licenses/$pkgname"
+build() {
+    cd "${pkgname}-${pkgver}"
+    make -f makefile clean
+    make -f makefile $MAKEFLAGS lib || { exit 1; }
+}
 
-  mkdir -m 755 -p "$pkgdir/psp/share/doc/$pkgname"
-  install -m 644 manual.txt "$pkgdir/psp/share/doc/$pkgname"
+package() {
+    cd "${pkgname}-${pkgver}"
+    mkdir -m 755 -p "$pkgdir/psp/lib" "$pkgdir/psp/include"
+    install -m 644 libunrar.a "$pkgdir/psp/lib/libunrar.a"
+    install -m 644 dll.hpp "$pkgdir/psp/include/unrar.h"
+
+    mkdir -m 755 -p "$pkgdir/psp/share/licenses/$pkgname"
+    install -m 644 license.txt "$pkgdir/psp/share/licenses/$pkgname"
+
+    mkdir -m 755 -p "$pkgdir/psp/share/doc/$pkgname"
+    install -m 644 readme.txt "$pkgdir/psp/share/doc/$pkgname"
 }

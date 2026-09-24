@@ -30,9 +30,9 @@
 	path = components/pspgl
 	url = https://github.com/pspdev/pspgl.git
 	shallow = true
-[submodule "components/libunrar-ps3"]
-	path = components/libunrar-ps3
-	url = https://github.com/bucanero/libunrar-ps3
+[submodule "components/libunrar"]
+	path = components/libunrar
+	url = https://github.com/pmachapman/unrar.git
 	shallow = true
 [submodule "components/imgui"]
 	path = components/imgui
@@ -53,10 +53,6 @@
 [submodule "components/raylib"]
 	path = components/raylib
 	url = https://github.com/raylib4Consoles/raylib.git
-	shallow = true
-[submodule "components/libmad"]
-	path = components/libmad
-	url = https://github.com/pspdev/libmad.git
 	shallow = true
 [submodule "components/theora"]
 	path = components/theora
@@ -322,11 +318,6 @@
 [submodule "components/zlib"]
 	path = components/zlib
 	url = https://github.com/madler/zlib.git
-	branch = master
-	shallow = true
-[submodule "components/zziplib"]
-	path = components/zziplib
-	url = https://github.com/gdraheim/zziplib.git
 	branch = master
 	shallow = true
 [submodule "components/freetype"]

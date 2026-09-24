@@ -4,7 +4,7 @@ https://github.com/adriensalon/imgui_psp.git	components/imgui
 https://github.com/albertodemichelis/squirrel.git	components/squirrel
 https://github.com/anjo76/angelscript.git	components/angelscript
 https://github.com/bucanero/dbglogger.git	components/dbglogger
-https://github.com/bucanero/libunrar-ps3	components/libunrar-ps3
+https://github.com/pmachapman/unrar.git	components/libunrar
 https://github.com/bucanero/mini18n	components/mini18n
 https://github.com/bulletphysics/bullet3.git	components/bullet3
 https://github.com/curl/curl.git	components/curl
@@ -20,7 +20,6 @@ https://github.com/freetype/freetype.git	components/freetype
 https://github.com/fungos/smpeg-psp.git	components/smpeg-psp
 https://github.com/g-truc/glm	components/glm
 https://github.com/gabime/spdlog.git	components/spdlog
-https://github.com/gdraheim/zziplib.git	components/zziplib
 https://github.com/google/flatbuffers.git	components/flatbuffers
 https://github.com/google/googletest.git	components/googletest
 https://github.com/HappySeaFox/sail.git	components/sail
@@ -55,7 +54,6 @@ https://github.com/pnggroup/libpng.git	components/libpng
 https://github.com/pocketpy/pocketpy.git	components/pocketpy
 https://github.com/pspdev/libbulletml.git	components/libbulletml
 https://github.com/pspdev/libintrafont	components/libintrafont
-https://github.com/pspdev/libmad.git	components/libmad
 https://github.com/pspdev/libpspav.git	components/libpspav
 https://github.com/pspdev/libpspftp.git	components/libpspftp
 https://github.com/pspdev/libpspvram	components/libpspvram
