@@ -148,10 +148,6 @@
 	path = components/libpspvram
 	url = https://github.com/pspdev/libpspvram
 	shallow = true
-[submodule "components/libmodplug"]
-	path = components/libmodplug
-	url = https://github.com/Konstanty/libmodplug
-	shallow = true
 [submodule "components/libpspmath"]
 	path = components/libpspmath
 	url = https://github.com/tufty/libpspmath.git
@@ -180,11 +176,6 @@
 [submodule "components/curl"]
 	path = components/curl
 	url = https://github.com/curl/curl.git
-	branch = master
-	shallow = true
-[submodule "components/dumb"]
-	path = components/dumb
-	url = https://github.com/kode54/dumb.git
 	branch = master
 	shallow = true
 [submodule "components/enet"]

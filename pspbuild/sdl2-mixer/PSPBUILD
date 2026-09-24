@@ -1,12 +1,12 @@
 pkgname=sdl2-mixer
 pkgver=2.8.2
-pkgrel=3
+pkgrel=4
 pkgdesc="An audio mixer library based on the SDL2 library"
 arch=(any)
 url="https://wiki.libsdl.org/SDL2_mixer/FrontPage"
 license=('Zlib')
 groups=('psp-libraries')
-depends=('sdl2' 'libmodplug' 'libvorbis' 'libogg')
+depends=('sdl2' 'libxmp' 'libvorbis' 'libogg')
 makedepends=()
 optdepends=()
 source=(
@@ -35,8 +35,8 @@ build() {
         -DBUILD_SHARED_LIBS=OFF -DCMAKE_POSITION_INDEPENDENT_CODE=OFF -DSDL2MIXER_DEPS_SHARED=OFF \
         -DSDL2MIXER_INSTALL=ON -DSDL2MIXER_SAMPLES=OFF -DSDL2MIXER_FLAC=OFF -DSDL2MIXER_OPUS=OFF \
         -DSDL2MIXER_MIDI=OFF -DSDL2MIXER_VORBIS=VORBISFILE -DSDL2MIXER_VORBIS_VORBISFILE_SHARED=OFF \
-        -DSDL2MIXER_MOD=ON -DSDL2MIXER_MOD_MODPLUG=ON -DSDL2MIXER_MOD_MODPLUG_SHARED=OFF \
-        -DSDL2MIXER_MOD_XMP=OFF -DSDL2MIXER_MP3=ON -DSDL2MIXER_MP3_MINIMP3=ON -DSDL2MIXER_MP3_MPG123=OFF \
+        -DSDL2MIXER_MOD=ON -DSDL2MIXER_MOD_MODPLUG=OFF -DSDL2MIXER_MOD_XMP=ON \
+        -DSDL2MIXER_MOD_XMP_LITE=OFF -DSDL2MIXER_MOD_XMP_SHARED=OFF -DSDL2MIXER_MP3=ON -DSDL2MIXER_MP3_MINIMP3=ON -DSDL2MIXER_MP3_MPG123=OFF \
         -DSDL2MIXER_WAVPACK=OFF -DCMAKE_BUILD_TYPE=Release .. "${XTRA_OPTS[@]}" || { exit 1; }
     make --quiet $MAKEFLAGS || { exit 1; }
 }

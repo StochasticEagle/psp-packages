@@ -30,8 +30,6 @@ https://github.com/icculus/physfs.git	components/physfs
 https://github.com/illteteka/openal-soft-psp.git	components/openal
 https://github.com/Jayanky/pspla.git	components/pspla
 https://github.com/jbeder/yaml-cpp.git	components/yaml-cpp
-https://github.com/kode54/dumb.git	components/dumb
-https://github.com/Konstanty/libmodplug	components/libmodplug
 https://github.com/leethomason/tinyxml2.git	components/tinyxml2
 https://github.com/libconfuse/libconfuse.git	components/libconfuse
 https://github.com/libexpat/libexpat.git	components/expat
