@@ -42,7 +42,6 @@ https://github.com/Mbed-TLS/mbedtls.git	components/mbedtls
 https://github.com/mcidclan/psp-media-engine-custom-core.git	components/psp-media-engine-custom-core
 https://github.com/nih-at/libzip.git	components/libzip
 https://github.com/nothings/stb.git	components/stb
-https://github.com/open-source-parsers/jsoncpp	components/jsoncpp
 https://github.com/Operation-DITTO/psp-uart-library.git	components/psp-uart-library
 https://github.com/pmachapman/unrar.git	components/libunrar
 https://github.com/pnggroup/libpng.git	components/libpng

@@ -71,10 +71,6 @@
 	path = components/bullet3
 	url = https://github.com/bulletphysics/bullet3.git
 	shallow = true
-[submodule "components/jsoncpp"]
-	path = components/jsoncpp
-	url = https://github.com/open-source-parsers/jsoncpp
-	shallow = true
 [submodule "components/libpspav"]
 	path = components/libpspav
 	url = https://github.com/pspdev/libpspav.git
