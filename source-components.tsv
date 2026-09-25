@@ -12,11 +12,9 @@ https://github.com/DanBloomberg/leptonica.git	components/leptonica
 https://github.com/DaveGamble/cJSON.git	components/cjson
 https://github.com/StochasticEagle/psp-oslib.git	components/oslib
 https://github.com/erincatto/box2d.git	components/box2d
-https://github.com/fjtrujy/openTRI.git	components/openTRI
 https://github.com/fmtlib/fmt.git	components/fmt
 https://github.com/FNA-XNA/FAudio.git	components/faudio
 https://github.com/freetype/freetype.git	components/freetype
-https://github.com/fungos/smpeg-psp.git	components/smpeg-psp
 https://github.com/g-truc/glm	components/glm
 https://github.com/gabime/spdlog.git	components/spdlog
 https://github.com/google/flatbuffers.git	components/flatbuffers
@@ -51,7 +49,6 @@ https://github.com/open-source-parsers/jsoncpp	components/jsoncpp
 https://github.com/Operation-DITTO/psp-uart-library.git	components/psp-uart-library
 https://github.com/pnggroup/libpng.git	components/libpng
 https://github.com/pocketpy/pocketpy.git	components/pocketpy
-https://github.com/pspdev/libbulletml.git	components/libbulletml
 https://github.com/pspdev/libintrafont	components/libintrafont
 https://github.com/pspdev/libpspav.git	components/libpspav
 https://github.com/pspdev/libpspftp.git	components/libpspftp
@@ -63,7 +60,6 @@ https://github.com/pspdev/SDL_ttf.git	components/SDL_ttf12
 https://github.com/pspdev/SDL.git	components/SDL
 https://github.com/raylib4Consoles/raylib.git	components/raylib
 https://github.com/sabdul-khabir/SDL3_gfx.git	components/sdl3-gfx
-https://github.com/selmf/unarr.git	components/unarr
 https://github.com/slendidev/smath.git	components/smath
 https://github.com/sqlite/sqlite.git	components/sqlite
 https://github.com/StochasticEagle/psp-argtable2.git	components/argtable2
