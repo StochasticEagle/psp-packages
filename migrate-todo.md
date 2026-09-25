@@ -14,7 +14,6 @@ None.
 - The SDL 1.2 and SDL2 package families are migrated to dedicated shallow components pinned to the exact revisions used by their recipes. Shared upstream repositories use separate component checkouts where different ABI/API generations require different revisions.
 - Lua has been consolidated onto Lua 5.5 as `lua55`. Lua 5.5 is not ABI-compatible with Lua 5.4, so all C modules must be rebuilt. LuaSocket now depends on `lua55` but remains build-blacklisted pending Lua 5.5 compatibility testing.
 - `argtable2` uses the PSP-maintained Git repository at `StochasticEagle/psp-argtable2`.
-- `mpg123` uses the `libsdl-org/mpg123` Git mirror pinned to its exact 1.33.7 release commit.
 - `pixman` uses the authoritative freedesktop.org Git repository pinned to the exact 0.40.0 release commit.
 - SQLite is consolidated onto the single `components/sqlite` source component; the obsolete `sqlite374` component has been removed.
 - PolarSSL is no longer present as a package recipe. Mbed TLS is the maintained successor and its component is aligned to the current stable release.

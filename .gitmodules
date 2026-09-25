@@ -1,7 +1,3 @@
-[submodule "components/box2d"]
-	path = components/box2d
-	url = https://github.com/erincatto/box2d.git
-	shallow = true
 [submodule "components/stb"]
 	path = components/stb
 	url = https://github.com/nothings/stb.git
@@ -21,10 +17,6 @@
 [submodule "components/pspgl"]
 	path = components/pspgl
 	url = https://github.com/pspdev/pspgl.git
-	shallow = true
-[submodule "components/libunrar"]
-	path = components/libunrar
-	url = https://github.com/pmachapman/unrar.git
 	shallow = true
 [submodule "components/imgui"]
 	path = components/imgui
@@ -66,10 +58,6 @@
 [submodule "components/psp-uart-library"]
 	path = components/psp-uart-library
 	url = https://github.com/Operation-DITTO/psp-uart-library.git
-	shallow = true
-[submodule "components/bullet3"]
-	path = components/bullet3
-	url = https://github.com/bulletphysics/bullet3.git
 	shallow = true
 [submodule "components/libpspav"]
 	path = components/libpspav
@@ -140,11 +128,6 @@
 	url = https://github.com/lsalzman/enet.git
 	branch = master
 	shallow = true
-[submodule "components/expat"]
-	path = components/expat
-	url = https://github.com/libexpat/libexpat.git
-	branch = master
-	shallow = true
 [submodule "components/faudio"]
 	path = components/faudio
 	url = https://github.com/FNA-XNA/FAudio.git
@@ -183,11 +166,6 @@
 [submodule "components/leptonica"]
 	path = components/leptonica
 	url = https://github.com/DanBloomberg/leptonica.git
-	branch = master
-	shallow = true
-[submodule "components/libconfuse"]
-	path = components/libconfuse
-	url = https://github.com/libconfuse/libconfuse.git
 	branch = master
 	shallow = true
 [submodule "components/libogg"]
@@ -280,11 +258,6 @@
 	url = https://github.com/freetype/freetype.git
 	branch = master
 	shallow = true
-[submodule "components/eigen"]
-	path = components/eigen
-	url = https://gitlab.com/libeigen/eigen.git
-	branch = master
-	shallow = true
 [submodule "components/xz"]
 	path = components/xz
 	url = https://github.com/tukaani-project/xz.git
@@ -299,11 +272,6 @@
 	path = components/psp-media-engine-custom-core
 	url = https://github.com/mcidclan/psp-media-engine-custom-core.git
 	branch = main
-	shallow = true
-[submodule "components/smath"]
-	path = components/smath
-	url = https://github.com/slendidev/smath.git
-	branch = master
 	shallow = true
 [submodule "components/luasocket"]
 	path = components/luasocket
@@ -362,10 +330,6 @@
 [submodule "components/argtable2"]
 	path = components/argtable2
 	url = https://github.com/StochasticEagle/psp-argtable2.git
-	shallow = true
-[submodule "components/mpg123"]
-	path = components/mpg123
-	url = https://github.com/libsdl-org/mpg123.git
 	shallow = true
 [submodule "components/pixman"]
 	path = components/pixman

@@ -4,12 +4,10 @@ https://github.com/albertodemichelis/squirrel.git	components/squirrel
 https://github.com/anjo76/angelscript.git	components/angelscript
 https://github.com/bucanero/dbglogger.git	components/dbglogger
 https://github.com/bucanero/mini18n	components/mini18n
-https://github.com/bulletphysics/bullet3.git	components/bullet3
 https://github.com/curl/curl.git	components/curl
 https://github.com/Cyan4973/xxHash.git	components/xxhash
 https://github.com/DanBloomberg/leptonica.git	components/leptonica
 https://github.com/DaveGamble/cJSON.git	components/cjson
-https://github.com/erincatto/box2d.git	components/box2d
 https://github.com/fmtlib/fmt.git	components/fmt
 https://github.com/FNA-XNA/FAudio.git	components/faudio
 https://github.com/freetype/freetype.git	components/freetype
@@ -24,10 +22,7 @@ https://github.com/illteteka/openal-soft-psp.git	components/openal
 https://github.com/Jayanky/pspla.git	components/pspla
 https://github.com/jbeder/yaml-cpp.git	components/yaml-cpp
 https://github.com/leethomason/tinyxml2.git	components/tinyxml2
-https://github.com/libconfuse/libconfuse.git	components/libconfuse
-https://github.com/libexpat/libexpat.git	components/expat
 https://github.com/libjpeg-turbo/libjpeg-turbo.git	components/libjpeg-turbo
-https://github.com/libsdl-org/mpg123.git	components/mpg123
 https://github.com/libsdl-org/SDL_image.git	components/SDL_image
 https://github.com/libsdl-org/SDL_mixer.git	components/SDL_mixer
 https://github.com/libsdl-org/SDL_net.git	components/SDL2_net
@@ -43,7 +38,6 @@ https://github.com/mcidclan/psp-media-engine-custom-core.git	components/psp-medi
 https://github.com/nih-at/libzip.git	components/libzip
 https://github.com/nothings/stb.git	components/stb
 https://github.com/Operation-DITTO/psp-uart-library.git	components/psp-uart-library
-https://github.com/pmachapman/unrar.git	components/libunrar
 https://github.com/pnggroup/libpng.git	components/libpng
 https://github.com/pocketpy/pocketpy.git	components/pocketpy
 https://github.com/pspdev/libintrafont	components/libintrafont
@@ -54,7 +48,6 @@ https://github.com/pspdev/pspirkeyb.git	components/pspirkeyb
 https://github.com/pspdev/SDL_gfx.git	components/SDL2_gfx
 https://github.com/raylib4Consoles/raylib.git	components/raylib
 https://github.com/sabdul-khabir/SDL3_gfx.git	components/sdl3-gfx
-https://github.com/slendidev/smath.git	components/smath
 https://github.com/sqlite/sqlite.git	components/sqlite
 https://github.com/StochasticEagle/psp-argtable2.git	components/argtable2
 https://github.com/StochasticEagle/psp-luasocket.git	components/luasocket
@@ -72,7 +65,6 @@ https://github.com/xiph/vorbis.git	components/libvorbis
 https://github.com/yaml/libyaml.git	components/libyaml
 https://github.com/yuhaoth/minilzo.git	components/minilzo
 https://gitlab.com/bzip2/bzip2.git	components/bzip2
-https://gitlab.com/libeigen/eigen.git	components/eigen
 https://gitlab.freedesktop.org/pixman/pixman.git	components/pixman
 https://gitlab.xiph.org/xiph/theora.git	components/theora
 https://gitlab.xiph.org/xiph/tremor.git	components/tremor
