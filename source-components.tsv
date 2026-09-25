@@ -49,7 +49,6 @@ https://github.com/pnggroup/libpng.git	components/libpng
 https://github.com/pocketpy/pocketpy.git	components/pocketpy
 https://github.com/pspdev/libintrafont	components/libintrafont
 https://github.com/pspdev/libpspav.git	components/libpspav
-https://github.com/pspdev/libpspftp.git	components/libpspftp
 https://github.com/pspdev/libpspvram	components/libpspvram
 https://github.com/pspdev/pspgl.git	components/pspgl
 https://github.com/pspdev/pspirkeyb.git	components/pspirkeyb
@@ -65,7 +64,6 @@ https://github.com/tinygettext/tinygettext.git	components/tinygettext
 https://github.com/tufty/libpspmath.git	components/libpspmath
 https://github.com/tukaani-project/xz.git	components/xz
 https://github.com/USCiLab/cereal.git	components/cereal
-https://github.com/wolfSSL/wolfssl.git	components/wolfssl
 https://github.com/xerpi/ya2d.git	components/ya2d
 https://github.com/xiph/flac.git	components/flac
 https://github.com/xiph/ogg.git	components/libogg

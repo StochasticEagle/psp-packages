@@ -109,10 +109,6 @@
 	path = components/dbglogger
 	url = https://github.com/bucanero/dbglogger.git
 	shallow = true
-[submodule "components/libpspftp"]
-	path = components/libpspftp
-	url = https://github.com/pspdev/libpspftp.git
-	shallow = true
 [submodule "components/libpspvram"]
 	path = components/libpspvram
 	url = https://github.com/pspdev/libpspvram
@@ -271,11 +267,6 @@
 [submodule "components/tinyxml2"]
 	path = components/tinyxml2
 	url = https://github.com/leethomason/tinyxml2.git
-	branch = master
-	shallow = true
-[submodule "components/wolfssl"]
-	path = components/wolfssl
-	url = https://github.com/wolfSSL/wolfssl.git
 	branch = master
 	shallow = true
 [submodule "components/xxhash"]
