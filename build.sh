@@ -315,7 +315,10 @@ fi
 # the gitlinks selected by psp-packages; do not float them with --remote.
 # Cleaning is intentionally local and does not initialize or fetch submodules.
 if [[ -z "${PSP_PACKAGES_SUBMODULES_READY:-}" ]]; then
-  git -C "${ROOT}" -c remote.origin.tagOpt=--no-tags submodule update --init --recursive --depth 1 --quiet
+  submodule_jobs="${PSP_SUBMODULE_JOBS:-$(getconf _NPROCESSORS_ONLN)}"
+  echo "Initializing package source submodules with ${submodule_jobs} parallel jobs ..."
+  git -C "${ROOT}" -c remote.origin.tagOpt=--no-tags submodule update --init --recursive --depth 1 --jobs "${submodule_jobs}" --progress
+  echo "Package source submodules initialized."
   export PSP_PACKAGES_SUBMODULES_READY=1
 fi
 
