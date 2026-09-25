@@ -32,7 +32,6 @@ https://github.com/libjpeg-turbo/libjpeg-turbo.git	components/libjpeg-turbo
 https://github.com/libsdl-org/mpg123.git	components/mpg123
 https://github.com/libsdl-org/SDL_image.git	components/SDL_image
 https://github.com/libsdl-org/SDL_mixer.git	components/SDL_mixer
-https://github.com/libsdl-org/SDL_net.git	components/SDL_net
 https://github.com/libsdl-org/SDL_ttf.git	components/SDL_ttf
 https://github.com/libsdl-org/SDL.git	components/SDL3
 https://github.com/libxmp/libxmp.git	components/libxmp
@@ -55,9 +54,6 @@ https://github.com/pspdev/libpspftp.git	components/libpspftp
 https://github.com/pspdev/libpspvram	components/libpspvram
 https://github.com/pspdev/pspgl.git	components/pspgl
 https://github.com/pspdev/pspirkeyb.git	components/pspirkeyb
-https://github.com/pspdev/SDL_gfx.git	components/SDL_gfx12
-https://github.com/pspdev/SDL_ttf.git	components/SDL_ttf12
-https://github.com/pspdev/SDL.git	components/SDL
 https://github.com/raylib4Consoles/raylib.git	components/raylib
 https://github.com/sabdul-khabir/SDL3_gfx.git	components/sdl3-gfx
 https://github.com/slendidev/smath.git	components/smath
@@ -76,7 +72,6 @@ https://github.com/xiph/opusfile.git	components/opusfile
 https://github.com/xiph/vorbis.git	components/libvorbis
 https://github.com/yaml/libyaml.git	components/libyaml
 https://github.com/yuhaoth/minilzo.git	components/minilzo
-https://github.com/zlib-ng/minizip-ng.git	components/minizip-ng
 https://gitlab.com/bzip2/bzip2.git	components/bzip2
 https://gitlab.com/libeigen/eigen.git	components/eigen
 https://gitlab.freedesktop.org/pixman/pixman.git	components/pixman

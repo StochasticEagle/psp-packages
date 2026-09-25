@@ -2,10 +2,6 @@
 	path = components/box2d
 	url = https://github.com/erincatto/box2d.git
 	shallow = true
-[submodule "components/SDL"]
-	path = components/SDL
-	url = https://github.com/pspdev/SDL.git
-	shallow = true
 [submodule "components/stb"]
 	path = components/stb
 	url = https://github.com/nothings/stb.git
@@ -71,10 +67,6 @@
 	path = components/psp-uart-library
 	url = https://github.com/Operation-DITTO/psp-uart-library.git
 	shallow = true
-[submodule "components/SDL_net"]
-	path = components/SDL_net
-	url = https://github.com/libsdl-org/SDL_net.git
-	shallow = true
 [submodule "components/bullet3"]
 	path = components/bullet3
 	url = https://github.com/bulletphysics/bullet3.git
@@ -108,10 +100,6 @@
 	path = components/SDL_mixer
 	url = https://github.com/libsdl-org/SDL_mixer.git
 	branch = main
-	shallow = true
-[submodule "components/SDL_mixer12"]
-	path = components/SDL_mixer12
-	url = https://github.com/libsdl-org/SDL_mixer.git
 	shallow = true
 [submodule "components/pspirkeyb"]
 	path = components/pspirkeyb
@@ -315,11 +303,6 @@
 	url = https://github.com/tukaani-project/xz.git
 	branch = master
 	shallow = true
-[submodule "components/minizip-ng"]
-	path = components/minizip-ng
-	url = https://github.com/zlib-ng/minizip-ng.git
-	branch = develop
-	shallow = true
 [submodule "components/pspla"]
 	path = components/pspla
 	url = https://github.com/Jayanky/pspla.git
@@ -355,10 +338,6 @@
 	url = https://github.com/lua/lua.git
 	branch = master
 	shallow = true
-[submodule "components/SDL_image12"]
-	path = components/SDL_image12
-	url = https://github.com/libsdl-org/SDL_image.git
-	shallow = true
 [submodule "components/angelscript"]
 	path = components/angelscript
 	url = https://github.com/anjo76/angelscript.git
@@ -368,17 +347,9 @@
 	url = https://github.com/sqlite/sqlite.git
 	shallow = true
 
-[submodule "components/SDL_gfx12"]
-	path = components/SDL_gfx12
-	url = https://github.com/pspdev/SDL_gfx.git
-	shallow = true
 [submodule "components/SDL2_gfx"]
 	path = components/SDL2_gfx
 	url = https://github.com/pspdev/SDL_gfx.git
-	shallow = true
-[submodule "components/SDL_ttf12"]
-	path = components/SDL_ttf12
-	url = https://github.com/pspdev/SDL_ttf.git
 	shallow = true
 [submodule "components/SDL2"]
 	path = components/SDL2
