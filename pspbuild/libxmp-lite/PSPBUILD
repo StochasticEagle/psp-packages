@@ -1,6 +1,6 @@
 pkgname=libxmp-lite
 pkgver=4.7.2
-pkgrel=2
+pkgrel=3
 pkgdesc="Libxmp is a library that renders module files to PCM data"
 arch=(any)
 url="https://github.com/libxmp/libxmp"
@@ -28,6 +28,34 @@ package() {
     rm -f "$pkgdir/psp/lib/libxmp.a"
     rm -f "$pkgdir/psp/lib/pkgconfig/libxmp.pc"
     rm -rf "$pkgdir/psp/lib/cmake/libxmp"
+
+    # Prefer upstream's exported target when it survives packaging, but keep
+    # the PSP package usable if only the config file is retained.
+    cat > "$pkgdir/psp/lib/cmake/libxmp-lite/libxmp-lite-config.cmake" <<'EOF'
+set(libxmp-lite_FOUND OFF)
+
+if(EXISTS "${CMAKE_CURRENT_LIST_DIR}/libxmp-lite-static-targets.cmake")
+    include("${CMAKE_CURRENT_LIST_DIR}/libxmp-lite-static-targets.cmake")
+endif()
+
+if(NOT TARGET libxmp-lite::xmp_lite_static)
+    get_filename_component(_libxmp_lite_prefix "${CMAKE_CURRENT_LIST_DIR}/../../.." ABSOLUTE)
+    if(EXISTS "${_libxmp_lite_prefix}/lib/libxmp-lite.a" AND EXISTS "${_libxmp_lite_prefix}/include/libxmp-lite/xmp.h")
+        add_library(libxmp-lite::xmp_lite_static STATIC IMPORTED)
+        set_target_properties(libxmp-lite::xmp_lite_static PROPERTIES
+            IMPORTED_LOCATION "${_libxmp_lite_prefix}/lib/libxmp-lite.a"
+            INTERFACE_INCLUDE_DIRECTORIES "${_libxmp_lite_prefix}/include/libxmp-lite"
+            INTERFACE_COMPILE_DEFINITIONS "LIBXMP_STATIC"
+            INTERFACE_LINK_LIBRARIES "m"
+        )
+    endif()
+    unset(_libxmp_lite_prefix)
+endif()
+
+if(TARGET libxmp-lite::xmp_lite_static)
+    set(libxmp-lite_FOUND ON)
+endif()
+EOF
 
     mkdir -m 755 -p "${pkgdir}/psp/share/licenses/${pkgname}"
     install -m 644 ../README "${pkgdir}/psp/share/licenses/${pkgname}"
