@@ -99,7 +99,8 @@
 	shallow = true
 [submodule "components/libpspmath"]
 	path = components/libpspmath
-	url = https://github.com/tufty/libpspmath.git
+	url = https://github.com/StochasticEagle/psp-math.git
+	branch = dev/fork
 	shallow = true
 [submodule "components/tinygettext"]
 	path = components/tinygettext

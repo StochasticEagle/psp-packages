@@ -53,7 +53,7 @@ https://github.com/StochasticEagle/psp-argtable2.git	components/argtable2
 https://github.com/StochasticEagle/psp-luasocket.git	components/luasocket
 https://github.com/StochasticEagle/psp-oslib.git	components/oslib
 https://github.com/tinygettext/tinygettext.git	components/tinygettext
-https://github.com/tufty/libpspmath.git	components/libpspmath
+https://github.com/StochasticEagle/psp-math.git	components/libpspmath
 https://github.com/tukaani-project/xz.git	components/xz
 https://github.com/USCiLab/cereal.git	components/cereal
 https://github.com/xerpi/ya2d.git	components/ya2d
