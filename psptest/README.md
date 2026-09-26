@@ -6,6 +6,8 @@ Each implemented package test lives in a directory whose name exactly matches it
 
 ```text
 psptest/
+├── EBOOT.PBP
+├── manifest.tsv
 ├── zlib/
 │   ├── Makefile.test
 │   └── ...
@@ -16,6 +18,34 @@ psptest/
 ```
 
 A package may use multiple source files, but it has one test module directory. Each module builds independently into an `EBOOT.PBP` and links the common PSPSDK `libpsptest.a` runtime.
+
+## On-device launcher
+
+The root PSPTEST `EBOOT.PBP` is the hardware-test launcher. Tests remain isolated executables and return to the launcher through the PSPTEST runtime.
+
+The deployment layout is:
+
+```text
+/PSP/GAME/psptest/
+├── EBOOT.PBP
+├── manifest.tsv
+├── state.tsv
+├── results/
+├── oslib/
+│   └── EBOOT.PBP
+└── <module>/
+    └── EBOOT.PBP
+```
+
+The launcher uses a fixed hardware-test palette:
+
+- amber: page headers, titles, and warnings;
+- white: normal text;
+- light gray: notes and secondary guidance;
+- red: failures;
+- green: passes.
+
+The launcher supports running the complete automated set, browsing and launching one module, rerunning failures, and reviewing aggregate results. Before launching a child EBOOT it records the active test in `state.tsv`. A missing completion result on the next launcher start is reported as an interrupted warning rather than a test failure.
 
 ## Coverage contract
 
@@ -34,5 +64,19 @@ make -C psptest
 ```
 
 Only implemented modules (directories containing `Makefile.test`) are built. `make -C psptest list` lists them.
+
+To build the complete Memory Stick layout:
+
+```bash
+make -C psptest bundle
+```
+
+The staged tree is written to:
+
+```text
+psptest/build/PSP/GAME/psptest/
+```
+
+Copy that `PSP` tree to the Memory Stick root.
 
 The `template` directory contains starting files and is not itself a test module.
