@@ -1,0 +1,71 @@
+TARGET = psptest-oslib$(if $(VARIANT),-$(VARIANT),)
+OBJS = main.o
+
+XMP ?= lite
+PROFILE ?= baseline
+
+ifeq ($(XMP),lite)
+XMP_LIB = -lxmp-lite
+else ifeq ($(XMP),full)
+XMP_LIB = -lxmp
+else
+$(error XMP must be "lite" or "full")
+endif
+
+PROFILE_CFLAGS =
+PROFILE_LDFLAGS =
+
+ifeq ($(PROFILE),gc)
+PROFILE_CFLAGS += -ffunction-sections -fdata-sections
+PROFILE_LDFLAGS += -Wl,--gc-sections
+else ifeq ($(PROFILE),lto-gc)
+PROFILE_CFLAGS += -flto -ffunction-sections -fdata-sections
+PROFILE_LDFLAGS += -flto -Wl,--gc-sections
+else ifneq ($(PROFILE),baseline)
+$(error PROFILE must be "baseline", "gc", or "lto-gc")
+endif
+
+CFLAGS = -O2 -G0 -Wall -Wextra -Werror $(PROFILE_CFLAGS)
+CXXFLAGS = $(CFLAGS) -fno-exceptions -fno-rtti
+ASFLAGS = $(CFLAGS)
+LDFLAGS = $(PROFILE_LDFLAGS) -Wl,-Map,$(TARGET).map
+
+LIBS = -losl $(XMP_LIB) -lpng -lz \
+       -lpsphprm -lpspsdk -lpspctrl -lpspumd -lpsprtc -lpsppower -lpspgu -lpspgum \
+       -lpspaudiolib -lpspaudio -lpsphttp -lpspssl -lpspwlan -lpspaudiocodec \
+       -lpspnet_adhocmatching -lpspnet_adhoc -lpspnet_adhocctl -lm -ljpeg -lpsptest
+
+EXTRA_TARGETS = EBOOT.PBP
+PSP_EBOOT_TITLE = PSPTEST: OSLib
+
+PSPSDK := $(shell psp-config --pspsdk-path)
+include $(PSPSDK)/lib/build.mak
+
+PSP_SIZE ?= psp-size
+PSP_NM ?= psp-nm
+
+.PHONY: matrix matrix-clean
+
+matrix:
+	@rm -rf results
+	@mkdir -p results
+	@: > results/sizes.txt
+	@set -e; for xmp in lite full; do \
+		for profile in baseline gc lto-gc; do \
+			variant="$$xmp-$$profile"; \
+			echo "== $$variant =="; \
+			$(MAKE) -f Makefile.test XMP="$$xmp" PROFILE="$$profile" VARIANT="$$variant" clean >/dev/null; \
+			$(MAKE) -f Makefile.test XMP="$$xmp" PROFILE="$$profile" VARIANT="$$variant" all; \
+			cp "psptest-oslib-$$variant.elf" "results/$$variant.elf"; \
+			cp "psptest-oslib-$$variant.map" "results/$$variant.map"; \
+			cp EBOOT.PBP "results/$$variant.EBOOT.PBP"; \
+			printf "\n[%s]\n" "$$variant" >> results/sizes.txt; \
+			$(PSP_SIZE) "psptest-oslib-$$variant.elf" >> results/sizes.txt; \
+			$(PSP_NM) -S --size-sort "psptest-oslib-$$variant.elf" > "results/$$variant.symbols.txt"; \
+		done; \
+	done
+	@cat results/sizes.txt
+
+matrix-clean:
+	@rm -rf results
+	@rm -f psptest-oslib-*.elf psptest-oslib-*.map psptest-oslib-*.prx
