@@ -87,8 +87,21 @@ static unsigned int status_color(TestStatus status) {
     }
 }
 
-static void make_path(char *destination, size_t destination_size, const char *suffix) {
-    snprintf(destination, destination_size, "%s/%s", root_path, suffix);
+static int make_path(char *destination, size_t destination_size, const char *suffix) {
+    size_t root_length = strlen(root_path);
+    size_t suffix_length = strlen(suffix);
+
+    if (root_length + 1 + suffix_length + 1 > destination_size) {
+        if (destination_size > 0) {
+            destination[0] = '\0';
+        }
+        return -1;
+    }
+
+    memcpy(destination, root_path, root_length);
+    destination[root_length] = '/';
+    memcpy(destination + root_length + 1, suffix, suffix_length + 1);
+    return 0;
 }
 
 static void derive_root_path(int argc, char **argv) {
@@ -151,7 +164,9 @@ static int load_manifest(void) {
     char line[320];
     FILE *file;
 
-    make_path(path, sizeof(path), "manifest.tsv");
+    if (make_path(path, sizeof(path), "manifest.tsv") != 0) {
+        return -1;
+    }
     file = fopen(path, "r");
     if (file == NULL) {
         return -1;
@@ -183,7 +198,10 @@ static int load_result(TestEntry *entry) {
     FILE *file;
 
     snprintf(suffix, sizeof(suffix), "results/%s.log", entry->module);
-    make_path(path, sizeof(path), suffix);
+    if (make_path(path, sizeof(path), suffix) != 0) {
+        entry->status = TEST_WARNING;
+        return -1;
+    }
     file = fopen(path, "r");
     if (file == NULL) {
         entry->status = TEST_PENDING;
@@ -234,8 +252,10 @@ static int write_state(const char *mode, int index) {
     char state_path[320];
     FILE *file;
 
-    make_path(temp_path, sizeof(temp_path), "state.tmp");
-    make_path(state_path, sizeof(state_path), "state.tsv");
+    if (make_path(temp_path, sizeof(temp_path), "state.tmp") != 0 ||
+        make_path(state_path, sizeof(state_path), "state.tsv") != 0) {
+        return -1;
+    }
 
     file = fopen(temp_path, "w");
     if (file == NULL) {
@@ -271,7 +291,9 @@ static RunState read_state(void) {
     memset(&state, 0, sizeof(state));
     state.index = -1;
 
-    make_path(path, sizeof(path), "state.tsv");
+    if (make_path(path, sizeof(path), "state.tsv") != 0) {
+        return state;
+    }
     file = fopen(path, "r");
     if (file == NULL) {
         return state;
@@ -286,10 +308,18 @@ static RunState read_state(void) {
     return state;
 }
 
-static void result_path_for(int index, char *path, size_t path_size) {
+static int result_path_for(int index, char *path, size_t path_size) {
     char suffix[160];
-    snprintf(suffix, sizeof(suffix), "results/%s.log", tests[index].module);
-    make_path(path, path_size, suffix);
+    int length = snprintf(suffix, sizeof(suffix), "results/%s.log", tests[index].module);
+
+    if (length < 0 || (size_t)length >= sizeof(suffix)) {
+        if (path_size > 0) {
+            path[0] = '\0';
+        }
+        return -1;
+    }
+
+    return make_path(path, path_size, suffix);
 }
 
 static int launch_test(int index, const char *mode) {
@@ -304,8 +334,10 @@ static int launch_test(int index, const char *mode) {
         return -1;
     }
 
-    snprintf(child_path, sizeof(child_path), "%s/%s", root_path, tests[index].relative_path);
-    result_path_for(index, result_path, sizeof(result_path));
+    if (make_path(child_path, sizeof(child_path), tests[index].relative_path) != 0 ||
+        result_path_for(index, result_path, sizeof(result_path)) != 0) {
+        return -2;
+    }
     remove(result_path);
 
     if (write_state(mode, index) != 0) {
@@ -492,8 +524,9 @@ int main(int argc, char **argv) {
 
     {
         char results_path[320];
-        make_path(results_path, sizeof(results_path), "results");
-        sceIoMkdir(results_path, 0777);
+        if (make_path(results_path, sizeof(results_path), "results") == 0) {
+            sceIoMkdir(results_path, 0777);
+        }
     }
 
     load_results();
@@ -502,9 +535,11 @@ int main(int argc, char **argv) {
 
     if (state.running) {
         char expected_result[320];
-        result_path_for(state.index, expected_result, sizeof(expected_result));
-
-        if (returned_result != NULL || load_result(&tests[state.index]) > 0) {
+        if (result_path_for(state.index, expected_result, sizeof(expected_result)) != 0) {
+            snprintf(interrupted_module, sizeof(interrupted_module), "%s", state.module);
+            tests[state.index].status = TEST_WARNING;
+            write_state("idle", -1);
+        } else if (returned_result != NULL || load_result(&tests[state.index]) > 0) {
             continue_run(&state);
         } else {
             snprintf(interrupted_module, sizeof(interrupted_module), "%s", state.module);
