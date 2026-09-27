@@ -17,7 +17,6 @@ https://github.com/google/flatbuffers.git	components/flatbuffers
 https://github.com/google/googletest.git	components/googletest
 https://github.com/HappySeaFox/sail.git	components/sail
 https://github.com/harfbuzz/harfbuzz.git	components/harfbuzz
-https://github.com/icculus/physfs.git	components/physfs
 https://github.com/illteteka/openal-soft-psp.git	components/openal
 https://github.com/Jayanky/pspla.git	components/pspla
 https://github.com/jbeder/yaml-cpp.git	components/yaml-cpp
@@ -51,9 +50,11 @@ https://github.com/sabdul-khabir/SDL3_gfx.git	components/sdl3-gfx
 https://github.com/sqlite/sqlite.git	components/sqlite
 https://github.com/StochasticEagle/psp-argtable2.git	components/argtable2
 https://github.com/StochasticEagle/psp-luasocket.git	components/luasocket
-https://github.com/StochasticEagle/psp-oslib.git	components/oslib
-https://github.com/tinygettext/tinygettext.git	components/tinygettext
 https://github.com/StochasticEagle/psp-math.git	components/libpspmath
+https://github.com/StochasticEagle/psp-oslib.git	components/oslib
+https://github.com/StochasticEagle/psp-physfs.git	components/physfs
+https://github.com/StochasticEagle/unarr.git	components/unarr
+https://github.com/tinygettext/tinygettext.git	components/tinygettext
 https://github.com/tukaani-project/xz.git	components/xz
 https://github.com/USCiLab/cereal.git	components/cereal
 https://github.com/xerpi/ya2d.git	components/ya2d
