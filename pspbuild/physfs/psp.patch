@@ -1,7 +1,7 @@
 diff --git a/src/physfs_platforms.h b/src/physfs_platforms.h
 --- a/src/physfs_platforms.h
 +++ b/src/physfs_platforms.h
-@@ -68,6 +68,10 @@
+@@ -69,6 +69,10 @@
  #elif defined(__QNX__)
  #  define PHYSFS_PLATFORM_QNX 1
  #  define PHYSFS_PLATFORM_POSIX 1
