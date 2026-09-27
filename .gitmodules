@@ -336,3 +336,8 @@
 	path = components/pixman
 	url = https://gitlab.freedesktop.org/pixman/pixman.git
 	shallow = true
+[submodule "components/unarr"]
+	path = components/unarr
+	url = https://github.com/selmf/unarr.git
+	branch = master
+	shallow = true
