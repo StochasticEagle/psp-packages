@@ -120,8 +120,10 @@ jobs:
           mv pspdev.db.tar.gz pspdev.db
           mv pspdev.files.tar.gz pspdev.files
 
+          printf '%s\n' '${{ steps.ci.outputs.head_sha }}' > psp-packages.sha
           test -s pspdev.db
           test -s pspdev.files
+          test -s psp-packages.sha
           compgen -G '*.pkg.tar.*' >/dev/null
 
       - name: Setup Pages
