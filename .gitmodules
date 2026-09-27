@@ -226,8 +226,8 @@
 	shallow = true
 [submodule "components/physfs"]
 	path = components/physfs
-	url = https://github.com/icculus/physfs.git
-	branch = main
+	url = https://github.com/StochasticEagle/psp-physfs.git
+	branch = dev/fork
 	shallow = true
 [submodule "components/pocketpy"]
 	path = components/pocketpy
@@ -338,6 +338,6 @@
 	shallow = true
 [submodule "components/unarr"]
 	path = components/unarr
-	url = https://github.com/selmf/unarr.git
-	branch = master
+	url = https://github.com/StochasticEagle/unarr.git
+	branch = dev/fork
 	shallow = true
