@@ -1,3 +1,4 @@
+#include <kubridge.h>
 #include <pspctrl.h>
 #include <pspdebug.h>
 #include <pspiofilemgr.h>
@@ -376,7 +377,7 @@ static int supervisor_thread(SceSize args, void *argp) {
         }
     }
 
-    module_id = sceKernelLoadModule(child_path, 0, NULL);
+    module_id = kuKernelLoadModule(child_path, 0, NULL);
     if (module_id < 0) {
         request->failure_stage = "load";
         result = module_id;
