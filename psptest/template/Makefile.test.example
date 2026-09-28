@@ -7,5 +7,6 @@ ASFLAGS = $(CFLAGS)
 LIBS = -lPACKAGE -lpsptest
 
 BUILD_PRX = 1
+PRX_EXPORTS = ../psptest.exp
 PSPSDK := $(shell psp-config --pspsdk-path)
 include $(PSPSDK)/lib/build.mak

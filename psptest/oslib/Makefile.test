@@ -37,6 +37,7 @@ LIBS = -losl $(XMP_LIB) -lpng -lz -lm -ljpeg -lpsptest \
        -lpspnet_adhocmatching -lpspnet_adhoc -lpspnet_adhocctl
 
 BUILD_PRX = 1
+PRX_EXPORTS = ../psptest.exp
 PSPSDK := $(shell psp-config --pspsdk-path)
 include $(PSPSDK)/lib/build.mak
 

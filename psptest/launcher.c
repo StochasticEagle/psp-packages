@@ -6,6 +6,7 @@
 #include <pspthreadman.h>
 #include <psptest.h>
 
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -313,7 +314,7 @@ typedef struct SupervisorRequest {
 static int supervisor_thread(SceSize args, void *argp) {
     SupervisorRequest *request = (SupervisorRequest *)argp;
     PspTestModuleControl control;
-    PspTestModuleStart start;
+    char module_args[512];
     char child_path[384];
     char result_path[320];
     SceUID module_id = -1;
@@ -349,10 +350,19 @@ static int supervisor_thread(SceSize args, void *argp) {
     control.result = 2;
     snprintf(control.output_path, sizeof(control.output_path), "%s", result_path);
 
-    memset(&start, 0, sizeof(start));
-    start.size = sizeof(start);
-    start.version = PSPTEST_MODULE_ABI_VERSION;
-    start.control = &control;
+    {
+        int first_length = snprintf(module_args, sizeof(module_args), "%s", child_path);
+        int second_length;
+        if (first_length < 0 || (size_t)first_length + 1 >= sizeof(module_args)) {
+            result = -2;
+            goto done;
+        }
+        second_length = snprintf(module_args + first_length + 1, sizeof(module_args) - (size_t)first_length - 1, "--psptest-control=0x%08X", (unsigned int)(uintptr_t)&control);
+        if (second_length < 0 || (size_t)first_length + (size_t)second_length + 2 > sizeof(module_args)) {
+            result = -2;
+            goto done;
+        }
+    }
 
     module_id = sceKernelLoadModuleMs(child_path, 0, NULL);
     if (module_id < 0) {
@@ -360,7 +370,12 @@ static int supervisor_thread(SceSize args, void *argp) {
         goto done;
     }
 
-    result = sceKernelStartModule(module_id, sizeof(start), &start, &module_status, NULL);
+    {
+        size_t first_length = strlen(module_args);
+        size_t second_length = strlen(module_args + first_length + 1);
+        SceSize module_args_size = (SceSize)(first_length + second_length + 2);
+        result = sceKernelStartModule(module_id, module_args_size, module_args, &module_status, NULL);
+    }
     if (result < 0) {
         goto done;
     }
@@ -371,6 +386,9 @@ static int supervisor_thread(SceSize args, void *argp) {
     }
 
     result = control.state == PSPTEST_MODULE_COMPLETE ? control.result : (control.result < 0 ? control.result : -1);
+    if (control.test_thread > 0) {
+        sceKernelWaitThreadEnd(control.test_thread, NULL);
+    }
 
 done:
     if (module_id >= 0) {
