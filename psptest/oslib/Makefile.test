@@ -31,7 +31,7 @@ ASFLAGS = $(CFLAGS)
 LDFLAGS = $(PROFILE_LDFLAGS) -Wl,-Map,$(TARGET).map
 
 LIBS = -losl $(XMP_LIB) -lpng -lz \
-       -lpsphprm -lpspsdk -lpspctrl -lpspumd -lpsprtc -lpsppower -lpspgu -lpspgum \
+       -lpsphprm -lpspumd -lpsprtc -lpsppower -lpspgu -lpspgum \
        -lpspaudiolib -lpspaudio -lpsphttp -lpspssl -lpspwlan -lpspaudiocodec \
        -lpspnet_adhocmatching -lpspnet_adhoc -lpspnet_adhocctl -lm -ljpeg -lpsptest
 
