@@ -52,6 +52,8 @@ static TestEntry tests[MAX_TESTS];
 static int test_count;
 static char root_path[256];
 static char interrupted_module[64];
+static char last_launch_stage[32];
+static int last_launch_error;
 
 static void set_color(unsigned int color) {
     pspDebugScreenSetTextColor(color);
@@ -309,6 +311,7 @@ static int result_path_for(int index, char *path, size_t path_size) {
 typedef struct SupervisorRequest {
     int index;
     int result;
+    const char *failure_stage;
 } SupervisorRequest;
 
 static int supervisor_thread(SceSize args, void *argp) {
@@ -330,6 +333,7 @@ static int supervisor_thread(SceSize args, void *argp) {
 
     if (make_path(child_path, sizeof(child_path), tests[request->index].relative_path) != 0 ||
         result_path_for(request->index, result_path, sizeof(result_path)) != 0) {
+        request->failure_stage = "path";
         request->result = -2;
         return -2;
     }
@@ -337,6 +341,7 @@ static int supervisor_thread(SceSize args, void *argp) {
     remove(result_path);
     completion_sema = sceKernelCreateSema("psptest-complete", 0, 0, 1, NULL);
     if (completion_sema < 0) {
+        request->failure_stage = "semaphore";
         request->result = completion_sema;
         return completion_sema;
     }
@@ -354,18 +359,21 @@ static int supervisor_thread(SceSize args, void *argp) {
         int first_length = snprintf(module_args, sizeof(module_args), "%s", child_path);
         int second_length;
         if (first_length < 0 || (size_t)first_length + 1 >= sizeof(module_args)) {
+            request->failure_stage = "arguments";
             result = -2;
             goto done;
         }
         second_length = snprintf(module_args + first_length + 1, sizeof(module_args) - (size_t)first_length - 1, "--psptest-control=0x%08X", (unsigned int)(uintptr_t)&control);
         if (second_length < 0 || (size_t)first_length + (size_t)second_length + 2 > sizeof(module_args)) {
+            request->failure_stage = "arguments";
             result = -2;
             goto done;
         }
     }
 
-    module_id = sceKernelLoadModuleMs(child_path, 0, NULL);
+    module_id = sceKernelLoadModule(child_path, 0, NULL);
     if (module_id < 0) {
+        request->failure_stage = "load";
         result = module_id;
         goto done;
     }
@@ -377,15 +385,20 @@ static int supervisor_thread(SceSize args, void *argp) {
         result = sceKernelStartModule(module_id, module_args_size, module_args, &module_status, NULL);
     }
     if (result < 0) {
+        request->failure_stage = "start";
         goto done;
     }
 
     result = sceKernelWaitSema(completion_sema, 1, NULL);
     if (result < 0) {
+        request->failure_stage = "wait";
         goto done;
     }
 
     result = control.state == PSPTEST_MODULE_COMPLETE ? control.result : (control.result < 0 ? control.result : -1);
+    if (control.state != PSPTEST_MODULE_COMPLETE) {
+        request->failure_stage = "test";
+    }
     if (control.test_thread > 0) {
         sceKernelWaitThreadEnd(control.test_thread, NULL);
     }
@@ -420,24 +433,40 @@ static int launch_test(int index, const char *mode) {
     pspDebugScreenPrintf("%s\n\n", tests[index].module);
     print_note("The test module is running on a dedicated test thread.");
 
+    last_launch_stage[0] = '\0';
+    last_launch_error = 0;
     request.index = index;
     request.result = -1;
+    request.failure_stage = NULL;
 
     supervisor = sceKernelCreateThread("psptest-supervisor", supervisor_thread, 0x18, 0x10000, PSP_THREAD_ATTR_USER, NULL);
     if (supervisor < 0) {
+        snprintf(last_launch_stage, sizeof(last_launch_stage), "%s", "supervisor-create");
+        last_launch_error = supervisor;
         write_state("idle", -1);
         return supervisor;
     }
 
     result = sceKernelStartThread(supervisor, sizeof(request), &request);
-    if (result >= 0) {
+    if (result < 0) {
+        snprintf(last_launch_stage, sizeof(last_launch_stage), "%s", "supervisor-start");
+        last_launch_error = result;
+    } else {
         result = sceKernelWaitThreadEnd(supervisor, NULL);
+        if (result < 0) {
+            snprintf(last_launch_stage, sizeof(last_launch_stage), "%s", "supervisor-wait");
+            last_launch_error = result;
+        }
     }
     sceKernelDeleteThread(supervisor);
     write_state("idle", -1);
 
     if (result < 0) {
         return result;
+    }
+    if (request.result < 0) {
+        snprintf(last_launch_stage, sizeof(last_launch_stage), "%s", request.failure_stage != NULL ? request.failure_stage : "module");
+        last_launch_error = request.result;
     }
     return request.result;
 }
@@ -532,6 +561,8 @@ static void browse_tests(void) {
                 print_header("Warning");
                 set_color(COLOR_AMBER);
                 pspDebugScreenPrintf("Could not launch %s\n", tests[selected].module);
+                pspDebugScreenPrintf("Stage: %s\n", last_launch_stage[0] != '\0' ? last_launch_stage : "unknown");
+                pspDebugScreenPrintf("Error: 0x%08X (%d)\n", (unsigned int)last_launch_error, last_launch_error);
                 print_note("Press O to return.");
                 while ((read_press() & PSP_CTRL_CIRCLE) == 0) {
                 }
@@ -615,7 +646,7 @@ int main(int argc, char **argv) {
         pspDebugScreenPrintf("[]      Rerun failures\n");
         pspDebugScreenPrintf("TRIANGLE Results\n");
         pspDebugScreenPrintf("START   Exit\n\n");
-        print_note("Each module runs from its own EBOOT.PBP and returns to this launcher.");
+        print_note("Each test runs as a user PRX under the persistent launcher.");
 
         buttons = read_press();
         if ((buttons & PSP_CTRL_CROSS) != 0) {
