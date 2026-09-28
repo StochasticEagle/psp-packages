@@ -315,7 +315,12 @@ typedef struct SupervisorRequest {
 } SupervisorRequest;
 
 static int supervisor_thread(SceSize args, void *argp) {
-    SupervisorRequest *request = (SupervisorRequest *)argp;
+    SupervisorRequest *request = NULL;
+
+    if (argp == NULL || args != sizeof(request)) {
+        return -1;
+    }
+    memcpy(&request, argp, sizeof(request));
     PspTestModuleControl control;
     char module_args[512];
     char child_path[384];
@@ -335,7 +340,7 @@ static int supervisor_thread(SceSize args, void *argp) {
         result_path_for(request->index, result_path, sizeof(result_path)) != 0) {
         request->failure_stage = "path";
         request->result = -2;
-        return -2;
+        return 0;
     }
 
     remove(result_path);
@@ -343,7 +348,7 @@ static int supervisor_thread(SceSize args, void *argp) {
     if (completion_sema < 0) {
         request->failure_stage = "semaphore";
         request->result = completion_sema;
-        return completion_sema;
+        return 0;
     }
 
     memset(&control, 0, sizeof(control));
@@ -413,7 +418,7 @@ done:
     }
 
     request->result = result;
-    return result;
+    return 0;
 }
 
 static int launch_test(int index, const char *mode) {
@@ -447,21 +452,24 @@ static int launch_test(int index, const char *mode) {
         return supervisor;
     }
 
-    result = sceKernelStartThread(supervisor, sizeof(request), &request);
+    {
+        SupervisorRequest *request_ptr = &request;
+        result = sceKernelStartThread(supervisor, sizeof(request_ptr), &request_ptr);
+    }
     if (result < 0) {
         snprintf(last_launch_stage, sizeof(last_launch_stage), "%s", "supervisor-start");
         last_launch_error = result;
     } else {
         result = sceKernelWaitThreadEnd(supervisor, NULL);
-        if (result < 0) {
-            snprintf(last_launch_stage, sizeof(last_launch_stage), "%s", "supervisor-wait");
+        if (result < 0 && request.failure_stage == NULL && request.result == -1) {
+            snprintf(last_launch_stage, sizeof(last_launch_stage), "%s", "supervisor");
             last_launch_error = result;
         }
     }
     sceKernelDeleteThread(supervisor);
     write_state("idle", -1);
 
-    if (result < 0) {
+    if (request.failure_stage == NULL && request.result == -1 && result < 0) {
         return result;
     }
     if (request.result < 0) {
