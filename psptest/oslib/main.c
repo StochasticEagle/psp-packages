@@ -553,4 +553,4 @@ static const PspTestCase cases[] = {
     PSPTEST_INTERACTIVE_CASE(utility_dialogs)
 };
 
-PSPTEST_MAIN("packages/oslib", cases)
+PSPTEST_MODULE("packages/oslib", cases)

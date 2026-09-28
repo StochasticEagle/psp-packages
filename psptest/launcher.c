@@ -2,7 +2,9 @@
 #include <pspdebug.h>
 #include <pspiofilemgr.h>
 #include <pspkernel.h>
-#include <psploadexec.h>
+#include <pspmodulemgr.h>
+#include <pspthreadman.h>
+#include <psptest.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -48,7 +50,6 @@ typedef struct RunState {
 static TestEntry tests[MAX_TESTS];
 static int test_count;
 static char root_path[256];
-static char launcher_path[320];
 static char interrupted_module[64];
 
 static void set_color(unsigned int color) {
@@ -123,24 +124,6 @@ static void derive_root_path(int argc, char **argv) {
             snprintf(root_path, sizeof(root_path), "%s", fallback);
         }
     }
-
-    snprintf(launcher_path, sizeof(launcher_path), "%s/EBOOT.PBP", root_path);
-}
-
-static const char *argument_value(int argc, char **argv, const char *name) {
-    int index;
-    size_t name_length = strlen(name);
-
-    for (index = 1; index < argc; index++) {
-        if (strncmp(argv[index], name, name_length) == 0 && argv[index][name_length] == '=' && argv[index][name_length + 1] != '\0') {
-            return argv[index] + name_length + 1;
-        }
-        if (strcmp(argv[index], name) == 0 && index + 1 < argc) {
-            return argv[index + 1];
-        }
-    }
-
-    return NULL;
 }
 
 static unsigned int read_press(void) {
@@ -322,60 +305,123 @@ static int result_path_for(int index, char *path, size_t path_size) {
     return make_path(path, path_size, suffix);
 }
 
-static int launch_test(int index, const char *mode) {
-    SceKernelLoadExecParam parameters;
+typedef struct SupervisorRequest {
+    int index;
+    int result;
+} SupervisorRequest;
+
+static int supervisor_thread(SceSize args, void *argp) {
+    SupervisorRequest *request = (SupervisorRequest *)argp;
+    PspTestModuleControl control;
+    PspTestModuleStart start;
     char child_path[384];
     char result_path[320];
-    char arguments[1024];
-    int length;
+    SceUID module_id = -1;
+    SceUID completion_sema = -1;
+    int module_status = 0;
+    int result = -1;
+
+    (void)args;
+
+    if (request == NULL || request->index < 0 || request->index >= test_count) {
+        return -1;
+    }
+
+    if (make_path(child_path, sizeof(child_path), tests[request->index].relative_path) != 0 ||
+        result_path_for(request->index, result_path, sizeof(result_path)) != 0) {
+        request->result = -2;
+        return -2;
+    }
+
+    remove(result_path);
+    completion_sema = sceKernelCreateSema("psptest-complete", 0, 0, 1, NULL);
+    if (completion_sema < 0) {
+        request->result = completion_sema;
+        return completion_sema;
+    }
+
+    memset(&control, 0, sizeof(control));
+    control.size = sizeof(control);
+    control.version = PSPTEST_MODULE_ABI_VERSION;
+    control.completion_sema = completion_sema;
+    control.test_thread = -1;
+    control.state = PSPTEST_MODULE_IDLE;
+    control.result = 2;
+    snprintf(control.output_path, sizeof(control.output_path), "%s", result_path);
+
+    memset(&start, 0, sizeof(start));
+    start.size = sizeof(start);
+    start.version = PSPTEST_MODULE_ABI_VERSION;
+    start.control = &control;
+
+    module_id = sceKernelLoadModuleMs(child_path, 0, NULL);
+    if (module_id < 0) {
+        result = module_id;
+        goto done;
+    }
+
+    result = sceKernelStartModule(module_id, sizeof(start), &start, &module_status, NULL);
+    if (result < 0) {
+        goto done;
+    }
+
+    result = sceKernelWaitSema(completion_sema, 1, NULL);
+    if (result < 0) {
+        goto done;
+    }
+
+    result = control.state == PSPTEST_MODULE_COMPLETE ? control.result : (control.result < 0 ? control.result : -1);
+
+done:
+    if (module_id >= 0) {
+        sceKernelStopModule(module_id, 0, NULL, &module_status, NULL);
+        sceKernelUnloadModule(module_id);
+    }
+    if (completion_sema >= 0) {
+        sceKernelDeleteSema(completion_sema);
+    }
+
+    request->result = result;
+    return result;
+}
+
+static int launch_test(int index, const char *mode) {
+    SupervisorRequest request;
+    SceUID supervisor;
     int result;
 
     if (index < 0 || index >= test_count) {
         return -1;
     }
 
-    if (make_path(child_path, sizeof(child_path), tests[index].relative_path) != 0 ||
-        result_path_for(index, result_path, sizeof(result_path)) != 0) {
-        return -2;
-    }
-    remove(result_path);
-
     if (write_state(mode, index) != 0) {
         return -2;
     }
 
-    length = snprintf(arguments, sizeof(arguments), "%s --psptest-output=%s --psptest-return=%s", child_path, result_path, launcher_path);
-    if (length < 0 || (size_t)length >= sizeof(arguments)) {
-        write_state("idle", -1);
-        return -3;
-    }
-
-    memset(&parameters, 0, sizeof(parameters));
-    parameters.size = sizeof(parameters);
-    parameters.args = (SceSize)(length + 1);
-    parameters.argp = arguments;
-    parameters.key = NULL;
-
     print_header("Running");
     pspDebugScreenPrintf("%s\n\n", tests[index].module);
-    print_note("The test runs in a separate process and returns here when complete.");
+    print_note("The test module is running on a dedicated test thread.");
 
-    result = sceKernelLoadExec(child_path, &parameters);
-    write_state("idle", -1);
-    return result;
-}
+    request.index = index;
+    request.result = -1;
 
-static int next_test_after(int index, const char *mode) {
-    int candidate;
-
-    for (candidate = index + 1; candidate < test_count; candidate++) {
-        if (strcmp(mode, "failed") == 0 && tests[candidate].status != TEST_FAIL) {
-            continue;
-        }
-        return candidate;
+    supervisor = sceKernelCreateThread("psptest-supervisor", supervisor_thread, 0x18, 0x10000, PSP_THREAD_ATTR_USER, NULL);
+    if (supervisor < 0) {
+        write_state("idle", -1);
+        return supervisor;
     }
 
-    return -1;
+    result = sceKernelStartThread(supervisor, sizeof(request), &request);
+    if (result >= 0) {
+        result = sceKernelWaitThreadEnd(supervisor, NULL);
+    }
+    sceKernelDeleteThread(supervisor);
+    write_state("idle", -1);
+
+    if (result < 0) {
+        return result;
+    }
+    return request.result;
 }
 
 static void count_statuses(int *passed, int *failed, int *warnings, int *pending) {
@@ -479,29 +525,7 @@ static void browse_tests(void) {
     }
 }
 
-static void continue_run(const RunState *state) {
-    int next;
-
-    if (!state->running || state->index < 0 || state->index >= test_count) {
-        return;
-    }
-
-    load_results();
-    if (strcmp(state->mode, "single") == 0) {
-        write_state("idle", -1);
-        return;
-    }
-
-    next = next_test_after(state->index, state->mode);
-    if (next >= 0) {
-        launch_test(next, state->mode);
-    } else {
-        write_state("idle", -1);
-    }
-}
-
 int main(int argc, char **argv) {
-    const char *returned_result;
     RunState state;
 
     pspDebugScreenInit();
@@ -531,21 +555,12 @@ int main(int argc, char **argv) {
 
     load_results();
     state = read_state();
-    returned_result = argument_value(argc, argv, "--psptest-result");
-
     if (state.running) {
-        char expected_result[320];
-        if (result_path_for(state.index, expected_result, sizeof(expected_result)) != 0) {
-            snprintf(interrupted_module, sizeof(interrupted_module), "%s", state.module);
+        snprintf(interrupted_module, sizeof(interrupted_module), "%s", state.module);
+        if (state.index >= 0 && state.index < test_count) {
             tests[state.index].status = TEST_WARNING;
-            write_state("idle", -1);
-        } else if (returned_result != NULL || load_result(&tests[state.index]) > 0) {
-            continue_run(&state);
-        } else {
-            snprintf(interrupted_module, sizeof(interrupted_module), "%s", state.module);
-            tests[state.index].status = TEST_WARNING;
-            write_state("idle", -1);
         }
+        write_state("idle", -1);
     }
 
     for (;;) {
@@ -586,15 +601,28 @@ int main(int argc, char **argv) {
 
         buttons = read_press();
         if ((buttons & PSP_CTRL_CROSS) != 0) {
-            if (test_count > 0) {
-                launch_test(0, "all");
+            int index;
+            for (index = 0; index < test_count; index++) {
+                int run_result = launch_test(index, "all");
+                load_result(&tests[index]);
+                if (run_result < 0) {
+                    tests[index].status = TEST_WARNING;
+                    break;
+                }
             }
         } else if ((buttons & PSP_CTRL_CIRCLE) != 0) {
             browse_tests();
         } else if ((buttons & PSP_CTRL_SQUARE) != 0) {
-            int first = next_test_after(-1, "failed");
-            if (first >= 0) {
-                launch_test(first, "failed");
+            int index;
+            for (index = 0; index < test_count; index++) {
+                if (tests[index].status == TEST_FAIL) {
+                    int run_result = launch_test(index, "failed");
+                    load_result(&tests[index]);
+                    if (run_result < 0) {
+                        tests[index].status = TEST_WARNING;
+                        break;
+                    }
+                }
             }
         } else if ((buttons & PSP_CTRL_TRIANGLE) != 0) {
             show_summary();
