@@ -6,5 +6,6 @@ CXXFLAGS = $(CFLAGS) -fno-exceptions -fno-rtti
 ASFLAGS = $(CFLAGS)
 LIBS = -lPACKAGE -lpsptest
 
+BUILD_PRX = 1
 PSPSDK := $(shell psp-config --pspsdk-path)
-include $(PSPSDK)/lib/build_prx.mak
+include $(PSPSDK)/lib/build.mak

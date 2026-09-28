@@ -36,8 +36,9 @@ LIBS = -losl $(XMP_LIB) -lpng -lz -lm -ljpeg -lpsptest \
        -lpsphttp -lpspssl -lpspwlan -lpspaudiocodec \
        -lpspnet_adhocmatching -lpspnet_adhoc -lpspnet_adhocctl
 
+BUILD_PRX = 1
 PSPSDK := $(shell psp-config --pspsdk-path)
-include $(PSPSDK)/lib/build_prx.mak
+include $(PSPSDK)/lib/build.mak
 
 PSP_SIZE ?= psp-size
 PSP_NM ?= psp-nm
