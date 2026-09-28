@@ -314,13 +314,13 @@ typedef struct SupervisorRequest {
     const char *failure_stage;
 } SupervisorRequest;
 
-static int supervisor_thread(SceSize args, void *argp) {
-    SupervisorRequest *request = NULL;
+static SupervisorRequest supervisor_request;
 
-    if (argp == NULL || args != sizeof(request)) {
-        return -1;
-    }
-    memcpy(&request, argp, sizeof(request));
+static int supervisor_thread(SceSize args, void *argp) {
+    SupervisorRequest *request = &supervisor_request;
+
+    (void)args;
+    (void)argp;
     PspTestModuleControl control;
     char module_args[512];
     char child_path[384];
@@ -330,10 +330,10 @@ static int supervisor_thread(SceSize args, void *argp) {
     int module_status = 0;
     int result = -1;
 
-    (void)args;
-
-    if (request == NULL || request->index < 0 || request->index >= test_count) {
-        return -1;
+    if (request->index < 0 || request->index >= test_count) {
+        request->failure_stage = "request";
+        request->result = -1;
+        return 0;
     }
 
     if (make_path(child_path, sizeof(child_path), tests[request->index].relative_path) != 0 ||
@@ -422,7 +422,7 @@ done:
 }
 
 static int launch_test(int index, const char *mode) {
-    SupervisorRequest request;
+    SupervisorRequest *request = &supervisor_request;
     SceUID supervisor;
     int result;
 
@@ -440,9 +440,9 @@ static int launch_test(int index, const char *mode) {
 
     last_launch_stage[0] = '\0';
     last_launch_error = 0;
-    request.index = index;
-    request.result = -1;
-    request.failure_stage = NULL;
+    request->index = index;
+    request->result = -1;
+    request->failure_stage = NULL;
 
     supervisor = sceKernelCreateThread("psptest-supervisor", supervisor_thread, 0x18, 0x10000, PSP_THREAD_ATTR_USER, NULL);
     if (supervisor < 0) {
@@ -452,16 +452,13 @@ static int launch_test(int index, const char *mode) {
         return supervisor;
     }
 
-    {
-        SupervisorRequest *request_ptr = &request;
-        result = sceKernelStartThread(supervisor, sizeof(request_ptr), &request_ptr);
-    }
+    result = sceKernelStartThread(supervisor, 0, NULL);
     if (result < 0) {
         snprintf(last_launch_stage, sizeof(last_launch_stage), "%s", "supervisor-start");
         last_launch_error = result;
     } else {
         result = sceKernelWaitThreadEnd(supervisor, NULL);
-        if (result < 0 && request.failure_stage == NULL && request.result == -1) {
+        if (result < 0 && request->failure_stage == NULL && request->result == -1) {
             snprintf(last_launch_stage, sizeof(last_launch_stage), "%s", "supervisor");
             last_launch_error = result;
         }
@@ -469,14 +466,14 @@ static int launch_test(int index, const char *mode) {
     sceKernelDeleteThread(supervisor);
     write_state("idle", -1);
 
-    if (request.failure_stage == NULL && request.result == -1 && result < 0) {
+    if (request->failure_stage == NULL && request->result == -1 && result < 0) {
         return result;
     }
-    if (request.result < 0) {
-        snprintf(last_launch_stage, sizeof(last_launch_stage), "%s", request.failure_stage != NULL ? request.failure_stage : "module");
-        last_launch_error = request.result;
+    if (request->result < 0) {
+        snprintf(last_launch_stage, sizeof(last_launch_stage), "%s", request->failure_stage != NULL ? request->failure_stage : "module");
+        last_launch_error = request->result;
     }
-    return request.result;
+    return request->result;
 }
 
 static void count_statuses(int *passed, int *failed, int *warnings, int *pending) {

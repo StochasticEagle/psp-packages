@@ -23,6 +23,7 @@ bundle: launcher
 		$(MAKE) -C "$$module" -f Makefile.test clean all; \
 		mkdir -p "$(BUNDLE_DIR)/$$module"; \
 		cp "$$module/psptest-$$module.prx" "$(BUNDLE_DIR)/$$module/test.prx"; \
+		PrxEncrypter "$(BUNDLE_DIR)/$$module/test.prx" "$(BUNDLE_DIR)/$$module/test.prx"; \
 		printf 'TEST\t%s\t%s/test.prx\tmodule\n' "$$module" "$$module" >> "$(BUNDLE_DIR)/manifest.tsv"; \
 	done
 	@echo "PSPTEST bundle: $(BUNDLE_DIR)"
