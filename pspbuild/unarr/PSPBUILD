@@ -1,6 +1,6 @@
 pkgname=unarr
 pkgver=1.2.0
-pkgrel=4
+pkgrel=5
 pkgdesc="A decompression library for rar, tar, zip and 7z archives"
 arch=(any)
 url="https://github.com/StochasticEagle/unarr"
@@ -10,7 +10,7 @@ depends=('zlib' 'bzip2' 'liblzma')
 optdepends=()
 makedepends=()
 source=(
-    "${pkgname}-${pkgver}::git+https://github.com/StochasticEagle/unarr.git#commit=f6d6c99ccccf5f25746b82fc3ccc20d8d78e6e23"
+    "${pkgname}-${pkgver}::git+https://github.com/StochasticEagle/unarr.git#commit=fd0cce6abb69e0a5cc1409e728f67c960cfd8596"
     "unarr-1.2.0-PSP.patch"
 )
 sha256sums=(
