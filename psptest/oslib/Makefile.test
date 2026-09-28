@@ -30,10 +30,11 @@ CXXFLAGS = $(CFLAGS) -fno-exceptions -fno-rtti
 ASFLAGS = $(CFLAGS)
 LDFLAGS = $(PROFILE_LDFLAGS) -Wl,-Map,$(TARGET).map
 
-LIBS = -losl $(XMP_LIB) -lpng -lz \
-       -lpsphprm -lpspumd -lpsprtc -lpsppower -lpspgu -lpspgum \
-       -lpspaudiolib -lpspaudio -lpsphttp -lpspssl -lpspwlan -lpspaudiocodec \
-       -lpspnet_adhocmatching -lpspnet_adhoc -lpspnet_adhocctl -lm -ljpeg -lpsptest
+LIBS = -losl $(XMP_LIB) -lpng -lz -lm -ljpeg -lpsptest \
+       -lpspgum -lpspaudiolib \
+       -lpsphprm -lpspumd -lpsprtc -lpsppower -lpspgu -lpspaudio \
+       -lpsphttp -lpspssl -lpspwlan -lpspaudiocodec \
+       -lpspnet_adhocmatching -lpspnet_adhoc -lpspnet_adhocctl
 
 EXTRA_TARGETS = EBOOT.PBP
 PSP_EBOOT_TITLE = PSPTEST: OSLib
