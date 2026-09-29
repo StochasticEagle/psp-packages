@@ -420,7 +420,7 @@ PSPTEST_TEST(audio_wav_playback) {
     PSPTEST_ASSERT_NOT_NULL(test, sound->deleteSound);
 
     oslPlaySound(sound, 0);
-    sceKernelDelayThread(100000);
+    sceKernelDelayThread(500000);
     oslStopSound(sound);
     oslDeleteSound(sound);
     oslDeinitAudio();
