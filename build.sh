@@ -5,7 +5,7 @@
 
 set -e
 
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 source "${ROOT}/install-permissions.sh"
 RECIPES="${ROOT}/pspbuild"
 BUILD_ROOT="${ROOT}/build"
@@ -13,6 +13,7 @@ PACKAGES="${ROOT}/packages"
 SOURCE_COMPONENTS="${ROOT}/source-components.tsv"
 CURRENT_LOCAL_BUILD_FILE=""
 PACKAGE_INPUT_STAMP=".psp-package-input.sha256"
+PACKAGE_BUILD_STATE=".psp-build-state"
 progress_mode=""
 progress_parent="${PSP_PROGRESS_PARENT:-0}"
 for arg in "$@"; do
@@ -456,6 +457,30 @@ configure_local_git_sources() {
   done
 }
 
+
+package_build_state() {
+  local workdir="$1"
+  local pspdev_path="${PSPDEV}"
+
+  if [[ -d "${PSPDEV}" ]]; then
+    pspdev_path="$(cd "${PSPDEV}" && pwd -P)"
+  fi
+
+  printf '%s\n' \
+    "schema=1" \
+    "root=${ROOT}" \
+    "workdir=${workdir}" \
+    "pspdev=${pspdev_path}"
+}
+
+package_build_state_matches() {
+  local workdir="$1"
+  local marker="${workdir}/${PACKAGE_BUILD_STATE}"
+
+  [[ -f "${marker}" ]] || return 1
+  [[ "$(cat "${marker}")" == "$(package_build_state "${workdir}")" ]]
+}
+
 install_package_batch() {
   local label="$1"
   shift
@@ -596,9 +621,16 @@ for pkg in ${PKG_LIST}; do
       if [[ -f "${package_path}" || -d "${workdir}" ]]; then
         echo "Package inputs changed for ${pkg}; invalidating cached build state."
       fi
-      rm -f "${package_path}"
+      rm -rf "${workdir}"
+    elif [[ -d "${workdir}" ]] && ! package_build_state_matches "${workdir}"; then
+      echo "Cached build state for ${pkg} belongs to another checkout or predates relocation tracking; invalidating it."
       rm -rf "${workdir}"
     fi
+
+    # PLAN_STALE is conservative by design: a stale dependency makes every
+    # dependent package stale even when its own recipe fingerprint is unchanged.
+    # Always remove the old archive so the selected stale set is actually rebuilt.
+    rm -f "${package_path}"
 
     if [[ ! -f "${package_path}" ]]; then
       echo "Building ${pkg} ..."
@@ -661,6 +693,7 @@ for pkg in ${PKG_LIST}; do
       # exists. Failed prepare/build trees remain available for inspection, but
       # the next invocation will invalidate them and rerun prepare().
       printf '%s\n' "${input_fingerprint}" > "${input_stamp}"
+      package_build_state "${workdir}" > "${workdir}/${PACKAGE_BUILD_STATE}"
     fi
   fi
 
