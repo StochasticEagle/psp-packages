@@ -1,46 +1,16 @@
 # OSLib PSPTEST
 
-This module provides a focused runtime regression test for OSLib's tracker-module path and a link-size comparison harness for compiler/linker optimization work.
+This module provides OSLib runtime regression coverage. Its source lives here with the package it tests; generated files are produced only by PSPDEV stage 6 under PSPDEV's ignored `build/` hierarchy.
 
-The runtime test creates a minimal ProTracker module at runtime, loads it through `oslLoadSoundFileMOD()`, validates the resulting OSLib sound object, and releases it through the public API. No binary fixture is required.
+The runtime module covers the OSLib tracker-module path, memory/file helpers, image and palette handling, graphics, audio, utility dialogs, and selected platform-state queries.
 
-## Normal package test
-
-The default build uses the package's current dependency, `libxmp-lite`:
+Build the integrated test program from PSPDEV:
 
 ```bash
-make -C psptest/oslib -f Makefile.test
+./build.sh 6
+./build.sh p 6
 ```
 
-The resulting `EBOOT.PBP` is an ordinary PSPTEST runtime test.
+The OSLib test is built as one PRX module and uses `PSPTEST_MODULE_WITH_HEAP(...)` because it requires a larger heap than the PSPTEST default.
 
-## libxmp/linker comparison matrix
-
-Both libxmp implementations export the XMP API symbols used by OSLib, so the same installed `libosl.a` can be linked against either implementation:
-
-```bash
-make -C psptest/oslib -f Makefile.test matrix
-```
-
-The matrix builds six variants:
-
-| XMP backend | Link profile |
-| --- | --- |
-| `libxmp-lite` | baseline |
-| `libxmp-lite` | section GC |
-| `libxmp-lite` | LTO + section GC |
-| `libxmp` | baseline |
-| `libxmp` | section GC |
-| `libxmp` | LTO + section GC |
-
-Results are written to `psptest/oslib/results/`:
-
-- `sizes.txt`: `psp-size` output for each ELF.
-- `*.map`: linker map for reachability analysis.
-- `*.symbols.txt`: symbols sorted by size.
-- `*.elf`: linked ELF for detailed inspection.
-- `*.EBOOT.PBP`: packaged executable for deployment/runtime testing.
-
-The profiles change the test application's compile/link flags. To measure the full effect of `-ffunction-sections -fdata-sections` or `-flto` on OSLib/libxmp themselves, rebuild the corresponding packages with those flags first, then rerun the same matrix. This keeps the workload constant while changing only the package/toolchain configuration under test.
-
-Use `make -C psptest/oslib -f Makefile.test matrix-clean` to remove matrix artifacts.
+The former source-directory linker-size matrix is intentionally disabled. Comparative builds must use separate ignored build directories so no generated ELF, map, PRX, symbol, or result files are ever written into the source tree.

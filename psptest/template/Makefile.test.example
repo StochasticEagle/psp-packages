@@ -1,3 +1,9 @@
+PSPTEST_SOURCE_DIR := $(patsubst %/,%,$(dir $(abspath $(firstword $(MAKEFILE_LIST)))))
+
+ifeq ($(abspath $(CURDIR)),$(PSPTEST_SOURCE_DIR))
+$(error PSPTEST generated files may not be written into the source directory; build through PSPDEV stage 6 or use a separate build directory)
+endif
+
 TARGET = psptest-PACKAGE
 OBJS = main.o
 
@@ -7,6 +13,12 @@ ASFLAGS = $(CFLAGS)
 LIBS = -lPACKAGE -lpsptest
 
 BUILD_PRX = 1
-PRX_EXPORTS = ../psptest.exp
+PRX_EXPORTS ?= ../psptest.exp
+
 PSPSDK := $(shell psp-config --pspsdk-path)
+PSPTEST_FRAMEWORK_INCDIR ?= $(PSPSDK)/include
+PSPTEST_FRAMEWORK_LIBDIR ?= $(PSPSDK)/lib
+INCDIR += $(PSPTEST_FRAMEWORK_INCDIR)
+LIBDIR += $(PSPTEST_FRAMEWORK_LIBDIR)
+
 include $(PSPSDK)/lib/build.mak
