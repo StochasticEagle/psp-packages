@@ -11,7 +11,6 @@
 
 PSP_MODULE_INFO("PSPTEST OSLib", 0, 1, 0);
 PSP_MAIN_THREAD_ATTR(PSP_THREAD_ATTR_USER | PSP_THREAD_ATTR_VFPU);
-PSP_HEAP_SIZE_KB(12 * 1024);
 
 #define TEST_PNG "psptest-oslib.png"
 #define TEST_WAV "psptest-oslib.wav"
@@ -553,4 +552,4 @@ static const PspTestCase cases[] = {
     PSPTEST_INTERACTIVE_CASE(utility_dialogs)
 };
 
-PSPTEST_MODULE("packages/oslib", cases)
+PSPTEST_MODULE_WITH_HEAP("packages/oslib", cases, 12 * 1024)
