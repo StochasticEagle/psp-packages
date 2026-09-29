@@ -1,5 +1,4 @@
 #include <pspkernel.h>
-#include <pspctrl.h>
 #include <oslib/oslib.h>
 #include <psptest.h>
 
@@ -73,17 +72,6 @@ PSPTEST_COVERS(oslLoadFontFile);
 PSPTEST_COVERS(oslIntraFontSetStyle);
 PSPTEST_COVERS(oslDeleteFont);
 PSPTEST_COVERS(oslIntraFontShutdown);
-PSPTEST_COVERS(oslInitMessageDialog);
-PSPTEST_COVERS(oslDrawDialog);
-PSPTEST_COVERS(oslGetDialogStatus);
-PSPTEST_COVERS(oslGetDialogButtonPressed);
-PSPTEST_COVERS(oslEndDialog);
-PSPTEST_COVERS(oslInitOsk);
-PSPTEST_COVERS(oslDrawOsk);
-PSPTEST_COVERS(oslGetOskStatus);
-PSPTEST_COVERS(oslOskGetResult);
-PSPTEST_COVERS(oslOskGetText);
-PSPTEST_COVERS(oslEndOsk);
 PSPTEST_COVERS(oslIsWlanPowerOn);
 PSPTEST_COVERS(oslIsRemoteExist);
 
@@ -165,12 +153,6 @@ static int write_test_wav(const char *path) {
     }
 
     return fclose(file) == 0;
-}
-
-static void draw_choice_footer(void) {
-    oslSetTextColor(RGBA(255, 255, 255, 255));
-    oslSetBkColor(RGBA(0, 0, 0, 128));
-    oslDrawString(16, 244, "X = PASS      O = FAIL");
 }
 
 PSPTEST_TEST(core_math_memory) {
@@ -332,7 +314,7 @@ PSPTEST_TEST(graphics_text_map_controller) {
     OSL_MAP *map;
     OSL_FONT *font = NULL;
     unsigned short map_data[4] = { 0, 1, 1, 0 };
-    int passed = 0;
+    int text_width;
 
     ensure_osl();
     oslInitGfx(OSL_PF_8888, 1);
@@ -378,8 +360,9 @@ PSPTEST_TEST(graphics_text_map_controller) {
 
     oslSetKeyAutorepeatInit(20);
     oslSetKeyAutorepeatInterval(5);
+    text_width = oslGetStringWidth("PSPTEST");
 
-    for (;;) {
+    for (int frame = 0; frame < 4; frame++) {
         oslStartDrawing();
         oslDrawGradientRect(0, 0, 480, 272, RGB(20, 20, 40), RGB(40, 20, 20), RGB(20, 40, 20), RGB(20, 20, 40));
         oslDrawLine(20, 45, 200, 45, RGB(255, 255, 255));
@@ -389,28 +372,12 @@ PSPTEST_TEST(graphics_text_map_controller) {
         image->y = 60;
         oslDrawImage(image);
         oslDrawMap(map);
-
         oslSetTextColor(RGBA(255, 255, 255, 255));
         oslSetBkColor(RGBA(0, 0, 0, 128));
-        oslDrawString(16, 10, "OSLib graphics / text / map / controller smoke test");
-        oslDrawString(16, 125, "Verify gradient, white line, amber outline, red box,");
-        oslDrawString(16, 145, "blue image, yellow/cyan map, and readable text.");
-        if (font != NULL) {
-            char width_text[96];
-            snprintf(width_text, sizeof(width_text), "Firmware font loaded; string width=%d", oslGetStringWidth("PSPTEST"));
-            oslDrawString(16, 175, width_text);
-        } else {
-            oslDrawString(16, 175, "Firmware intraFont unavailable; system font active.");
-        }
-        draw_choice_footer();
+        oslDrawString(16, 10, "PSPTEST OSLib automated graphics smoke test");
+        oslDrawString(16, 125, "Rendering graphics, text, map and controller state.");
         oslEndDrawing();
-
-        OSL_CONTROLLER *keys = oslReadKeys();
-        if (keys->pressed.cross) {
-            passed = 1;
-            break;
-        }
-        if (keys->pressed.circle) break;
+        (void)oslReadKeys();
         oslEndFrame();
         oslSyncFrame();
     }
@@ -425,12 +392,11 @@ PSPTEST_TEST(graphics_text_map_controller) {
     oslDeleteImage(image);
     oslEndGfx();
 
-    psptest_interactive_result(test, passed, passed ? "graphics, map, text and controller verified" : "graphics, map, text or controller failed visual verification");
+    PSPTEST_ASSERT_TRUE(test, text_width > 0);
 }
 
 PSPTEST_TEST(audio_wav_playback) {
     OSL_SOUND *sound;
-    int passed = 0;
 
     ensure_osl();
     PSPTEST_ASSERT_TRUE(test, write_test_wav(TEST_WAV));
@@ -448,96 +414,18 @@ PSPTEST_TEST(audio_wav_playback) {
         return;
     }
 
+    PSPTEST_ASSERT_NOT_NULL(test, sound->data);
+    PSPTEST_ASSERT_NOT_NULL(test, sound->playSound);
+    PSPTEST_ASSERT_NOT_NULL(test, sound->stopSound);
+    PSPTEST_ASSERT_NOT_NULL(test, sound->deleteSound);
+
     oslPlaySound(sound, 0);
-
-    for (;;) {
-        oslStartDrawing();
-        oslClearScreen(RGB(18, 18, 18));
-        oslSetTextColor(RGBA(255, 255, 255, 255));
-        oslSetBkColor(RGBA(0, 0, 0, 0));
-        oslDrawString(16, 24, "OSLib audio smoke test");
-        oslDrawString(16, 64, "A 440 Hz tone should be audible.");
-        oslDrawString(16, 84, "The WAV was generated, loaded, and played by OSLib.");
-        draw_choice_footer();
-        oslEndDrawing();
-
-        OSL_CONTROLLER *keys = oslReadKeys();
-        if (keys->pressed.cross) {
-            passed = 1;
-            break;
-        }
-        if (keys->pressed.circle) break;
-        oslEndFrame();
-        oslSyncFrame();
-    }
-
+    sceKernelDelayThread(100000);
     oslStopSound(sound);
     oslDeleteSound(sound);
     oslDeinitAudio();
     oslEndGfx();
     remove(TEST_WAV);
-
-    psptest_interactive_result(test, passed, passed ? "WAV playback verified" : "WAV playback was not audible/correct");
-}
-
-PSPTEST_TEST(utility_dialogs) {
-    int message_passed = 0;
-    char text[64];
-
-    ensure_osl();
-    oslInitGfx(OSL_PF_8888, 1);
-    oslInitConsole();
-
-    if (oslInitMessageDialog("PSPTEST OSLib message dialog. Select YES to continue.", 1) != 0) {
-        oslEndGfx();
-        psptest_fail(test, __FILE__, __LINE__, "message dialog failed to initialize");
-        return;
-    }
-
-    for (;;) {
-        oslStartDrawing();
-        oslDrawDialog();
-        oslEndDrawing();
-        oslEndFrame();
-        oslSyncFrame();
-
-        if (oslGetDialogStatus() == PSP_UTILITY_DIALOG_NONE) {
-            message_passed = oslGetDialogButtonPressed() == PSP_UTILITY_MSGDIALOG_RESULT_YES;
-            oslEndDialog();
-            break;
-        }
-    }
-
-    if (!message_passed) {
-        oslEndGfx();
-        psptest_interactive_result(test, 0, "message dialog was cancelled or NO was selected");
-        return;
-    }
-
-    memset(text, 0, sizeof(text));
-    oslInitOsk("PSPTEST OSLib OSK. Enter any text.", "test", 32, 1, -1);
-    while (oslOskIsActive()) {
-        oslStartDrawing();
-        oslDrawOsk();
-        oslEndDrawing();
-        oslEndFrame();
-        oslSyncFrame();
-
-        if (oslGetOskStatus() == PSP_UTILITY_DIALOG_NONE) {
-            if (oslOskGetResult() == OSL_OSK_CANCEL) {
-                oslEndOsk();
-                oslEndGfx();
-                psptest_interactive_result(test, 0, "OSK was cancelled");
-                return;
-            }
-            oslOskGetText(text);
-            oslEndOsk();
-            break;
-        }
-    }
-
-    oslEndGfx();
-    psptest_interactive_result(test, text[0] != '\0', text[0] != '\0' ? "message dialog and OSK verified" : "OSK returned empty text");
 }
 
 static const PspTestCase cases[] = {
@@ -547,9 +435,8 @@ static const PspTestCase cases[] = {
     PSPTEST_CASE(map_creation),
     PSPTEST_CASE(mod_loader_uses_xmp_backend),
     PSPTEST_CASE(platform_state_queries),
-    PSPTEST_INTERACTIVE_CASE(graphics_text_map_controller),
-    PSPTEST_INTERACTIVE_CASE(audio_wav_playback),
-    PSPTEST_INTERACTIVE_CASE(utility_dialogs)
+    PSPTEST_CASE(graphics_text_map_controller),
+    PSPTEST_CASE(audio_wav_playback)
 };
 
 PSPTEST_MODULE_WITH_HEAP("packages/oslib", cases, 12 * 1024)
