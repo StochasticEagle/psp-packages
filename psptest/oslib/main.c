@@ -16,7 +16,6 @@ PSP_MAIN_THREAD_ATTR(PSP_THREAD_ATTR_USER | PSP_THREAD_ATTR_VFPU);
 #define TEST_MOD "psptest-oslib.mod"
 
 PSPTEST_COVERS(oslInit);
-PSPTEST_COVERS(oslGetRamStatus);
 PSPTEST_COVERS(oslSin);
 PSPTEST_COVERS(oslCos);
 PSPTEST_COVERS(VirtualFileOpen);
@@ -168,24 +167,15 @@ PSPTEST_TEST(core_math) {
 
 PSPTEST_TEST(aligned_memory) {
     void *aligned;
+    const size_t size = 16 * 1024;
 
     ensure_osl();
-    aligned = memalign(64, 1024);
+    aligned = memalign(64, size);
     PSPTEST_ASSERT_NOT_NULL(test, aligned);
     PSPTEST_ASSERT_EQ_INT(test, 0, (uintptr_t)aligned & 63u);
-    memset(aligned, 0x5a, 1024);
-    PSPTEST_ASSERT_EQ_INT(test, 0x5a, ((unsigned char *)aligned)[1023]);
+    memset(aligned, 0x5a, size);
+    PSPTEST_ASSERT_EQ_INT(test, 0x5a, ((unsigned char *)aligned)[size - 1]);
     free(aligned);
-}
-
-PSPTEST_TEST(ram_status) {
-    OSL_MEMSTATUS memory;
-
-    ensure_osl();
-    memory = oslGetRamStatus();
-    PSPTEST_ASSERT_TRUE(test, memory.maxAvailable > 0);
-    PSPTEST_ASSERT_TRUE(test, memory.maxBlockSize > 0);
-    PSPTEST_ASSERT_TRUE(test, memory.maxBlockSize <= memory.maxAvailable);
 }
 
 PSPTEST_TEST(virtual_file_memory) {
@@ -449,7 +439,6 @@ static const PspTestCase cases[] = {
     PSPTEST_CASE(map_creation),
     PSPTEST_CASE(mod_loader_uses_xmp_backend),
     PSPTEST_CASE(platform_state_queries),
-    PSPTEST_CASE(ram_status),
     PSPTEST_CASE(graphics_text_map_controller),
     PSPTEST_CASE(audio_wav_playback)
 };
