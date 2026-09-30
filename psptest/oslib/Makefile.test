@@ -38,7 +38,7 @@ LDFLAGS = $(PROFILE_LDFLAGS) -Wl,-Map,$(TARGET).map
 
 LIBS = -losl $(XMP_LIB) -lpng -lz -lm -ljpeg -lpsptest \
        -lpspgum -lpspaudiolib \
-       -lpsphprm -lpspumd -lpsprtc -lpsppower -lpspgu -lpspaudio \
+       -lpsphprm -lpspumd -lpsppower -lpspgu -lpspaudio \
        -lpsphttp -lpspssl -lpspwlan -lpspaudiocodec \
        -lpspnet_adhocmatching -lpspnet_adhoc -lpspnet_adhocctl
 
