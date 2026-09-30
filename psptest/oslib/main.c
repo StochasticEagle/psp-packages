@@ -9,7 +9,6 @@
 #include <string.h>
 
 PSP_MODULE_INFO("PSPTEST OSLib", 0, 1, 0);
-PSP_MAIN_THREAD_ATTR(PSP_THREAD_ATTR_USER | PSP_THREAD_ATTR_VFPU);
 
 #define TEST_PNG "psptest-oslib.png"
 #define TEST_WAV "psptest-oslib.wav"
@@ -443,4 +442,4 @@ static const PspTestCase cases[] = {
     PSPTEST_CASE(audio_wav_playback)
 };
 
-PSPTEST_MODULE_WITH_HEAP("packages/oslib", cases, 12 * 1024)
+PSPTEST_MODULE("packages/oslib", cases, PSP_THREAD_ATTR_USER | PSP_THREAD_ATTR_VFPU)

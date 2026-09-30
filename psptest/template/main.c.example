@@ -4,8 +4,6 @@
 /* Include the package's public header(s) here. */
 
 PSP_MODULE_INFO("PSPTEST PACKAGE", 0, 1, 0);
-PSP_MAIN_THREAD_ATTR(PSP_THREAD_ATTR_USER);
-
 /*
  * Add one PSPTEST_COVERS(public_function); marker for every public function
  * actually exercised by this module.
@@ -23,4 +21,4 @@ static const PspTestCase cases[] = {
     PSPTEST_CASE(example_case)
 };
 
-PSPTEST_MODULE("packages/PACKAGE", cases)
+PSPTEST_MODULE("packages/PACKAGE", cases, PSP_THREAD_ATTR_USER)

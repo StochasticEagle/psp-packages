@@ -1,30 +1,13 @@
 # PSPTEST package tests
 
-psp-packages owns its package recipes, package source selections, and package-specific PSPTEST source modules. Each implemented runtime test lives under `psptest/<module>/`, matching a package module.
+psp-packages owns its package-specific PSPTEST source modules. Each runtime test remains in `psptest/<module>/` beside the package repository that owns it.
 
-Generated files are not written into the psp-packages source tree. PSPDEV stage 6 discovers these modules and builds them directly from their checked-out source locations into PSPDEV's ignored `build/` hierarchy.
+A package test PRX contains only test code, its `PspTestSuite` descriptor, and the minimal `module_start()`/ `module_stop()` registration shim supplied by `psptest.h`. It does not link `libpsptest.a` and does not contain runner/orchestrator logic.
 
-## Runtime module contract
+The persistent PSPTEST EBOOT in PSPDEV is the sole orchestrator. It loads each PRX, obtains the suite descriptor, creates the test thread, executes cases, records progress/results, and stops/unloads the module.
 
-Each implemented package test:
+Generated files are produced only under PSPDEV's ignored `build/` hierarchy. Test source is never copied into PSPDEV, PSPSDK, or the PSPTEST program tree.
 
-- contains `Makefile.test`;
-- builds as one user PRX;
-- links against the package under test and `libpsptest`;
-- uses `PSPTEST_MODULE(...)` or `PSPTEST_MODULE_WITH_HEAP(...)`;
-- emits no generated files into its source directory.
+## Coverage
 
-`make -C psptest list` lists implemented package tests. Build the integrated PSPTEST program from PSPDEV with:
-
-```bash
-./build.sh 6
-./build.sh p 6
-```
-
-The template directory contains source templates only and is not itself a test module.
-
-## Coverage contract
-
-Completion is based on public-API coverage, not merely successful linking. Every public function exercised by a module should have a file-scope `PSPTEST_COVERS(function_name);` marker. Host-side tooling can extract the `.psptest_coverage` section and compare it with the package's exported/public API.
-
-Do not add placeholder PASS tests. Runtime outcomes are `PASS`, `FAIL`, `SKIP`, `INTERACTIVE_PASS`, and `INTERACTIVE_FAIL`.
+Use `PSPTEST_COVERS(function_name);` for every public function actually exercised by the suite. Do not add placeholder passing tests.

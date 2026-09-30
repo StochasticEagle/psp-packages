@@ -1,8 +1,10 @@
 # OSLib PSPTEST
 
-This module provides OSLib runtime regression coverage. Its source lives here with the package it tests; generated files are produced only by PSPDEV stage 6 under PSPDEV's ignored `build/` hierarchy.
+OSLib runtime regression coverage remains a loadable PSPTEST PRX. Its source lives here with the package it tests; generated files are produced only by PSPDEV stage 6 under PSPDEV's ignored `build/` hierarchy.
 
-The runtime module covers the OSLib tracker-module path, memory/file helpers, image and palette handling, graphics, audio, utility dialogs, and selected platform-state queries.
+The PRX contains the OSLib test functions, case table, suite descriptor, and the minimal PSPTEST registration entrypoint. It does not contain or link the PSPTEST runner.
+
+The persistent PSPTEST EBOOT loads the PRX, receives its suite descriptor, creates the runner-owned worker thread with the suite's VFPU requirement, executes the cases, records progress/results, and then stops and unloads the PRX.
 
 Build the integrated test program from PSPDEV:
 
@@ -11,6 +13,4 @@ Build the integrated test program from PSPDEV:
 ./build.sh p 6
 ```
 
-The OSLib test is built as one PRX module and uses `PSPTEST_MODULE_WITH_HEAP(...)` because it requires a larger heap than the PSPTEST default.
-
-The former source-directory linker-size matrix is intentionally disabled. Comparative builds must use separate ignored build directories so no generated ELF, map, PRX, symbol, or result files are ever written into the source tree.
+Generated ELF, map, PRX, symbol, or result files must never be written into this source tree.

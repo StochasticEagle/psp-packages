@@ -10,15 +10,13 @@ OBJS = main.o
 CFLAGS = -O2 -G0 -Wall -Wextra -Werror
 CXXFLAGS = $(CFLAGS) -fno-exceptions -fno-rtti
 ASFLAGS = $(CFLAGS)
-LIBS = -lPACKAGE -lpsptest
+LIBS = -lPACKAGE
 
 BUILD_PRX = 1
 PRX_EXPORTS ?= ../psptest.exp
 
 PSPSDK := $(shell psp-config --pspsdk-path)
 PSPTEST_FRAMEWORK_INCDIR ?= $(PSPSDK)/include
-PSPTEST_FRAMEWORK_LIBDIR ?= $(PSPSDK)/lib
 INCDIR += $(PSPTEST_FRAMEWORK_INCDIR)
-LIBDIR += $(PSPTEST_FRAMEWORK_LIBDIR)
 
 include $(PSPSDK)/lib/build.mak
