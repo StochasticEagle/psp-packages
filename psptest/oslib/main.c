@@ -155,25 +155,37 @@ static int write_test_wav(const char *path) {
     return fclose(file) == 0;
 }
 
-PSPTEST_TEST(core_math_memory) {
-    OSL_MEMSTATUS memory;
+PSPTEST_TEST(initialize_osl) {
+    ensure_osl();
+    PSPTEST_ASSERT_TRUE(test, osl_initialized != 0);
+}
+
+PSPTEST_TEST(core_math) {
+    ensure_osl();
+    PSPTEST_ASSERT_TRUE(test, nearly_equal(oslSin(90.0f, 1.0f), 1.0f, 0.02f));
+    PSPTEST_ASSERT_TRUE(test, nearly_equal(oslCos(0.0f, 1.0f), 1.0f, 0.02f));
+}
+
+PSPTEST_TEST(aligned_memory) {
     void *aligned;
 
     ensure_osl();
-
-    memory = oslGetRamStatus();
-    PSPTEST_ASSERT_TRUE(test, memory.maxAvailable > 0);
-    PSPTEST_ASSERT_TRUE(test, memory.maxBlockSize > 0);
-    PSPTEST_ASSERT_TRUE(test, memory.maxBlockSize <= memory.maxAvailable);
-    PSPTEST_ASSERT_TRUE(test, nearly_equal(oslSin(90.0f, 1.0f), 1.0f, 0.02f));
-    PSPTEST_ASSERT_TRUE(test, nearly_equal(oslCos(0.0f, 1.0f), 1.0f, 0.02f));
-
     aligned = memalign(64, 1024);
     PSPTEST_ASSERT_NOT_NULL(test, aligned);
     PSPTEST_ASSERT_EQ_INT(test, 0, (uintptr_t)aligned & 63u);
     memset(aligned, 0x5a, 1024);
     PSPTEST_ASSERT_EQ_INT(test, 0x5a, ((unsigned char *)aligned)[1023]);
     free(aligned);
+}
+
+PSPTEST_TEST(ram_status) {
+    OSL_MEMSTATUS memory;
+
+    ensure_osl();
+    memory = oslGetRamStatus();
+    PSPTEST_ASSERT_TRUE(test, memory.maxAvailable > 0);
+    PSPTEST_ASSERT_TRUE(test, memory.maxBlockSize > 0);
+    PSPTEST_ASSERT_TRUE(test, memory.maxBlockSize <= memory.maxAvailable);
 }
 
 PSPTEST_TEST(virtual_file_memory) {
@@ -429,12 +441,15 @@ PSPTEST_TEST(audio_wav_playback) {
 }
 
 static const PspTestCase cases[] = {
-    PSPTEST_CASE(core_math_memory),
+    PSPTEST_CASE(initialize_osl),
+    PSPTEST_CASE(core_math),
+    PSPTEST_CASE(aligned_memory),
     PSPTEST_CASE(virtual_file_memory),
     PSPTEST_CASE(image_palette_png),
     PSPTEST_CASE(map_creation),
     PSPTEST_CASE(mod_loader_uses_xmp_backend),
     PSPTEST_CASE(platform_state_queries),
+    PSPTEST_CASE(ram_status),
     PSPTEST_CASE(graphics_text_map_controller),
     PSPTEST_CASE(audio_wav_playback)
 };
