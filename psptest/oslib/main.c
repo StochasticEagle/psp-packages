@@ -29,6 +29,7 @@ void __libpthreadglue_init(void) {
 PSPTEST_COVERS(oslInit);
 PSPTEST_COVERS(oslSin);
 PSPTEST_COVERS(oslCos);
+PSPTEST_COVERS(oslGetRamStatus);
 PSPTEST_COVERS(VirtualFileOpen);
 PSPTEST_COVERS(VirtualFileRead);
 PSPTEST_COVERS(VirtualFileWrite);
@@ -297,6 +298,18 @@ cleanup:
     free(aligned);
 }
 
+PSPTEST_TEST(ram_status) {
+    OSL_MEMSTATUS status;
+
+    ensure_osl(test);
+    if (test->status != PSPTEST_STATUS_PASS) return;
+
+    status = oslGetRamStatus();
+    PSPTEST_ASSERT_TRUE(test, status.maxAvailable >= 0);
+    PSPTEST_ASSERT_TRUE(test, status.maxBlockSize >= 0);
+    PSPTEST_ASSERT_TRUE(test, status.maxBlockSize <= status.maxAvailable);
+}
+
 PSPTEST_TEST(virtual_file_memory) {
     unsigned char storage[64];
     char readback[16];
@@ -549,6 +562,7 @@ PSPTEST_TEST(audio_wav_playback) {
     OSLIB_REQUIRE(test, active_sound->deleteSound != NULL, cleanup);
 
     oslPlaySound(active_sound, 0);
+    OSLIB_REQUIRE(test, osl_audioActive[0] > 0, cleanup);
     sceKernelDelayThread(500000);
     oslStopSound(active_sound);
     idle = wait_audio_idle(AUDIO_SHUTDOWN_TIMEOUT_US);
@@ -575,6 +589,7 @@ static const PspTestCase cases[] = {
     PSPTEST_CASE(initialize_osl),
     PSPTEST_CASE(core_math),
     PSPTEST_CASE(aligned_memory),
+    PSPTEST_CASE(ram_status),
     PSPTEST_CASE(virtual_file_memory),
     PSPTEST_CASE(image_palette_png),
     PSPTEST_CASE(map_creation),
