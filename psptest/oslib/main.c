@@ -149,8 +149,8 @@ static int cleanup_audio(void) {
     }
 
     if (audio_initialized) {
-        oslDeinitAudio();
         if (!wait_audio_idle(AUDIO_SHUTDOWN_TIMEOUT_US)) return 0;
+        oslDeinitAudio();
         audio_initialized = 0;
     }
     return 1;
@@ -561,8 +561,7 @@ cleanup:
     }
     if (audio_initialized && idle) {
         oslDeinitAudio();
-        idle = wait_audio_idle(AUDIO_SHUTDOWN_TIMEOUT_US);
-        if (idle) audio_initialized = 0;
+        audio_initialized = 0;
     }
     if (!idle && test->status == PSPTEST_STATUS_PASS) psptest_fail(test, __FILE__, __LINE__, "OSLib audio worker did not stop");
     if (gfx_initialized) {
