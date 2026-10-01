@@ -21,4 +21,4 @@ static const PspTestCase cases[] = {
     PSPTEST_CASE(example_case)
 };
 
-PSPTEST_MODULE("packages/PACKAGE", cases, PSP_THREAD_ATTR_USER)
+PSPTEST_MODULE("packages/PACKAGE", cases, PSP_THREAD_ATTR_USER, NULL, NULL)
