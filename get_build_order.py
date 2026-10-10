@@ -33,7 +33,7 @@ def read_package(path: pathlib.Path) -> Package:
             "bash",
             "-c",
             r"""
-source "$1"
+source "$1" || exit $?
 printf 'name\t%s\n' "${pkgname[0]}"
 for dep in "${depends[@]}" "${makedepends[@]}"; do
     [[ -n "$dep" ]] && printf 'dep\t%s\n' "$dep"

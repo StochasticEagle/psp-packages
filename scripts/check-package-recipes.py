@@ -34,7 +34,7 @@ def probe_recipe(path: pathlib.Path) -> dict[str, list[str]]:
             "bash",
             "-c",
             r"""
-source "$1"
+source "$1" || exit $?
 printf 'pkgname\t%s\n' "${pkgname[0]}"
 printf 'pkgver\t%s\n' "${pkgver-}"
 printf 'pkgrel\t%s\n' "${pkgrel-}"
