@@ -97,8 +97,8 @@
 	path = components/libpspvram
 	url = https://github.com/pspdev/libpspvram
 	shallow = true
-[submodule "components/libpspmath"]
-	path = components/libpspmath
+[submodule "components/psp-math"]
+	path = components/psp-math
 	url = https://github.com/StochasticEagle/psp-math.git
 	branch = dev/fork
 	shallow = true
@@ -263,11 +263,6 @@
 	path = components/xz
 	url = https://github.com/tukaani-project/xz.git
 	branch = master
-	shallow = true
-[submodule "components/pspla"]
-	path = components/pspla
-	url = https://github.com/Jayanky/pspla.git
-	branch = main
 	shallow = true
 [submodule "components/psp-media-engine-custom-core"]
 	path = components/psp-media-engine-custom-core

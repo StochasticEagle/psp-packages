@@ -18,7 +18,6 @@ https://github.com/google/googletest.git	components/googletest
 https://github.com/HappySeaFox/sail.git	components/sail
 https://github.com/harfbuzz/harfbuzz.git	components/harfbuzz
 https://github.com/illteteka/openal-soft-psp.git	components/openal
-https://github.com/Jayanky/pspla.git	components/pspla
 https://github.com/jbeder/yaml-cpp.git	components/yaml-cpp
 https://github.com/leethomason/tinyxml2.git	components/tinyxml2
 https://github.com/libjpeg-turbo/libjpeg-turbo.git	components/libjpeg-turbo
@@ -50,7 +49,7 @@ https://github.com/sabdul-khabir/SDL3_gfx.git	components/sdl3-gfx
 https://github.com/sqlite/sqlite.git	components/sqlite
 https://github.com/StochasticEagle/psp-argtable2.git	components/argtable2
 https://github.com/StochasticEagle/psp-luasocket.git	components/luasocket
-https://github.com/StochasticEagle/psp-math.git	components/libpspmath
+https://github.com/StochasticEagle/psp-math.git	components/psp-math
 https://github.com/StochasticEagle/psp-oslib.git	components/oslib
 https://github.com/StochasticEagle/psp-physfs.git	components/physfs
 https://github.com/StochasticEagle/unarr.git	components/unarr

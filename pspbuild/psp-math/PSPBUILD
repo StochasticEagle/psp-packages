@@ -1,0 +1,27 @@
+pkgname=psp-math
+pkgver=r1.c0632f7
+pkgrel=1
+pkgdesc="Unified VFPU-accelerated PSP math and linear algebra library"
+arch=(any)
+url="https://github.com/StochasticEagle/psp-math"
+license=('BSD-3-Clause' 'MIT')
+groups=('psp-libraries')
+depends=()
+makedepends=()
+optdepends=()
+source=("psp-math::git+https://github.com/StochasticEagle/psp-math.git#commit=c0632f716a8de6484593c46025ac081534be10a1")
+sha256sums=('SKIP')
+
+build() {
+    cd "$pkgname"
+    make --quiet $MAKEFLAGS || { exit 1; }
+}
+
+package() {
+    cd "$pkgname"
+    install -d -m 755 "$pkgdir/psp/lib" "$pkgdir/psp/include" "$pkgdir/psp/share/licenses/$pkgname"
+    install -m 644 bin/psp-math.a "$pkgdir/psp/lib/"
+    install -m 644 include/pspmath.h include/pspmath-compatibility.h "$pkgdir/psp/include/"
+    install -m 644 LICENSE-pspla "$pkgdir/psp/share/licenses/$pkgname/"
+    install -m 644 "${PSPDEV}/psp/share/licenses/pspsdk/LICENSE" "$pkgdir/psp/share/licenses/$pkgname/LICENSE-pspsdk"
+}
