@@ -1,5 +1,5 @@
 pkgname=psp-math
-pkgver=r1.c0632f7
+pkgver=r1.8ea07b4
 pkgrel=1
 pkgdesc="Unified VFPU-accelerated PSP math and linear algebra library"
 arch=(any)
@@ -9,7 +9,7 @@ groups=('psp-libraries')
 depends=()
 makedepends=()
 optdepends=()
-source=("psp-math::git+https://github.com/StochasticEagle/psp-math.git#commit=c0632f716a8de6484593c46025ac081534be10a1")
+source=("psp-math::git+https://github.com/StochasticEagle/psp-math.git#commit=8ea07b4dba9fd8a02a716dbfbdd20f23e95d1103")
 sha256sums=('SKIP')
 
 build() {
