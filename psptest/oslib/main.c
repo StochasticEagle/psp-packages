@@ -123,7 +123,7 @@ static int audio_is_idle(void) {
 }
 
 static int wait_audio_idle(unsigned int timeout_us) {
-    uint64_t deadline = sceKernelGetSystemTimeWide() + timeout_us;
+    SceInt64 deadline = sceKernelGetSystemTimeWide() + timeout_us;
 
     while (!audio_is_idle()) {
         if (sceKernelGetSystemTimeWide() >= deadline) return 0;
