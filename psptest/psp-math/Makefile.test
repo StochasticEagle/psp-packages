@@ -1,0 +1,18 @@
+PSPTEST_SOURCE_DIR := $(patsubst %/,%,$(dir $(abspath $(firstword $(MAKEFILE_LIST)))))
+
+ifeq ($(abspath $(CURDIR)),$(PSPTEST_SOURCE_DIR))
+$(error PSPTEST generated files must be built in PSPDEV's ignored build directory)
+endif
+
+TARGET = psptest-psp-math$(if $(VARIANT),-$(VARIANT),)
+OBJS = main.o
+CFLAGS = -O2 -G0 -Wall -Wextra -Werror
+CXXFLAGS = $(CFLAGS) -fno-exceptions -fno-rtti
+ASFLAGS = $(CFLAGS)
+LIBS = -l:psp-math.a -lm
+BUILD_PRX = 1
+PRX_EXPORTS ?= ../psptest.exp
+PSPSDK := $(shell psp-config --pspsdk-path)
+PSPTEST_FRAMEWORK_INCDIR ?= $(PSPSDK)/include
+INCDIR += $(PSPTEST_FRAMEWORK_INCDIR)
+include $(PSPSDK)/lib/build.mak
