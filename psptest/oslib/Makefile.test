@@ -36,7 +36,7 @@ CXXFLAGS = $(CFLAGS) -fno-exceptions -fno-rtti
 ASFLAGS = $(CFLAGS)
 LDFLAGS = $(PROFILE_LDFLAGS) -Wl,-Map,$(TARGET).map
 
-LIBS = -losl $(XMP_LIB) -lpng -lz -lm -ljpeg \
+LIBS = -losl -l:psp-math.a $(XMP_LIB) -lpng -lz -lm -ljpeg \
        -lpspgum -lpspaudiolib \
        -lpsphprm -lpspumd -lpsppower -lpspgu -lpspaudio \
        -lpsphttp -lpspssl -lpspwlan -lpspaudiocodec \

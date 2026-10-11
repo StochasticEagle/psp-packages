@@ -29,6 +29,8 @@ void __libpthreadglue_init(void) {
 PSPTEST_COVERS(oslInit);
 PSPTEST_COVERS(oslSin);
 PSPTEST_COVERS(oslCos);
+PSPTEST_COVERS(oslSini);
+PSPTEST_COVERS(oslCosi);
 PSPTEST_COVERS(oslGetRamStatus);
 PSPTEST_COVERS(VirtualFileOpen);
 PSPTEST_COVERS(VirtualFileRead);
@@ -275,10 +277,26 @@ PSPTEST_TEST(initialize_osl) {
 }
 
 PSPTEST_TEST(core_math) {
+    static const float angles[] = { -270.0f, -180.0f, -90.0f, 0.0f, 30.0f, 90.0f, 180.0f, 270.0f, 360.0f };
+    unsigned int i;
+
     ensure_osl(test);
     if (test->status != PSPTEST_STATUS_PASS) return;
-    PSPTEST_ASSERT_TRUE(test, nearly_equal(oslSin(90.0f, 1.0f), 1.0f, 0.02f));
-    PSPTEST_ASSERT_TRUE(test, nearly_equal(oslCos(0.0f, 1.0f), 1.0f, 0.02f));
+
+    for (i = 0; i < sizeof(angles) / sizeof(angles[0]); ++i) {
+        float radians = angles[i] * (3.14159265358979323846f / 180.0f);
+        float scale = 2.5f;
+        PSPTEST_ASSERT_TRUE(test, nearly_equal(oslSin(angles[i], scale), sinf(radians) * scale, 0.02f));
+        PSPTEST_ASSERT_TRUE(test, nearly_equal(oslCos(angles[i], scale), cosf(radians) * scale, 0.02f));
+    }
+
+    /* Integer operations return an integer radius scaled by Q14 table values. */
+    PSPTEST_ASSERT_EQ_INT(test, 0, oslSini(0, 100));
+    PSPTEST_ASSERT_EQ_INT(test, 100, oslSini(90, 100));
+    PSPTEST_ASSERT_EQ_INT(test, -100, oslSini(270, 100));
+    PSPTEST_ASSERT_EQ_INT(test, 100, oslCosi(0, 100));
+    PSPTEST_ASSERT_EQ_INT(test, 0, oslCosi(90, 100));
+    PSPTEST_ASSERT_EQ_INT(test, -100, oslCosi(180, 100));
 }
 
 PSPTEST_TEST(aligned_memory) {
