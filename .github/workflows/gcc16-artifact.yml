@@ -1,0 +1,108 @@
+name: GCC 16.2 PSPTEST package dependencies
+
+on:
+  push:
+    branches: [gcc-16.2]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: gcc16-package-deps-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  packages:
+    if: github.ref == 'refs/heads/gcc-16.2'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    env:
+      PSPDEV: /opt/pspdev
+      GH_TOKEN: ${{ secrets.PSP_CI_ARTIFACT_TOKEN || github.token }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+          submodules: false
+
+      - name: Verify pinned package source and SDK revision
+        run: |
+          set -euo pipefail
+          python3 scripts/check-source-components.py
+          python3 scripts/check-test-layout.py
+          test "$(cat ci/gcc16-sdk-sha.txt)" = b70855d90753596838ad7e341945119fe426ac8a
+
+      - name: Select upstream GCC 16.2 SDK artifact
+        id: sdk
+        shell: bash
+        run: |
+          set -euo pipefail
+          sha="$(cat ci/gcc16-sdk-sha.txt)"
+          runs="$(gh api 'repos/StochasticEagle/pspsdk/actions/workflows/compilation.yml/runs?branch=gcc-16.2&status=success&per_page=100')"
+          run_id="$(jq -r --arg sha "$sha" '
+            [.workflow_runs[] | select(.head_sha == $sha and .conclusion == "success")][0].id // empty' <<< "$runs")"
+          if [[ -z "$run_id" ]]; then
+            echo "::error::Missing upstream GCC 16.2 SDK CI artifact for $sha."
+            exit 1
+          fi
+          artifacts="$(gh api "repos/StochasticEagle/pspsdk/actions/runs/$run_id/artifacts?per_page=100")"
+          jq -e '.artifacts[] | select(.name == "gcc16-sdk-ubuntu-x86_64" and .expired == false)' \
+            <<< "$artifacts" >/dev/null || exit 1
+          echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: gcc16-sdk-ubuntu-x86_64
+          repository: StochasticEagle/pspsdk
+          run-id: ${{ steps.sdk.outputs.run_id }}
+          github-token: ${{ secrets.PSP_CI_ARTIFACT_TOKEN || github.token }}
+          path: upstream
+
+      - name: Install commit-verified GCC 16.2 SDK
+        run: |
+          set -euo pipefail
+          sudo tar -xzf upstream/gcc16-sdk.tar.gz -C /opt
+          sudo chown -R "$(id -u):$(id -g)" "$PSPDEV"
+          export PATH="$PSPDEV/bin:$PATH"
+          echo "$PSPDEV/bin" >> "$GITHUB_PATH"
+          test "$(psp-gcc -dumpfullversion)" = 16.2.0
+          grep -Fxq "sdk_commit=$(cat ci/gcc16-sdk-sha.txt)" "$PSPDEV/share/psp-ci/sdk-source.txt"
+
+      - name: Install package build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            autoconf automake autopoint bison build-essential cmake fakeroot flex \
+            gawk gettext git libarchive-dev libarchive-tools libcurl4-openssl-dev \
+            libgmp-dev libgpgme-dev libgsl-dev libmpc-dev libmpfr-dev \
+            libreadline-dev libssl-dev libtool libtool-bin libusb-dev meson \
+            ninja-build patch pkg-config python3 python3-jinja2 \
+            python3-jsonschema texinfo wget xz-utils zlib1g-dev
+
+      - name: Compile and install PSPTEST package dependency closure
+        run: |
+          set -euo pipefail
+          export PATH="$PSPDEV/bin:$PATH"
+          ./build.sh --install oslib
+          test -s "$PSPDEV/psp/lib/psp-math.a"
+          test -s "$PSPDEV/psp/include/pspmath.h"
+          mkdir -p "$PSPDEV/share/psp-ci"
+          printf 'format=1\npackages_commit=%s\nsdk_commit=%s\ncompiler=%s\n' \
+            "$GITHUB_SHA" "$(cat ci/gcc16-sdk-sha.txt)" "$(psp-gcc -dumpfullversion)" \
+            > "$PSPDEV/share/psp-ci/packages-source.txt"
+
+      - name: Archive validated PSPTEST dependencies
+        run: |
+          set -euo pipefail
+          tar -czf "$RUNNER_TEMP/gcc16-package-deps.tar.gz" -C /opt pspdev
+          tar -tzf "$RUNNER_TEMP/gcc16-package-deps.tar.gz" |
+            grep -Fx 'pspdev/share/psp-ci/packages-source.txt' >/dev/null
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: gcc16-package-deps-ubuntu-x86_64
+          path: ${{ runner.temp }}/gcc16-package-deps.tar.gz
+          retention-days: 30
+          if-no-files-found: error
