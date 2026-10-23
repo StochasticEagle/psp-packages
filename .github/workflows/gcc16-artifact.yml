@@ -81,10 +81,21 @@ jobs:
             ninja-build patch pkg-config python3 python3-jinja2 \
             python3-jsonschema texinfo wget xz-utils zlib1g-dev
 
+      - name: Checkout only required PSPTEST package sources (depth 1)
+        run: |
+          set -euo pipefail
+          git -c remote.origin.tagOpt=--no-tags submodule update \
+            --init --recursive --depth 1 --jobs 4 \
+            components/libxmp components/zlib components/libpng \
+            components/libjpeg-turbo components/psp-math components/oslib
+
       - name: Compile and install PSPTEST package dependency closure
         run: |
           set -euo pipefail
           export PATH="$PSPDEV/bin:$PATH"
+          # The exact six required source components were checked out above.
+          # Avoid fetching unrelated package repositories.
+          export PSP_PACKAGES_SUBMODULES_READY=1
           ./build.sh --install oslib
           test -s "$PSPDEV/psp/lib/psp-math.a"
           test -s "$PSPDEV/psp/include/pspmath.h"
